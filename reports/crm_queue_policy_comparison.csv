@@ -1,0 +1,17 @@
+outreach_capacity,outreach_capacity_fraction,selected_count,policy,selected_non_repeaters,selected_non_repeat_rate,share_of_all_non_repeaters_captured,historical_commercial_value_gbp,share_of_cohort_commercial_value
+1%,0.01,53,Risk-first,48.0,0.9057,0.0162,934.83,0.0001
+1%,0.01,53,Value-aware,21.0,0.3962,0.0071,1508385.6,0.1138
+1%,0.01,53,Hybrid,45.0,0.8491,0.0152,164966.98,0.0124
+1%,0.01,53,Random baseline (analytical),29.9,0.5642,0.0101,132599.83,0.01
+5%,0.05,263,Risk-first,237.0,0.9011,0.0798,28592.26,0.0022
+5%,0.05,263,Value-aware,100.0,0.3802,0.0337,3450419.4,0.2602
+5%,0.05,263,Hybrid,195.0,0.7414,0.0657,531104.88,0.0401
+5%,0.05,263,Random baseline (analytical),148.6,0.565,0.05,662999.15,0.05
+10%,0.1,526,Risk-first,477.0,0.9068,0.1606,82584.55,0.0062
+10%,0.1,526,Value-aware,193.0,0.3669,0.065,4848157.89,0.3656
+10%,0.1,526,Hybrid,399.0,0.7586,0.1343,897205.33,0.0677
+10%,0.1,526,Random baseline (analytical),297.2,0.565,0.1001,1325998.3,0.1
+20%,0.2,1051,Risk-first,907.0,0.863,0.3054,236568.69,0.0178
+20%,0.2,1051,Value-aware,403.0,0.3834,0.1357,7154456.78,0.5396
+20%,0.2,1051,Hybrid,751.0,0.7146,0.2529,1786090.05,0.1347
+20%,0.2,1051,Random baseline (analytical),593.8,0.565,0.1999,2651996.6,0.2

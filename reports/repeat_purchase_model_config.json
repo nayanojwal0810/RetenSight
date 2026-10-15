@@ -1,0 +1,74 @@
+{
+  "model_type": "LogisticRegression (scikit-learn)",
+  "solver": "lbfgs",
+  "penalty": "l2",
+  "C": 1.0,
+  "max_iter": 1000,
+  "random_state": 42,
+  "preprocessing": {
+    "transformation": "SignedLogTransformer: sign(x) * log1p(abs(x))",
+    "imputation": "SimpleImputer(strategy='median')",
+    "scaling": "StandardScaler()"
+  },
+  "chronological_splits": {
+    "validation_stage": {
+      "train_cutoff": "2010-12-09 23:59:59",
+      "train_samples": 4286,
+      "val_cutoff": "2011-06-10 23:59:59",
+      "val_samples": 4952,
+      "window_gap_days": 93
+    },
+    "temporal_holdout_stage": {
+      "train_cutoffs": [
+        "2010-12-09 23:59:59",
+        "2011-06-10 23:59:59"
+      ],
+      "train_samples": 9238,
+      "holdout_cutoff": "2011-09-09 23:59:59",
+      "holdout_samples": 5257,
+      "window_gap_days": 1
+    }
+  },
+  "feature_sets": {
+    "rfm_baseline": [
+      "recency_days",
+      "frequency",
+      "net_commercial_spend"
+    ],
+    "expanded_features": [
+      "recency_days",
+      "frequency",
+      "net_commercial_spend",
+      "customer_tenure_days",
+      "distinct_purchase_days",
+      "total_items_purchased",
+      "merchandise_aov",
+      "commercial_order_value",
+      "net_spend_per_order",
+      "total_invoices_all",
+      "cancellation_invoice_count",
+      "monetary_merchandise_sales",
+      "monetary_merchandise_returns",
+      "monetary_shipping",
+      "monetary_discounts",
+      "monetary_manual_charges"
+    ],
+    "prohibited_columns_guarded": [
+      "customer_id",
+      "target_repeat_purchase_90d",
+      "target_spend_90d",
+      "target_ledger_balance_90d",
+      "is_target_window_observed",
+      "segment",
+      "r_score",
+      "f_score",
+      "m_score",
+      "rfm_score",
+      "snapshot_date",
+      "first_purchase_date",
+      "last_purchase_date",
+      "country"
+    ]
+  },
+  "selected_model_by_validation": "Expanded Model"
+}

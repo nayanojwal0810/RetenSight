@@ -638,6 +638,8 @@ def compute_customer_rfm_snapshot(
         "frequency",
         "distinct_purchase_days",
         "total_items_purchased",
+        "total_invoices_all",
+        "cancellation_invoice_count",
         "qualifying_merchandise_sales",
         "qualifying_commercial_sales",
         "qualifying_orders_gross_sales",
