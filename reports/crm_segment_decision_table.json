@@ -1,0 +1,1136 @@
+[
+  {
+    "r_score":1,
+    "f_score":1,
+    "m_score":1,
+    "segment":"Lost",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive one-time buyers with low historical spend.",
+    "core_crm_action":"Deprioritized from high-touch CRM; archive or broad brand awareness only."
+  },
+  {
+    "r_score":1,
+    "f_score":1,
+    "m_score":2,
+    "segment":"Lost",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive one-time buyers with low historical spend.",
+    "core_crm_action":"Deprioritized from high-touch CRM; archive or broad brand awareness only."
+  },
+  {
+    "r_score":1,
+    "f_score":1,
+    "m_score":3,
+    "segment":"Lost",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive one-time buyers with low historical spend.",
+    "core_crm_action":"Deprioritized from high-touch CRM; archive or broad brand awareness only."
+  },
+  {
+    "r_score":1,
+    "f_score":1,
+    "m_score":4,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":1,
+    "m_score":5,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":2,
+    "m_score":1,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":2,
+    "m_score":2,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":2,
+    "m_score":3,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":2,
+    "m_score":4,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":2,
+    "m_score":5,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":3,
+    "m_score":1,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":3,
+    "m_score":2,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":3,
+    "m_score":3,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":3,
+    "m_score":4,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":3,
+    "m_score":5,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":1,
+    "f_score":4,
+    "m_score":1,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":4,
+    "m_score":2,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":4,
+    "m_score":3,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":4,
+    "m_score":4,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":1,
+    "f_score":4,
+    "m_score":5,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":1,
+    "f_score":5,
+    "m_score":1,
+    "segment":"Hibernating",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Long-inactive repeat buyers with low-to-moderate historical spend.",
+    "core_crm_action":"Automated low-cost email drip campaigns; seasonal clearance announcements."
+  },
+  {
+    "r_score":1,
+    "f_score":5,
+    "m_score":2,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":5,
+    "m_score":3,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":1,
+    "f_score":5,
+    "m_score":4,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":1,
+    "f_score":5,
+    "m_score":5,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":2,
+    "f_score":1,
+    "m_score":1,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":1,
+    "m_score":2,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":1,
+    "m_score":3,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":1,
+    "m_score":4,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":1,
+    "m_score":5,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":2,
+    "m_score":1,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":2,
+    "m_score":2,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":2,
+    "m_score":3,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":2,
+    "m_score":4,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":2,
+    "m_score":5,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":3,
+    "m_score":1,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":3,
+    "m_score":2,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":2,
+    "f_score":3,
+    "m_score":3,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":3,
+    "m_score":4,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":3,
+    "m_score":5,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":2,
+    "f_score":4,
+    "m_score":1,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":4,
+    "m_score":2,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":4,
+    "m_score":3,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":4,
+    "m_score":4,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":2,
+    "f_score":4,
+    "m_score":5,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":2,
+    "f_score":5,
+    "m_score":1,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":5,
+    "m_score":2,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":5,
+    "m_score":3,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":2,
+    "f_score":5,
+    "m_score":4,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":2,
+    "f_score":5,
+    "m_score":5,
+    "segment":"Can't Lose Them",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Formerly valuable VIP buyers who have become dormant (low recency).",
+    "core_crm_action":"Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach."
+  },
+  {
+    "r_score":3,
+    "f_score":1,
+    "m_score":1,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":3,
+    "f_score":1,
+    "m_score":2,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":3,
+    "f_score":1,
+    "m_score":3,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":3,
+    "f_score":1,
+    "m_score":4,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":3,
+    "f_score":1,
+    "m_score":5,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":3,
+    "f_score":2,
+    "m_score":1,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":3,
+    "f_score":2,
+    "m_score":2,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":3,
+    "f_score":2,
+    "m_score":3,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":3,
+    "f_score":2,
+    "m_score":4,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":3,
+    "f_score":2,
+    "m_score":5,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":3,
+    "f_score":3,
+    "m_score":1,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":3,
+    "f_score":3,
+    "m_score":2,
+    "segment":"About To Sleep",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Below-average recency and modest historical engagement slipping toward dormancy.",
+    "core_crm_action":"Gentle re-activation reminders before dormancy; low-friction seasonal promotions."
+  },
+  {
+    "r_score":3,
+    "f_score":3,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":3,
+    "m_score":4,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":3,
+    "m_score":5,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":4,
+    "m_score":1,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":3,
+    "f_score":4,
+    "m_score":2,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":3,
+    "f_score":4,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":4,
+    "m_score":4,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":4,
+    "m_score":5,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":5,
+    "m_score":1,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":3,
+    "f_score":5,
+    "m_score":2,
+    "segment":"At Risk",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+    "core_crm_action":"Targeted re-engagement campaigns, personalized catalog offers, renewal discounts."
+  },
+  {
+    "r_score":3,
+    "f_score":5,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":5,
+    "m_score":4,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":3,
+    "f_score":5,
+    "m_score":5,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":1,
+    "m_score":1,
+    "segment":"New Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent entry-level first-time buyers with modest initial basket spend.",
+    "core_crm_action":"Dedicated onboarding sequence, welcome-back second-order discount."
+  },
+  {
+    "r_score":4,
+    "f_score":1,
+    "m_score":2,
+    "segment":"New Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent entry-level first-time buyers with modest initial basket spend.",
+    "core_crm_action":"Dedicated onboarding sequence, welcome-back second-order discount."
+  },
+  {
+    "r_score":4,
+    "f_score":1,
+    "m_score":3,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":1,
+    "m_score":4,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":1,
+    "m_score":5,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":2,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":2,
+    "m_score":2,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":4,
+    "f_score":2,
+    "m_score":3,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":4,
+    "f_score":2,
+    "m_score":4,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":4,
+    "f_score":2,
+    "m_score":5,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":4,
+    "f_score":3,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":3,
+    "m_score":2,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":4,
+    "f_score":3,
+    "m_score":3,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":4,
+    "f_score":3,
+    "m_score":4,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":3,
+    "m_score":5,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":4,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":4,
+    "m_score":2,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":4,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":4,
+    "m_score":4,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":4,
+    "f_score":4,
+    "m_score":5,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":4,
+    "f_score":5,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":4,
+    "f_score":5,
+    "m_score":2,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":5,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":4,
+    "f_score":5,
+    "m_score":4,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":4,
+    "f_score":5,
+    "m_score":5,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":5,
+    "f_score":1,
+    "m_score":1,
+    "segment":"New Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent entry-level first-time buyers with modest initial basket spend.",
+    "core_crm_action":"Dedicated onboarding sequence, welcome-back second-order discount."
+  },
+  {
+    "r_score":5,
+    "f_score":1,
+    "m_score":2,
+    "segment":"New Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent entry-level first-time buyers with modest initial basket spend.",
+    "core_crm_action":"Dedicated onboarding sequence, welcome-back second-order discount."
+  },
+  {
+    "r_score":5,
+    "f_score":1,
+    "m_score":3,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":1,
+    "m_score":4,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":1,
+    "m_score":5,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":2,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":2,
+    "m_score":2,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":5,
+    "f_score":2,
+    "m_score":3,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":5,
+    "f_score":2,
+    "m_score":4,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":5,
+    "f_score":2,
+    "m_score":5,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":5,
+    "f_score":3,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":3,
+    "m_score":2,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":5,
+    "f_score":3,
+    "m_score":3,
+    "segment":"Potential Loyalists",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent repeat buyers building frequency and order volume.",
+    "core_crm_action":"Category cross-sell, second-tier order bundles, loyalty point incentives."
+  },
+  {
+    "r_score":5,
+    "f_score":3,
+    "m_score":4,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":5,
+    "f_score":3,
+    "m_score":5,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":5,
+    "f_score":4,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":4,
+    "m_score":2,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":5,
+    "f_score":4,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":5,
+    "f_score":4,
+    "m_score":4,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":5,
+    "f_score":4,
+    "m_score":5,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":5,
+    "f_score":5,
+    "m_score":1,
+    "segment":"Promising",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+    "core_crm_action":"Incentives to increase basket size and establish regular purchasing cadence."
+  },
+  {
+    "r_score":5,
+    "f_score":5,
+    "m_score":2,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":5,
+    "f_score":5,
+    "m_score":3,
+    "segment":"Loyal Customers",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Established repeat buyers with strong purchase cadence and consistent spend.",
+    "core_crm_action":"Membership loyalty rewards, category cross-sell, automated reorder reminders."
+  },
+  {
+    "r_score":5,
+    "f_score":5,
+    "m_score":4,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":5,
+    "f_score":5,
+    "m_score":5,
+    "segment":"Champions",
+    "spend_condition":"net_commercial_spend > 0",
+    "business_rationale":"Elite shoppers with top recency, high frequency, and high monetary spend.",
+    "core_crm_action":"VIP concierge outreach, early product access, executive appreciation."
+  },
+  {
+    "r_score":0,
+    "f_score":0,
+    "m_score":0,
+    "segment":"Negative or Zero Spend",
+    "spend_condition":"net_commercial_spend <= 0",
+    "business_rationale":"Accounts with non-positive net commercial spend due to returns or concessions.",
+    "core_crm_action":"Audit return reasons, inspect product defect reports, review trade concessions."
+  }
+]

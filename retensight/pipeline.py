@@ -137,7 +137,7 @@ def run_pipeline(
     # 7. Customer RFM Feature Snapshots across Chronological Cutoffs
     try:
         rfm_snapshots = build_all_rfm_snapshots(invoices_df=invoices_df)
-        rfm_summary = summarize_rfm_snapshots(rfm_snapshots)
+        rfm_summary = summarize_rfm_snapshots(rfm_snapshots, invoices_df=invoices_df)
     except Exception as exc:
         logger.exception("Customer RFM snapshot generation failed: %s", exc)
         return 1

@@ -54,6 +54,19 @@ def test_invoice_component_reconciliation_penny_tolerance(synthetic_sheets):
     # 6. Overall net value
     assert np.isclose(invoices["net_value"].sum(), cleaned["line_total"].sum(), atol=0.01)
 
+    # 7. Merchandise returns component
+    tx_merch_ret = cleaned[
+        (~cleaned["is_special_code"])
+        & (~cleaned["is_bad_debt"])
+        & cleaned["is_cancellation"]
+        & (~cleaned["is_zero_price"])
+    ]["line_total"].sum()
+    assert np.isclose(invoices["merchandise_returns_value"].sum(), tx_merch_ret, atol=0.01)
+
+    # 8. Customer reconciliation residual must be 0.00
+    cust_inv = invoices[invoices["has_customer_id"]]
+    assert np.allclose(cust_inv["reconciliation_residual"], 0.0, atol=0.01)
+
 
 def test_positive_cancellation_and_bad_debt_components(synthetic_sheets):
     """Verifies that positive cancellation and bad-debt lines remain in their respective

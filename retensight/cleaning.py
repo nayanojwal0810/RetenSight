@@ -107,6 +107,18 @@ def clean_and_classify_transactions(
         & (cleaned["price"] > 0)
     )
 
+    # Line item represents a physical merchandise return / cancellation
+    cleaned["is_merchandise_return"] = (
+        cleaned["is_merchandise"]
+        & cleaned["is_cancellation"]
+        & (~cleaned["is_zero_price"])
+    )
+
+    # Anomaly flag: line item on a cancellation invoice with positive value
+    cleaned["is_positive_cancellation_anomaly"] = (
+        cleaned["is_cancellation"] & (cleaned["line_total"] > 0)
+    )
+
     # Line item affects customer commercial spend (excludes non-commercial admin settlements, bad debt, freebies)
     cleaned["affects_customer_commercial_spend"] = (
         cleaned["has_customer_id"]

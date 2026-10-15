@@ -99,13 +99,21 @@ The architecture maintains an unambiguous three-tier reconciliation between acco
 
 ## 5. Sensitivity Analysis: Admin Settlements Inclusion vs Exclusion
 
-To evaluate the operational risk of excluding administrative settlements from customer commercial spend, a sensitivity audit was executed on the full 24-month customer population (5,853 qualifying customers on 2011-12-09):
+To evaluate the operational risk of excluding administrative settlements from customer commercial spend, a sensitivity audit was executed on the full dataset (5,942 customer accounts) and the 24-month customer population (5,853 qualifying customers on 2011-12-09):
 
-- **Affected Accounts**: Only 14 customer accounts (0.24% of all customers) had non-zero administrative settlements.
+- **Full Dataset Population (5,942 customer IDs)**:
+  - **74** customer accounts have at least one administrative settlement transaction.
+  - **69** accounts have a non-zero net administrative settlement balance (totaling -£4,834.26).
+  - **5** accounts have net zero-sum administrative transactions (debits exactly offset credits).
+- **2011-12-09 RFM Snapshot (5,853 qualifying customers)**:
+  - **53** qualifying customer accounts have at least one administrative settlement line.
+  - **48** qualifying customer accounts have a non-zero net administrative settlement balance.
+  - **5** qualifying accounts have net zero-sum administrative balances.
+  - **21** customer accounts with administrative transactions had 0 qualifying merchandise purchases across 24 months and are excluded from RFM scoring.
 - **Top Impact Account (Customer ID 14096 - Cancer Research UK)**:
   - Commercial Net Spend (Excl. Admin): £57,946.49 ($M=5$)
   - Total Account Balance (Incl. Admin): £50,013.06 ($M=5$)
-  - Difference: £7,933.43 (charity commission payouts).
+  - Admin Difference: -£7,933.43 (charity commission payouts).
   - Recency = 4 days ($R=5$), Frequency = 84 orders ($F=5$).
   - **Segment Assignment**: **Champions** under both definitions.
 - **Segment Stability**: Across all 5,853 customers, exactly **0 customer segment reassignments** occurred when comparing commercial net spend vs total account balance ($100.0\%$ stability).

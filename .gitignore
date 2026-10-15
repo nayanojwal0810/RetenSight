@@ -20,6 +20,7 @@ data/
 *.xlsx
 *.parquet
 *.csv
+!reports/*.csv
 *.zip
 
 # Power BI binary files (PBIX must not be committed without explicit owner approval)

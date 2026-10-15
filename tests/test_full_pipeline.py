@@ -149,12 +149,14 @@ def test_full_workbook_pipeline():
     assert (rfm_final["recency_days"] >= 0).all()
     assert (rfm_final["customer_tenure_days"] >= rfm_final["recency_days"]).all()
 
-    # Verify component reconciliation and conventional AOV metrics
+    # Verify component reconciliation and zero residual
+    assert np.allclose(rfm_final["reconciliation_residual"], 0.0, atol=0.01)
+
     reconciled_net = (
         rfm_final["monetary_merchandise_sales"]
+        + rfm_final["monetary_merchandise_returns"]
         + rfm_final["monetary_shipping"]
         + rfm_final["monetary_discounts"]
-        + rfm_final["monetary_returns"]
         + rfm_final["monetary_manual_charges"]
     )
     assert np.allclose(rfm_final["net_commercial_spend"], reconciled_net, atol=0.01)
@@ -162,13 +164,23 @@ def test_full_workbook_pipeline():
     reconciled_balance = rfm_final["net_commercial_spend"] + rfm_final["monetary_admin_settlements"]
     assert np.allclose(rfm_final["total_account_balance"], reconciled_balance, atol=0.01)
 
-    # Conventional AOV must be strictly positive since qualifying gross sales > 0
-    assert (rfm_final["avg_order_value"] > 0).all()
+    # Merchandise AOV strictly positive across qualifying purchase orders
+    assert (rfm_final["merchandise_aov"] > 0).all()
+    assert (rfm_final["commercial_order_value"] >= rfm_final["merchandise_aov"]).all()
     assert np.allclose(
-        rfm_final["avg_order_value"],
-        rfm_final["qualifying_orders_gross_sales"] / rfm_final["frequency"],
+        rfm_final["merchandise_aov"],
+        rfm_final["qualifying_merchandise_sales"] / rfm_final["frequency"],
         atol=0.01,
     )
+    assert np.allclose(
+        rfm_final["commercial_order_value"],
+        rfm_final["qualifying_commercial_sales"] / rfm_final["frequency"],
+        atol=0.01,
+    )
+
+    # Decision table files verification
+    assert (rep_dir / "crm_segment_decision_table.json").exists()
+    assert (rep_dir / "crm_segment_decision_table.csv").exists()
 
     # Check unobserved future target at final history cutoff
     assert rfm_final["target_repeat_purchase_90d"].isna().all()

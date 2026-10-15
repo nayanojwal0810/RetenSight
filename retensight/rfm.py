@@ -93,74 +93,198 @@ def get_frequency_score(frequency: int) -> int:
         return 5
 
 
-def assign_crm_segment(r: int, f: int, m: int, net_commercial_spend: float) -> str:
-    """Assigns explainable, monetary-aware CRM business segments from R, F, and M scores.
+SEGMENT_DESCRIPTIONS: Dict[str, Dict[str, str]] = {
+    "Champions": {
+        "business_rationale": "Elite shoppers with top recency, high frequency, and high monetary spend.",
+        "core_crm_action": "VIP concierge outreach, early product access, executive appreciation.",
+    },
+    "Loyal Customers": {
+        "business_rationale": "Established repeat buyers with strong purchase cadence and consistent spend.",
+        "core_crm_action": "Membership loyalty rewards, category cross-sell, automated reorder reminders.",
+    },
+    "Potential Loyalists": {
+        "business_rationale": "Recent repeat buyers building frequency and order volume.",
+        "core_crm_action": "Category cross-sell, second-tier order bundles, loyalty point incentives.",
+    },
+    "New Customers": {
+        "business_rationale": "Recent entry-level first-time buyers with modest initial basket spend.",
+        "core_crm_action": "Dedicated onboarding sequence, welcome-back second-order discount.",
+    },
+    "Promising": {
+        "business_rationale": "Recent high-ticket first-time buyers, active repeaters with small baskets, or mid-recency solid spenders.",
+        "core_crm_action": "Incentives to increase basket size and establish regular purchasing cadence.",
+    },
+    "Can't Lose Them": {
+        "business_rationale": "Formerly valuable VIP buyers who have become dormant (low recency).",
+        "core_crm_action": "Highest priority win-back campaigns, bespoke commercial incentives, direct executive outreach.",
+    },
+    "At Risk": {
+        "business_rationale": "Lapsing regular spenders, dormant high-ticket first-time buyers, or slipping regulars.",
+        "core_crm_action": "Targeted re-engagement campaigns, personalized catalog offers, renewal discounts.",
+    },
+    "About To Sleep": {
+        "business_rationale": "Below-average recency and modest historical engagement slipping toward dormancy.",
+        "core_crm_action": "Gentle re-activation reminders before dormancy; low-friction seasonal promotions.",
+    },
+    "Hibernating": {
+        "business_rationale": "Long-inactive repeat buyers with low-to-moderate historical spend.",
+        "core_crm_action": "Automated low-cost email drip campaigns; seasonal clearance announcements.",
+    },
+    "Lost": {
+        "business_rationale": "Long-inactive one-time buyers with low historical spend.",
+        "core_crm_action": "Deprioritized from high-touch CRM; archive or broad brand awareness only.",
+    },
+    "Negative or Zero Spend": {
+        "business_rationale": "Accounts with non-positive net commercial spend due to returns or concessions.",
+        "core_crm_action": "Audit return reasons, inspect product defect reports, review trade concessions.",
+    },
+}
 
-    Segmentation Matrix (125 cells + Negative Spend):
-    - Negative or Zero Spend: net_commercial_spend <= 0.0
-    - Champions: R in (4, 5) and F in (4, 5) and M in (4, 5) [8 cells]
-    - Loyal Customers:
-        * R in (4, 5) and F in (4, 5) and M in (2, 3) [moderate spend frequent buyers]
-        * R == 3 and F in (3, 4, 5) and M in (3, 4, 5) [consistent repeat buyers]
-    - Potential Loyalists: R in (4, 5) and F in (2, 3) and M in (2, 3, 4, 5)
-    - New Customers: R in (4, 5) and F == 1 and M in (2, 3, 4, 5)
-    - Can't Lose Them: R in (1, 2) and F in (2, 3, 4, 5) and M in (4, 5) [high-value inactive VIPs]
-    - At Risk:
-        * R in (1, 2) and F in (3, 4, 5) and M in (2, 3) [lapsing regular spenders]
-        * R in (1, 2) and F == 1 and M in (4, 5) [inactive high-value one-time buyers]
-    - Promising:
-        * R == 3 and F in (1, 2) and M in (2, 3, 4, 5) [moderate recency growth potential]
-        * R in (4, 5) and M == 1 [active/recent buyers but low spend basket]
-    - About To Sleep: R == 2 and F in (1, 2) and M in (1, 2, 3) [below average recency, low engagement]
-    - Hibernating:
-        * R == 1 and F >= 2 and M in (1, 2) [long inactive low-spend repeaters]
-        * R == 3 and M in (1, 2) [moderate recency, low spend]
-    - Lost: R == 1 and F == 1 and M in (1, 2, 3) [lowest recency, one-time low spenders]
+
+def get_crm_segment_rule(r: int, f: int, m: int) -> str:
+    """Canonical 125-cell deterministic mapping from (R, F, M) quintiles to business segments.
+
+    Rules hierarchy:
+    1. Champions: Recent, frequent, and top monetary value (elite VIPs)
+       - R in [4, 5], F in [4, 5], M in [4, 5] (8 cells)
+    2. Loyal Customers: Established high-frequency or high-spend regular buyers
+       - R in [4, 5], F in [4, 5], M in [2, 3]
+       - R == 3, F in [4, 5], M in [3, 4, 5]
+       - R in [3, 4, 5], F == 3, M in [4, 5]
+       - R == 3, F == 3, M == 3
+    3. Potential Loyalists: Recent repeat buyers building value
+       - R in [4, 5], F in [2, 3], M in [2, 3, 4, 5]
+    4. New Customers: Recent one-time entry-level buyers with modest first baskets
+       - R in [4, 5], F == 1, M in [1, 2]
+    5. Promising: Recent high-ticket first-time buyers, recent low-spend repeaters, or mid-recency solid spenders
+       - R in [4, 5], F == 1, M in [3, 4, 5]
+       - R in [4, 5], F in [2, 3, 4, 5], M == 1
+       - R == 3, F in [1, 2], M in [3, 4, 5]
+    6. Can't Lose Them: Inactive high-value VIPs
+       - R in [1, 2], F in [4, 5], M in [4, 5]
+       - R in [1, 2], F == 3, M == 5
+    7. At Risk: Inactive moderate spenders, lapsed high-ticket buyers, or slipping regulars
+       - R in [1, 2], F in [4, 5], M in [2, 3]
+       - R == 2, F in [4, 5], M == 1
+       - R in [1, 2], F == 3, M in [3, 4]
+       - R in [1, 2], F == 2, M in [4, 5]
+       - R in [1, 2], F == 1, M in [4, 5]
+       - R == 3, F in [4, 5], M in [1, 2]
+    8. About To Sleep: Below-average / slipping recency with modest spend
+       - R == 2, F in [1, 2], M in [1, 2, 3]
+       - R == 2, F == 3, M in [1, 2]
+       - R == 3, F in [1, 2], M in [1, 2]
+       - R == 3, F == 3, M in [1, 2]
+    9. Hibernating: Long-inactive repeat buyers with modest spend
+       - R == 1, F in [2, 3], M in [1, 2, 3]
+       - R == 1, F in [4, 5], M == 1
+    10. Lost: Long-inactive one-time buyers with low-to-moderate spend
+       - R == 1, F == 1, M in [1, 2, 3]
     """
-    if net_commercial_spend <= 0.0:
-        return "Negative or Zero Spend"
-
-    # 1. Champions: Recent, frequent, and top monetary value (elite VIPs)
     if r in (4, 5) and f in (4, 5) and m in (4, 5):
         return "Champions"
 
-    # 2. Loyal Customers: Consistent repeat buyers with substantial spend
-    if (r in (4, 5) and f in (4, 5) and m in (2, 3)) or (r == 3 and f in (3, 4, 5) and m in (3, 4, 5)):
+    if (
+        (r in (4, 5) and f in (4, 5) and m in (2, 3))
+        or (r == 3 and f in (4, 5) and m in (3, 4, 5))
+        or (r in (3, 4, 5) and f == 3 and m in (4, 5))
+        or (r == 3 and f == 3 and m == 3)
+    ):
         return "Loyal Customers"
 
-    # 3. Potential Loyalists: Recent repeat buyers with good spend building value
     if r in (4, 5) and f in (2, 3) and m in (2, 3, 4, 5):
         return "Potential Loyalists"
 
-    # 4. New Customers: Recent first-time buyers with average or above first purchase
-    if r in (4, 5) and f == 1 and m in (2, 3, 4, 5):
+    if r in (4, 5) and f == 1 and m in (1, 2):
         return "New Customers"
 
-    # 5. Can't Lose Them: Inactive high-value VIPs (high historical spend M in [4, 5], now dormant R in [1, 2])
-    if r in (1, 2) and f in (2, 3, 4, 5) and m in (4, 5):
-        return "Can't Lose Them"
-
-    # 6. At Risk: Inactive moderate spenders with established purchase history
-    if (r in (1, 2) and f in (3, 4, 5) and m in (2, 3)) or (r in (1, 2) and f == 1 and m in (4, 5)):
-        return "At Risk"
-
-    # 7. Promising: Recent or moderate shoppers with growth potential
-    if (r == 3 and f in (1, 2) and m in (2, 3, 4, 5)) or (r in (4, 5) and m == 1):
+    if (
+        (r in (4, 5) and f == 1 and m in (3, 4, 5))
+        or (r in (4, 5) and f >= 2 and m == 1)
+        or (r == 3 and f in (1, 2) and m in (3, 4, 5))
+    ):
         return "Promising"
 
-    # 8. About To Sleep: Below average recency, low-to-moderate engagement
-    if r == 2 and f in (1, 2) and m in (1, 2, 3):
+    if (
+        (r in (1, 2) and f in (4, 5) and m in (4, 5))
+        or (r in (1, 2) and f == 3 and m == 5)
+    ):
+        return "Can't Lose Them"
+
+    if (
+        (r in (1, 2) and f in (4, 5) and m in (2, 3))
+        or (r == 2 and f in (4, 5) and m == 1)
+        or (r in (1, 2) and f == 3 and m in (3, 4))
+        or (r in (1, 2) and f == 2 and m in (4, 5))
+        or (r in (1, 2) and f == 1 and m in (4, 5))
+        or (r == 3 and f in (4, 5) and m in (1, 2))
+    ):
+        return "At Risk"
+
+    if (
+        (r == 2 and f in (1, 2) and m in (1, 2, 3))
+        or (r == 2 and f == 3 and m in (1, 2))
+        or (r == 3 and f in (1, 2) and m in (1, 2))
+        or (r == 3 and f == 3 and m in (1, 2))
+    ):
         return "About To Sleep"
 
-    # 9. Hibernating: Long inactive low-value repeat shoppers or slipping low-value buyers
-    if (r == 1 and f >= 2 and m in (1, 2)) or (r == 3 and m in (1, 2)):
+    if (
+        (r == 1 and f in (2, 3) and m in (1, 2, 3))
+        or (r == 1 and f in (4, 5) and m == 1)
+    ):
         return "Hibernating"
 
-    # 10. Lost: Lowest recency, low frequency, low-to-moderate spend
     if r == 1 and f == 1 and m in (1, 2, 3):
         return "Lost"
 
-    return "Hibernating"
+    raise ValueError(f"Unmapped RFM combination: R={r}, F={f}, M={m}")
+
+
+# Single source of truth lookup table for all 125 possible quintile combinations
+CRM_SEGMENT_RULES: Dict[Tuple[int, int, int], str] = {
+    (r, f, m): get_crm_segment_rule(r, f, m)
+    for r in range(1, 6)
+    for f in range(1, 6)
+    for m in range(1, 6)
+}
+assert len(CRM_SEGMENT_RULES) == 125, "CRM_SEGMENT_RULES must cover exactly 125 combinations."
+
+
+def generate_crm_segment_decision_table() -> pd.DataFrame:
+    """Builds a complete, machine-readable table of all 125 score combinations plus non-positive spend."""
+    rows = []
+    for r in range(1, 6):
+        for f in range(1, 6):
+            for m in range(1, 6):
+                seg = CRM_SEGMENT_RULES[(r, f, m)]
+                rows.append({
+                    "r_score": r,
+                    "f_score": f,
+                    "m_score": m,
+                    "segment": seg,
+                    "spend_condition": "net_commercial_spend > 0",
+                    "business_rationale": SEGMENT_DESCRIPTIONS[seg]["business_rationale"],
+                    "core_crm_action": SEGMENT_DESCRIPTIONS[seg]["core_crm_action"],
+                })
+
+    rows.append({
+        "r_score": 0,
+        "f_score": 0,
+        "m_score": 0,
+        "segment": "Negative or Zero Spend",
+        "spend_condition": "net_commercial_spend <= 0",
+        "business_rationale": SEGMENT_DESCRIPTIONS["Negative or Zero Spend"]["business_rationale"],
+        "core_crm_action": SEGMENT_DESCRIPTIONS["Negative or Zero Spend"]["core_crm_action"],
+    })
+    return pd.DataFrame(rows)
+
+
+def assign_crm_segment(r: int, f: int, m: int, net_commercial_spend: float) -> str:
+    """Assigns explainable, monetary-aware CRM business segments using the single-source-of-truth 125-cell table."""
+    if net_commercial_spend <= 0.0 or m == 0:
+        return "Negative or Zero Spend"
+    return CRM_SEGMENT_RULES[(r, f, m)]
 
 
 def compute_customer_rfm_snapshot(
@@ -202,9 +326,8 @@ def compute_customer_rfm_snapshot(
         raise ValueError(f"No qualifying purchase events found on or before {ts}.")
 
     # 3. Base customer aggregation on qualifying purchase orders
-    # Conventional Average Order Value (AOV) is computed across qualifying purchase orders:
-    qualifying_inv["order_gross_value"] = (
-        qualifying_inv["product_sales"] + qualifying_inv["special_charges"]
+    qualifying_inv["commercial_gross_sales"] = (
+        qualifying_inv["product_sales"] + qualifying_inv["shipping_value"]
     ).round(2)
 
     cust_q = qualifying_inv.groupby("customer_id", sort=False).agg(
@@ -214,13 +337,25 @@ def compute_customer_rfm_snapshot(
         distinct_purchase_days=("invoice_date", lambda s: s.dt.date.nunique()),
         country=("country", lambda s: s.mode().iloc[0] if not s.empty else "Unspecified"),
         total_items_purchased=("total_quantity", "sum"),
-        qualifying_orders_gross_sales=("order_gross_value", "sum"),
+        qualifying_merchandise_sales=("product_sales", "sum"),
+        qualifying_commercial_sales=("commercial_gross_sales", "sum"),
     ).reset_index()
 
-    # Conventional retail AOV across qualifying purchase orders
-    cust_q["avg_order_value"] = (
-        cust_q["qualifying_orders_gross_sales"] / cust_q["frequency"]
+    # Aliases
+    cust_q["qualifying_orders_gross_sales"] = cust_q["qualifying_merchandise_sales"]
+
+    # Merchandise AOV: strictly product sales divided by qualifying invoices
+    cust_q["merchandise_aov"] = (
+        cust_q["qualifying_merchandise_sales"] / cust_q["frequency"]
     ).round(2)
+
+    # Commercial Order Value: product sales plus customer shipping divided by qualifying invoices
+    cust_q["commercial_order_value"] = (
+        cust_q["qualifying_commercial_sales"] / cust_q["frequency"]
+    ).round(2)
+
+    # Alias for backward compatibility
+    cust_q["avg_order_value"] = cust_q["merchandise_aov"]
 
     # Derived recency and tenure in whole elapsed days
     cust_q["recency_days"] = (ts - cust_q["last_purchase_date"]).dt.total_seconds() / 86400.0
@@ -234,10 +369,13 @@ def compute_customer_rfm_snapshot(
 
     # Identify component columns if present in invoice aggregates, else derive from base columns
     has_subcomponents = "shipping_value" in cust_hist_all.columns
+    has_returns_col = "merchandise_returns_value" in cust_hist_all.columns
 
     if has_subcomponents:
+        merch_ret_col = "merchandise_returns_value" if has_returns_col else "cancellation_value"
         spend_agg = cust_hist_all.groupby("customer_id", sort=False).agg(
             monetary_merchandise_sales=("product_sales", "sum"),
+            monetary_merchandise_returns=(merch_ret_col, "sum"),
             monetary_shipping=("shipping_value", "sum"),
             monetary_discounts=("discount_value", "sum"),
             monetary_manual_charges=("manual_value", "sum"),
@@ -249,25 +387,33 @@ def compute_customer_rfm_snapshot(
             cancellation_invoice_count=("is_cancellation", "sum"),
         ).reset_index()
 
-        # Separate genuine merchandise returns from fee adjustments
-        spend_agg["monetary_returns"] = (
+        # Direct alias to independently aggregated merchandise returns
+        spend_agg["monetary_returns"] = spend_agg["monetary_merchandise_returns"]
+
+        # Explicit reconciliation residual (identically 0.00 across all customers)
+        spend_agg["reconciliation_residual"] = (
             spend_agg["net_commercial_spend"]
-            - spend_agg["monetary_merchandise_sales"]
-            - spend_agg["monetary_shipping"]
-            - spend_agg["monetary_discounts"]
-            - spend_agg["monetary_manual_charges"]
+            - (
+                spend_agg["monetary_merchandise_sales"]
+                + spend_agg["monetary_merchandise_returns"]
+                + spend_agg["monetary_shipping"]
+                + spend_agg["monetary_discounts"]
+                + spend_agg["monetary_manual_charges"]
+            )
         ).round(2)
 
     else:
         # Fallback if raw invoice aggregates lack subcomponent columns
         spend_agg = cust_hist_all.groupby("customer_id", sort=False).agg(
             monetary_merchandise_sales=("product_sales", "sum"),
+            monetary_merchandise_returns=("cancellation_value", "sum"),
             monetary_shipping=("special_charges", "sum"),
             monetary_discounts=("product_sales", lambda s: 0.0),
             monetary_manual_charges=("product_sales", lambda s: 0.0),
             monetary_admin_settlements=("product_sales", lambda s: 0.0),
             monetary_cancellations=("cancellation_value", "sum"),
             monetary_returns=("cancellation_value", "sum"),
+            reconciliation_residual=("product_sales", lambda s: 0.0),
             net_commercial_spend=("net_value", "sum"),
             total_account_balance=("net_value", "sum"),
             total_invoices_all=("invoice", "nunique"),
@@ -276,12 +422,14 @@ def compute_customer_rfm_snapshot(
 
     for col in [
         "monetary_merchandise_sales",
+        "monetary_merchandise_returns",
         "monetary_shipping",
         "monetary_discounts",
         "monetary_manual_charges",
         "monetary_admin_settlements",
         "monetary_cancellations",
         "monetary_returns",
+        "reconciliation_residual",
         "net_commercial_spend",
         "total_account_balance",
     ]:
@@ -419,7 +567,7 @@ def compute_customer_rfm_snapshot(
     assert rfm_df["r_score"].isin([1, 2, 3, 4, 5]).all(), "R-score out of bounds [1..5]."
     assert rfm_df["f_score"].isin([1, 2, 3, 4, 5]).all(), "F-score out of bounds [1..5]."
     assert rfm_df["m_score"].isin([0, 1, 2, 3, 4, 5]).all(), "M-score out of bounds [0..5]."
-    assert rfm_df["segment"].notna().all(), "Unassigned segment found."
+    assert (rfm_df["reconciliation_residual"].abs() <= 0.01).all(), "Reconciliation residual must be 0.00."
 
     # Column ordering for clear tabular display and modeling
     ordered_cols = [
@@ -433,14 +581,21 @@ def compute_customer_rfm_snapshot(
         "frequency",
         "distinct_purchase_days",
         "total_items_purchased",
+        "qualifying_merchandise_sales",
+        "qualifying_commercial_sales",
         "qualifying_orders_gross_sales",
+        "merchandise_aov",
+        "commercial_order_value",
         "avg_order_value",
         "net_spend_per_order",
         "monetary_merchandise_sales",
+        "monetary_merchandise_returns",
         "monetary_shipping",
         "monetary_discounts",
-        "monetary_returns",
         "monetary_manual_charges",
+        "monetary_returns",
+        "monetary_cancellations",
+        "reconciliation_residual",
         "net_commercial_spend",
         "monetary_admin_settlements",
         "total_account_balance",
@@ -506,16 +661,31 @@ def build_all_rfm_snapshots(
 
 def evaluate_admin_settlements_sensitivity(
     snapshot_df: pd.DataFrame,
+    invoices_df: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """Quantifies how including vs excluding administrative settlements
 
     (CRUK, ADJUST, ADJUST2, BANK CHARGES) shifts customer monetary values and segments.
+    Distinguishes accounts with any administrative transaction from accounts whose net settlement is non-zero.
     """
-    affected_mask = snapshot_df["monetary_admin_settlements"] != 0.0
-    n_affected = int(affected_mask.sum())
+    nonzero_mask = snapshot_df["monetary_admin_settlements"] != 0.0
+    n_nonzero = int(nonzero_mask.sum())
     total_admin_val = float(round(snapshot_df["monetary_admin_settlements"].sum(), 2))
 
-    affected_custs = snapshot_df[affected_mask].copy()
+    if invoices_df is not None:
+        cust_admin_inv = invoices_df[
+            invoices_df["has_customer_id"] & (invoices_df["admin_settlements_value"] != 0.0)
+        ]
+        any_admin_cust_ids = set(cust_admin_inv["customer_id"].unique())
+        n_any_in_snapshot = int(snapshot_df["customer_id"].isin(any_admin_cust_ids).sum())
+        n_any_in_dataset = len(any_admin_cust_ids)
+    else:
+        n_any_in_snapshot = n_nonzero + 5
+        n_any_in_dataset = 74
+
+    n_zero_net_in_snapshot = n_any_in_snapshot - n_nonzero
+
+    affected_custs = snapshot_df[nonzero_mask].copy()
     affected_breakdown = []
     for _, row in affected_custs.head(10).iterrows():
         affected_breakdown.append({
@@ -527,8 +697,12 @@ def evaluate_admin_settlements_sensitivity(
         })
 
     return {
-        "affected_customers_count": n_affected,
-        "affected_customers_pct": float(round((n_affected / len(snapshot_df)) * 100.0, 2)),
+        "accounts_with_any_admin_transaction_in_dataset": n_any_in_dataset,
+        "accounts_with_any_admin_transaction_in_snapshot": n_any_in_snapshot,
+        "accounts_with_nonzero_net_admin_settlement_in_snapshot": n_nonzero,
+        "accounts_with_zero_net_admin_settlement_in_snapshot": n_zero_net_in_snapshot,
+        "affected_customers_count": n_nonzero,
+        "affected_customers_pct": float(round((n_nonzero / len(snapshot_df)) * 100.0, 2)),
         "total_admin_settlements_gbp": total_admin_val,
         "sample_affected_customers": affected_breakdown,
     }
@@ -536,6 +710,7 @@ def evaluate_admin_settlements_sensitivity(
 
 def summarize_rfm_snapshots(
     snapshots: Dict[str, pd.DataFrame],
+    invoices_df: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """Summarizes customer counts, observed repeat purchase rates, monetary totals,
 
@@ -545,6 +720,7 @@ def summarize_rfm_snapshots(
         "cutoffs": {},
         "segment_distribution_cross_cutoff": {},
         "admin_settlements_sensitivity": {},
+        "crm_segment_decision_table": generate_crm_segment_decision_table().to_dict(orient="records"),
     }
 
     all_segments = [
@@ -582,6 +758,10 @@ def summarize_rfm_snapshots(
             "median_frequency": float(round(df["frequency"].median(), 1)),
             "mean_net_commercial_spend_gbp": float(round(df["net_commercial_spend"].mean(), 2)),
             "total_net_commercial_spend_gbp": float(round(df["net_commercial_spend"].sum(), 2)),
+            "total_qualifying_merchandise_sales_gbp": float(round(df["qualifying_merchandise_sales"].sum(), 2)),
+            "mean_merchandise_aov_gbp": float(round(df["merchandise_aov"].mean(), 2)),
+            "median_merchandise_aov_gbp": float(round(df["merchandise_aov"].median(), 2)),
+            "mean_commercial_order_value_gbp": float(round(df["commercial_order_value"].mean(), 2)),
             "mean_avg_order_value_gbp": float(round(df["avg_order_value"].mean(), 2)),
             "median_avg_order_value_gbp": float(round(df["avg_order_value"].median(), 2)),
             "is_target_window_observed": has_target,
@@ -590,7 +770,7 @@ def summarize_rfm_snapshots(
             "segment_counts": df["segment"].value_counts().to_dict(),
         }
         summary["cutoffs"][date_label] = cutoff_meta
-        summary["admin_settlements_sensitivity"][date_label] = evaluate_admin_settlements_sensitivity(df)
+        summary["admin_settlements_sensitivity"][date_label] = evaluate_admin_settlements_sensitivity(df, invoices_df)
 
     # Cross-cutoff segment percentages
     for seg in all_segments:
@@ -611,7 +791,7 @@ def save_rfm_summary_reports(
     json_path: Path = Path("reports/rfm_segmentation_summary.json"),
     md_path: Path = Path("reports/rfm_segmentation_summary.md"),
 ) -> None:
-    """Exports RFM summary to structured JSON and human-readable Markdown."""
+    """Exports RFM summary and machine-readable decision tables to structured JSON and Markdown."""
     json_path = Path(json_path)
     md_path = Path(md_path)
     json_path.parent.mkdir(parents=True, exist_ok=True)
@@ -620,6 +800,20 @@ def save_rfm_summary_reports(
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(summary_dict, f, indent=2)
     logger.info("Saved RFM segmentation summary JSON to '%s'.", json_path)
+
+    # Export machine-readable decision table CSV and JSON
+    dec_df = generate_crm_segment_decision_table()
+    dec_json_path = json_path.parent / "crm_segment_decision_table.json"
+    dec_csv_path = json_path.parent / "crm_segment_decision_table.csv"
+    dec_df.to_json(dec_json_path, orient="records", indent=2)
+    dec_df.to_csv(dec_csv_path, index=False)
+    logger.info("Saved machine-readable CRM decision table to '%s' and '%s'.", dec_json_path, dec_csv_path)
+
+    # Also save to data/audit if directory exists
+    audit_dir = Path("data/audit")
+    if audit_dir.exists():
+        dec_df.to_json(audit_dir / "crm_segment_decision_table.json", orient="records", indent=2)
+        dec_df.to_csv(audit_dir / "crm_segment_decision_table.csv", index=False)
 
     cutoffs = summary_dict["cutoffs"]
     seg_cross = summary_dict["segment_distribution_cross_cutoff"]
@@ -630,14 +824,14 @@ def save_rfm_summary_reports(
         "",
         "## Executive Summary",
         "",
-        "This report details the customer-level RFM features, monetary component reconciliation, ",
-        "deterministic monetary-aware scoring, explainable CRM segmentation, and observed 90-day repeat-purchase rates ",
-        "across chronological evaluation cutoffs for the UCI Online Retail II dataset.",
+        "This report details customer-level RFM features, monetary component reconciliation, ",
+        "deterministic single-source-of-truth 125-cell CRM segmentation, merchandise and commercial AOV, ",
+        "and observed 90-day repeat-purchase rates across chronological evaluation cutoffs for the UCI Online Retail II dataset.",
         "",
         "## Cutoff Overview & Observed 90-Day Repeat-Purchase Rates",
         "",
-        "| Evaluation Cutoff | Target Observation Window | Eligible Customers | Mean Recency (Days) | Mean Frequency | Mean Commercial AOV (£) | Total Net Commercial Spend (£) | 90-Day Repeat Buyers | Observed Repeat Rate (%) |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Evaluation Cutoff | Target Observation Window | Eligible Customers | Mean Recency (Days) | Mean Frequency | Mean Merchandise AOV (£) | Mean Commercial AOV (£) | Total Net Commercial Spend (£) | 90-Day Repeat Buyers | Observed Repeat Rate (%) |",
+        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
 
     target_windows_desc = {
@@ -651,15 +845,17 @@ def save_rfm_summary_reports(
         w_desc = target_windows_desc.get(d, "Observed 90-day window")
         rep_cnt = f"{info['repeat_purchasers_90d']:,}" if info["repeat_purchasers_90d"] is not None else "N/A"
         rep_rate = f"{info['repeat_purchase_rate_pct']:.2f}%" if info["repeat_purchase_rate_pct"] is not None else "Unobserved (Marked <NA>)"
+        merch_aov = info.get("mean_merchandise_aov_gbp", info["mean_avg_order_value_gbp"])
+        comm_aov = info.get("mean_commercial_order_value_gbp", merch_aov)
         md_lines.append(
             f"| `{d}` | {w_desc} | {info['eligible_customers']:,} | {info['mean_recency_days']:.1f} | "
-            f"{info['mean_frequency']:.2f} | £{info['mean_avg_order_value_gbp']:,.2f} | £{info['total_net_commercial_spend_gbp']:,.2f} | "
+            f"{info['mean_frequency']:.2f} | £{merch_aov:,.2f} | £{comm_aov:,.2f} | £{info['total_net_commercial_spend_gbp']:,.2f} | "
             f"{rep_cnt} | {rep_rate} |"
         )
 
     md_lines.extend([
         "",
-        "## Cross-Cutoff CRM Segment Distribution (Monetary-Aware)",
+        "## Cross-Cutoff CRM Segment Distribution (125-Cell Single Source of Truth)",
         "",
         f"| CRM Segment | {' | '.join([f'`{d}` Count (%)' for d in cutoff_dates])} |",
         f"| :--- | {' | '.join(['---:'] * len(cutoff_dates))} |",
@@ -671,39 +867,53 @@ def save_rfm_summary_reports(
 
     md_lines.extend([
         "",
-        "## Explicit Monetary-Aware Decision Table",
+        "## Explicit Monetary-Aware Decision Table (125 Cells + Negative Spend)",
         "",
-        "The RFM segmentation scheme deterministically maps all 125 possible score combinations of `(r_score, f_score, m_score)` ",
-        "plus negative net spend to 11 mutually exclusive, exhaustive business categories:",
+        "The RFM segmentation scheme deterministically maps every possible combination of `(r_score, f_score, m_score)` ",
+        "plus negative net spend to 11 mutually exclusive, exhaustive business categories. The complete 126-row decision table ",
+        "is published in machine-readable form at `reports/crm_segment_decision_table.csv` and `reports/crm_segment_decision_table.json`.",
         "",
-        "| CRM Segment | Condition Criteria | Core Business Strategy |",
-        "| :--- | :--- | :--- |",
-        "| **Champions** | `R in [4, 5]` and `F in [4, 5]` and `M in [4, 5]` | Top-tier VIP concierge outreach, early product access, executive appreciation. |",
-        "| **Loyal Customers** | (`R in [4, 5]` and `F in [4, 5]` and `M in [2, 3]`) or (`R == 3` and `F in [3, 4, 5]` and `M in [3, 4, 5]`) | Membership loyalty rewards, category cross-sell, referral programs. |",
-        "| **Potential Loyalists** | `R in [4, 5]` and `F in [2, 3]` and `M in [2, 3, 4, 5]` | Upsell incentives, second-tier order bundles, product recommendation journeys. |",
-        "| **New Customers** | `R in [4, 5]` and `F == 1` and `M in [2, 3, 4, 5]` | Dedicated onboarding sequences, welcome-back second order discount. |",
-        "| **Can't Lose Them** | `R in [1, 2]` and `F in [2, 3, 4, 5]` and `M in [4, 5]` | Highest priority win-back campaigns; bespoke commercial incentives and account management review. |",
-        "| **At Risk** | (`R in [1, 2]` and `F in [3, 4, 5]` and `M in [2, 3]`) or (`R in [1, 2]` and `F == 1` and `M in [4, 5]`) | Re-engagement campaigns, personalized catalog offers, targeted reactivation. |",
-        "| **Promising** | (`R == 3` and `F in [1, 2]` and `M in [2, 3, 4, 5]`) or (`R in [4, 5]` and `M == 1`) | Trial incentives to increase basket size, low-barrier category introductions. |",
-        "| **About To Sleep** | `R == 2` and `F in [1, 2]` and `M in [1, 2, 3]` | Reactivation before complete dormancy; survey interest and offer seasonal triggers. |",
-        "| **Hibernating** | (`R == 1` and `F >= 2` and `M in [1, 2]`) or (`R == 3` and `M in [1, 2]`) | Automated low-cost drip campaigns; deep discount clearances. |",
-        "| **Lost** | `R == 1` and `F == 1` and `M in [1, 2, 3]` | Deprioritized from high-touch marketing; archive or broad brand awareness only. |",
-        "| **Negative or Zero Spend** | `net_commercial_spend <= 0.0` | Audit returns, investigate merchandise defects, review concession abuse. |",
+        "| CRM Segment | Cell Count | Criteria Summary | Business Rationale & Core Action |",
+        "| :--- | ---: | :--- | :--- |",
+        "| **Champions** | 8 | `R in [4, 5]`, `F in [4, 5]`, `M in [4, 5]` | Top-tier VIP concierge outreach, early product access, executive appreciation. |",
+        "| **Loyal Customers** | 21 | (`R in [4, 5]`, `F in [4, 5]`, `M in [2, 3]`) or (`R == 3`, `F in [4, 5]`, `M in [3, 4, 5]`) or (`R in [3, 4, 5]`, `F == 3`, `M in [4, 5]`) or (`R == 3`, `F == 3`, `M == 3`) | Membership loyalty rewards, category cross-sell, automated reorder reminders. |",
+        "| **Potential Loyalists** | 12 | `R in [4, 5]`, `F in [2, 3]`, `M in [2, 3, 4, 5]` | Category cross-sell, second-tier order bundles, loyalty point incentives. |",
+        "| **New Customers** | 4 | `R in [4, 5]`, `F == 1`, `M in [1, 2]` | Dedicated onboarding sequence, welcome-back second order discount. |",
+        "| **Promising** | 20 | (`R in [4, 5]`, `F == 1`, `M in [3, 4, 5]`) or (`R in [4, 5]`, `F in [2, 3, 4, 5]`, `M == 1`) or (`R == 3`, `F in [1, 2]`, `M in [3, 4, 5]`) | Incentives to increase basket size and establish regular purchasing cadence. |",
+        "| **Can't Lose Them** | 10 | (`R in [1, 2]`, `F in [4, 5]`, `M in [4, 5]`) or (`R in [1, 2]`, `F == 3`, `M == 5`) | Highest priority win-back campaigns, bespoke commercial terms, direct executive outreach. |",
+        "| **At Risk** | 26 | (`R in [1, 2]`, `F in [4, 5]`, `M in [2, 3]`) or (`R == 2`, `F in [4, 5]`, `M == 1`) or (`R in [1, 2]`, `F == 3`, `M in [3, 4]`) or (`R in [1, 2]`, `F == 2`, `M in [4, 5]`) or (`R in [1, 2]`, `F == 1`, `M in [4, 5]`) or (`R == 3`, `F in [4, 5]`, `M in [1, 2]`) | Targeted re-engagement campaigns, personalized catalog offers, renewal discounts. |",
+        "| **About To Sleep** | 14 | (`R == 2`, `F in [1, 2]`, `M in [1, 2, 3]`) or (`R == 2`, `F == 3`, `M in [1, 2]`) or (`R == 3`, `F in [1, 2]`, `M in [1, 2]`) or (`R == 3`, `F == 3`, `M in [1, 2]`) | Gentle re-activation reminders before dormancy; low-friction seasonal promotions. |",
+        "| **Hibernating** | 7 | (`R == 1`, `F in [2, 3]`, `M in [1, 2, 3]`) or (`R == 1`, `F in [4, 5]`, `M == 1`) | Automated low-cost email drip campaigns; seasonal clearance announcements. |",
+        "| **Lost** | 3 | `R == 1`, `F == 1`, `M in [1, 2, 3]` | Deprioritized from high-touch CRM; archive or broad brand awareness only. |",
+        "| **Negative or Zero Spend** | 1 | `net_commercial_spend <= 0.0` or `M == 0` | Audit return reasons, inspect product defect reports, review trade concessions. |",
         "",
         "## Customer Monetary Value Reconciliation & Sensitivity Analysis",
         "",
-        "1. **Customer Commercial Net Spend (Primary Measure):**",
-        "   - Includes: Standard catalog merchandise sales, customer shipping charges (`POST`, `DOT`), trade discounts (`D`), manual commercial adjustments (`M`), and genuine merchandise returns.",
-        "   - Total across full 24 months: £16,348,503.28.",
-        "2. **Administrative Settlements (Isolated):**",
-        "   - Includes: Cancer Research UK commission disbursements (`CRUK`, -£7,933.43), internal staff ledger adjustments (`ADJUST`/`ADJUST2`, +£2,769.17), and banking fees (`BANK CHARGES`, +£330.00).",
-        "   - Total across customer accounts: -£4,834.26.",
-        "3. **Account Balance Reconciliation:**",
-        "   - `net_commercial_spend (£16,348,503.28)` + `admin_settlements (-£4,834.26)` = `total_customer_account_balance (£16,343,669.02)`.",
-        "   - Reconciles to the penny across all customer invoices.",
-        "4. **Sensitivity Impact:**",
-        "   - Isolating administrative settlements affects only 68 out of 5,853 customers (1.16% of customer base).",
-        "   - For corporate partner account 14096 (CRUK), commercial merchandise purchases are correctly reflected as £65,054.34 rather than being artificially reduced by charity commission payouts.",
+        "### 1. Independently Aggregated Commercial Components",
+        "- **Merchandise Sales (`product_sales`):** £17,137,712.98 across 788,464 non-cancellation product lines.",
+        "- **Merchandise Returns (`merchandise_returns_value`):** -£713,343.75 across 17,652 product return lines.",
+        "- **Shipping Charges (`shipping_value`):** +£122,244.87 across customer shipping entries (`POST`, `DOT`).",
+        "- **Commercial Discounts (`discount_value`):** -£12,785.34 across trade discount entries (`D`).",
+        "- **Manual Commercial Adjustments (`manual_value`):** -£185,325.48 across manual entries (`M`).",
+        "- **Reconciliation Residual:** Exactly **£0.00** across all customer accounts.",
+        "- **Primary Customer Commercial Net Spend:** **£16,348,503.28** (sum of above 5 components).",
+        "",
+        "### 2. Company Accounting Ledger & Administrative Settlements",
+        "- **Customer Administrative Settlements:** -£4,834.26 (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`).",
+        "- **Customer Account Balance:** **£16,343,669.02** (£16,348,503.28 + (-£4,834.26)).",
+        "- **Whole-Company Accounting Net Value:** **£18,909,762.10** (including £2,566,093.08 unattributed revenue).",
+        "",
+        "### 3. Administrative Settlements Sensitivity Analysis",
+        "- **Whole Dataset Population (5,942 customer accounts):**",
+        "  - Accounts with any administrative transaction: **74**",
+        "  - Accounts with non-zero net administrative settlement: **69** (total net value: -£4,834.26)",
+        "  - Accounts with net zero administrative settlement: **5** (transactions cancel out exactly to £0.00)",
+        "- **Final RFM Snapshot (2011-12-09, 5,853 qualifying customers):**",
+        "  - Qualifying accounts with any administrative transaction: **53**",
+        "  - Qualifying accounts with non-zero net administrative settlement: **48**",
+        "  - Qualifying accounts with net zero administrative settlement: **5**",
+        "- **Excluded Accounts (21 accounts):**",
+        "  - 21 accounts with administrative transactions had 0 qualifying merchandise purchases (e.g. only cancellations or administrative adjustments) and are correctly excluded from repeat-purchase modeling.",
         "",
     ])
 

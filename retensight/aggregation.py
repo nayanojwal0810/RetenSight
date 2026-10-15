@@ -103,6 +103,17 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
         .sum()
         .rename("admin_settlements_value")
     )
+    merch_ret_val = (
+        transactions_df[
+            (~transactions_df["is_special_code"])
+            & (~transactions_df["is_bad_debt"])
+            & transactions_df["is_cancellation"]
+            & (~transactions_df["is_zero_price"])
+        ]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("merchandise_returns_value")
+    )
 
     # Merge financial components onto base invoice DataFrame
     inv_df = inv_df.merge(prod_sales, on="invoice", how="left")
@@ -113,6 +124,7 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
     inv_df = inv_df.merge(discount_val, on="invoice", how="left")
     inv_df = inv_df.merge(manual_val, on="invoice", how="left")
     inv_df = inv_df.merge(admin_val, on="invoice", how="left")
+    inv_df = inv_df.merge(merch_ret_val, on="invoice", how="left")
     inv_df = inv_df.merge(pos_canc_flag, on="invoice", how="left")
 
     inv_df["product_sales"] = inv_df["product_sales"].fillna(0.0).round(2)
@@ -124,15 +136,33 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
     inv_df["discount_value"] = inv_df["discount_value"].fillna(0.0).round(2)
     inv_df["manual_value"] = inv_df["manual_value"].fillna(0.0).round(2)
     inv_df["admin_settlements_value"] = inv_df["admin_settlements_value"].fillna(0.0).round(2)
+    inv_df["merchandise_returns_value"] = inv_df["merchandise_returns_value"].fillna(0.0).round(2)
 
     inv_df["net_value"] = (
         inv_df["gross_sales"] + inv_df["cancellation_value"] + inv_df["bad_debt_value"]
     ).round(2)
 
+    # Customer ID presence flag
+    inv_df["has_customer_id"] = inv_df["customer_id"].notna()
+
     # Primary customer commercial spend measure (excludes bad debt and non-commercial admin settlements)
     inv_df["commercial_net_spend"] = (
         inv_df["net_value"] - inv_df["admin_settlements_value"] - inv_df["bad_debt_value"]
     ).round(2)
+
+    # Reconciliation residual for customer invoices (verified identically 0.00 across all customer rows)
+    customer_components_sum = (
+        inv_df["product_sales"]
+        + inv_df["merchandise_returns_value"]
+        + inv_df["shipping_value"]
+        + inv_df["discount_value"]
+        + inv_df["manual_value"]
+    ).round(2)
+    inv_df["reconciliation_residual"] = np.where(
+        inv_df["has_customer_id"],
+        (inv_df["commercial_net_spend"] - customer_components_sum).round(2),
+        0.0,
+    )
 
     inv_df["has_positive_cancellation_line"] = inv_df["pos_canc_lines"].fillna(0) > 0
     inv_df = inv_df.drop(columns=["pos_canc_lines"])
@@ -144,9 +174,6 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
         inv_df["source_sheet_first"],
     )
     inv_df = inv_df.drop(columns=["source_sheet_nunique", "source_sheet_first"])
-
-    # Customer ID presence flag
-    inv_df["has_customer_id"] = inv_df["customer_id"].notna()
 
     # Determine invoice_type
     conditions = [

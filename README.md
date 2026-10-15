@@ -26,8 +26,9 @@ The data ingestion, schema validation, exact cross-sheet duplicate resolution, d
 - **Customer Administrative Settlements (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`)**: -£4,834.26 (isolated from commercial spend).
 - **Primary Customer Commercial Net Spend**: £16,348,503.28 (£16,343,669.02 − (-£4,834.26)).
 - **Customer Modeling-Ready Transactions**: 809,491 rows (excludes 70 zero-revenue promotional freebies from the commercial extract).
-- **Conventional Retail AOV**: Computed strictly across qualifying purchase orders ($\sum \text{qualifying\_gross\_sales} / \text{frequency}$).
-- **125-Cell Monetary-Aware Segmentation**: All $(R, F, M)$ cells explicitly mapped; prevents low-ticket buyers from becoming Champions and prioritizes dormant VIP accounts as Can't Lose Them.
+- **Merchandise AOV & Commercial Order Value**: Conventional retail merchandise AOV is calculated strictly from qualifying catalog product sales ($\sum \text{qualifying\_merchandise\_sales} / \text{frequency}$). Commercial order value is also exposed inclusive of customer delivery surcharges. Changing non-merchandise administrative fees does not affect merchandise AOV.
+- **Direct Return Aggregation & Zero Residual**: Merchandise returns (-£713,343.75 customer total) are directly aggregated from physical merchandise lines on cancellation invoices rather than calculated as a residual. The explicit customer reconciliation residual is identically £0.00 across all 5,942 customer accounts.
+- **Single Source of Truth 125-Cell Decision Table**: All 125 $(R, F, M)$ quintile cells plus non-positive spend are deterministically mapped without cascading overlaps, exported as machine-readable reference tables in `reports/crm_segment_decision_table.json` and `reports/crm_segment_decision_table.csv`.
 - **Customer RFM Snapshots**: Generated for 3 chronological evaluation cutoffs with fully observed 90-day forward windows (`2010-12-09`: 4,286 customers, 30.73% repeat rate; `2011-06-10`: 4,952 customers, 32.03% repeat rate; `2011-09-09`: 5,257 customers, 43.50% repeat rate) plus the full dataset end snapshot (`2011-12-09`: 5,853 customers; forward target unobserved `<NA>`).
 
 Detailed reports and schemas are available in:
@@ -36,6 +37,8 @@ Detailed reports and schemas are available in:
 - [Data Dictionary](docs/data_dictionary.md)
 - [Cleaning Rules and Methodology](docs/cleaning_rules.md)
 - [RFM Segmentation Summary Report](reports/rfm_segmentation_summary.md)
+- [CRM Segment Decision Table (JSON)](reports/crm_segment_decision_table.json)
+- [CRM Segment Decision Table (CSV)](reports/crm_segment_decision_table.csv)
 - [Special Stock Code Audit Report](reports/special_stock_codes_audit.md)
 - [Cleaning and Reconciliation Summary Report](reports/cleaning_and_reconciliation_summary.md)
 - [Machine-Readable Audit JSON](reports/data_quality_audit.json)
