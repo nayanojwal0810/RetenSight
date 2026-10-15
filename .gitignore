@@ -1,0 +1,35 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Data directory (never commit raw or processed datasets)
+data/
+*.xlsx
+*.parquet
+*.csv
+*.zip
+
+# Power BI binary files (PBIX must not be committed without explicit owner approval)
+*.pbix
+*.pbit
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

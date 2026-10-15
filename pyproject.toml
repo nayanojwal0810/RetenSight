@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "retensight"
+version = "0.1.0"
+description = "E-commerce CRM decision support and analytics pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "RetenSight Team" }
+]
+dependencies = [
+    "pandas>=2.0.0",
+    "openpyxl>=3.1.0",
+    "python-calamine>=0.2.0",
+    "pyarrow>=14.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+retensight = "retensight.pipeline:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+markers = [
+    "full_data: marks tests that require the full raw Excel workbook (deselect with '-m \"not full_data\"')",
+]

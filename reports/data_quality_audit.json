@@ -1,0 +1,61 @@
+{
+  "ingestion": {
+    "sheet1_name": "Year 2009-2010",
+    "sheet1_raw_rows": 525461,
+    "sheet2_name": "Year 2010-2011",
+    "sheet2_raw_rows": 541910,
+    "total_raw_rows_ingested": 1067371
+  },
+  "deduplication": {
+    "cross_sheet_duplicates_removed": 22523,
+    "retained_rows_post_deduplication": 1044848,
+    "sheet1_rows_in_same_sheet_duplicates": 13283,
+    "sheet2_rows_in_same_sheet_duplicates_pre": 10147,
+    "overlap_window_start": "2010-12-01 08:26:00",
+    "overlap_window_end": "2010-12-09 20:01:00",
+    "same_sheet_duplicates_preserved": true
+  },
+  "transactions_breakdown": {
+    "total_retained_transactions": 1044848,
+    "customer_attributed_transactions": 809561,
+    "unattributed_transactions": 235287,
+    "standard_sales_count": 1019653,
+    "cancellations_count": 19165,
+    "bad_debt_adjustments_count": 6,
+    "inventory_adjustments_count": 5954,
+    "promotional_freebies_count": 70,
+    "zero_price_rows_count": 6024,
+    "negative_price_rows_count": 5
+  },
+  "invoice_breakdown": {
+    "total_unique_invoices": 53628,
+    "customer_invoices": 44876,
+    "unattributed_invoices": 8752,
+    "customer_sales_invoices": 36975,
+    "customer_cancellation_invoices": 7901,
+    "unattributed_sales_invoices": 4962,
+    "unattributed_cancellation_invoices": 391,
+    "inventory_adjustment_invoices": 3393,
+    "bad_debt_adjustment_invoices": 6,
+    "distinct_valid_customers": 5942
+  },
+  "financial_reconciliation": {
+    "gross_positive_sales_gbp": 20522679.84,
+    "attributed_gross_sales_gbp": 17431551.16,
+    "unattributed_gross_sales_gbp": 3091128.68,
+    "cancellations_value_gbp": -1465303.66,
+    "attributed_cancellations_gbp": -1087882.14,
+    "unattributed_cancellations_gbp": -377421.52,
+    "bad_debt_adjustments_gbp": -147614.08,
+    "net_commercial_revenue_gbp": 18909762.1,
+    "invoice_net_revenue_sum_gbp": 18909762.1,
+    "revenue_discrepancy_gbp": 0.0
+  },
+  "reconciliation_invariants": {
+    "raw_minus_duplicates_equals_retained": true,
+    "transaction_lines_equal_invoice_line_count_sum": true,
+    "transaction_quantities_equal_invoice_quantities": true,
+    "transaction_net_value_equals_invoice_net_value": true,
+    "gross_plus_returns_plus_bad_debt_equals_total_value": true
+  }
+}
