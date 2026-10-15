@@ -1,0 +1,308 @@
+{
+  "cutoffs": {
+    "2010-12-09": {
+      "snapshot_date": "2010-12-09",
+      "eligible_customers": 4286,
+      "mean_recency_days": 89.6,
+      "median_recency_days": 51.0,
+      "mean_frequency": 4.43,
+      "median_frequency": 2.0,
+      "mean_net_monetary_gbp": 1967.89,
+      "total_net_monetary_gbp": 8434360.82,
+      "is_target_window_observed": true,
+      "repeat_purchasers_90d": 1317,
+      "repeat_purchase_rate_pct": 30.73,
+      "segment_counts": {
+        "Champions": 843,
+        "Potential Loyalists": 619,
+        "Lost": 581,
+        "About To Sleep": 509,
+        "Promising": 454,
+        "At Risk": 432,
+        "Loyal Customers": 399,
+        "New Customers": 249,
+        "Hibernating": 157,
+        "Can't Lose Them": 23,
+        "Negative or Zero Spend": 20
+      }
+    },
+    "2011-06-10": {
+      "snapshot_date": "2011-06-10",
+      "eligible_customers": 4952,
+      "mean_recency_days": 170.3,
+      "median_recency_days": 144.0,
+      "mean_frequency": 5.27,
+      "median_frequency": 3.0,
+      "mean_net_monetary_gbp": 2316.73,
+      "total_net_monetary_gbp": 11472463.65,
+      "is_target_window_observed": true,
+      "repeat_purchasers_90d": 1586,
+      "repeat_purchase_rate_pct": 32.03,
+      "segment_counts": {
+        "Champions": 1124,
+        "About To Sleep": 664,
+        "Lost": 616,
+        "Loyal Customers": 589,
+        "Potential Loyalists": 587,
+        "At Risk": 455,
+        "Promising": 399,
+        "New Customers": 268,
+        "Hibernating": 200,
+        "Can't Lose Them": 29,
+        "Negative or Zero Spend": 21
+      }
+    },
+    "2011-09-10": {
+      "snapshot_date": "2011-09-10",
+      "eligible_customers": 5257,
+      "mean_recency_days": 206.4,
+      "median_recency_days": 163.0,
+      "mean_frequency": 5.71,
+      "median_frequency": 3.0,
+      "mean_net_monetary_gbp": 2522.86,
+      "total_net_monetary_gbp": 13262651.64,
+      "is_target_window_observed": true,
+      "repeat_purchasers_90d": 2289,
+      "repeat_purchase_rate_pct": 43.54,
+      "segment_counts": {
+        "Champions": 1253,
+        "About To Sleep": 649,
+        "Lost": 649,
+        "Potential Loyalists": 612,
+        "Loyal Customers": 580,
+        "At Risk": 533,
+        "Promising": 469,
+        "New Customers": 236,
+        "Hibernating": 210,
+        "Can't Lose Them": 44,
+        "Negative or Zero Spend": 22
+      }
+    },
+    "2011-12-09": {
+      "snapshot_date": "2011-12-09",
+      "eligible_customers": 5853,
+      "mean_recency_days": 199.2,
+      "median_recency_days": 94.0,
+      "mean_frequency": 6.25,
+      "median_frequency": 3.0,
+      "mean_net_monetary_gbp": 2806.6,
+      "total_net_monetary_gbp": 16427051.43,
+      "is_target_window_observed": false,
+      "repeat_purchasers_90d": null,
+      "repeat_purchase_rate_pct": null,
+      "segment_counts": {
+        "Champions": 1393,
+        "Loyal Customers": 747,
+        "Potential Loyalists": 709,
+        "Lost": 709,
+        "About To Sleep": 676,
+        "At Risk": 642,
+        "Promising": 417,
+        "New Customers": 235,
+        "Hibernating": 234,
+        "Can't Lose Them": 65,
+        "Negative or Zero Spend": 26
+      }
+    }
+  },
+  "segment_distribution_cross_cutoff": {
+    "Champions": {
+      "2010-12-09": {
+        "count": 843,
+        "pct": 19.67
+      },
+      "2011-06-10": {
+        "count": 1124,
+        "pct": 22.7
+      },
+      "2011-09-10": {
+        "count": 1253,
+        "pct": 23.83
+      },
+      "2011-12-09": {
+        "count": 1393,
+        "pct": 23.8
+      }
+    },
+    "Loyal Customers": {
+      "2010-12-09": {
+        "count": 399,
+        "pct": 9.31
+      },
+      "2011-06-10": {
+        "count": 589,
+        "pct": 11.89
+      },
+      "2011-09-10": {
+        "count": 580,
+        "pct": 11.03
+      },
+      "2011-12-09": {
+        "count": 747,
+        "pct": 12.76
+      }
+    },
+    "Potential Loyalists": {
+      "2010-12-09": {
+        "count": 619,
+        "pct": 14.44
+      },
+      "2011-06-10": {
+        "count": 587,
+        "pct": 11.85
+      },
+      "2011-09-10": {
+        "count": 612,
+        "pct": 11.64
+      },
+      "2011-12-09": {
+        "count": 709,
+        "pct": 12.11
+      }
+    },
+    "New Customers": {
+      "2010-12-09": {
+        "count": 249,
+        "pct": 5.81
+      },
+      "2011-06-10": {
+        "count": 268,
+        "pct": 5.41
+      },
+      "2011-09-10": {
+        "count": 236,
+        "pct": 4.49
+      },
+      "2011-12-09": {
+        "count": 235,
+        "pct": 4.02
+      }
+    },
+    "Promising": {
+      "2010-12-09": {
+        "count": 454,
+        "pct": 10.59
+      },
+      "2011-06-10": {
+        "count": 399,
+        "pct": 8.06
+      },
+      "2011-09-10": {
+        "count": 469,
+        "pct": 8.92
+      },
+      "2011-12-09": {
+        "count": 417,
+        "pct": 7.12
+      }
+    },
+    "About To Sleep": {
+      "2010-12-09": {
+        "count": 509,
+        "pct": 11.88
+      },
+      "2011-06-10": {
+        "count": 664,
+        "pct": 13.41
+      },
+      "2011-09-10": {
+        "count": 649,
+        "pct": 12.35
+      },
+      "2011-12-09": {
+        "count": 676,
+        "pct": 11.55
+      }
+    },
+    "At Risk": {
+      "2010-12-09": {
+        "count": 432,
+        "pct": 10.08
+      },
+      "2011-06-10": {
+        "count": 455,
+        "pct": 9.19
+      },
+      "2011-09-10": {
+        "count": 533,
+        "pct": 10.14
+      },
+      "2011-12-09": {
+        "count": 642,
+        "pct": 10.97
+      }
+    },
+    "Can't Lose Them": {
+      "2010-12-09": {
+        "count": 23,
+        "pct": 0.54
+      },
+      "2011-06-10": {
+        "count": 29,
+        "pct": 0.59
+      },
+      "2011-09-10": {
+        "count": 44,
+        "pct": 0.84
+      },
+      "2011-12-09": {
+        "count": 65,
+        "pct": 1.11
+      }
+    },
+    "Hibernating": {
+      "2010-12-09": {
+        "count": 157,
+        "pct": 3.66
+      },
+      "2011-06-10": {
+        "count": 200,
+        "pct": 4.04
+      },
+      "2011-09-10": {
+        "count": 210,
+        "pct": 3.99
+      },
+      "2011-12-09": {
+        "count": 234,
+        "pct": 4.0
+      }
+    },
+    "Lost": {
+      "2010-12-09": {
+        "count": 581,
+        "pct": 13.56
+      },
+      "2011-06-10": {
+        "count": 616,
+        "pct": 12.44
+      },
+      "2011-09-10": {
+        "count": 649,
+        "pct": 12.35
+      },
+      "2011-12-09": {
+        "count": 709,
+        "pct": 12.11
+      }
+    },
+    "Negative or Zero Spend": {
+      "2010-12-09": {
+        "count": 20,
+        "pct": 0.47
+      },
+      "2011-06-10": {
+        "count": 21,
+        "pct": 0.42
+      },
+      "2011-09-10": {
+        "count": 22,
+        "pct": 0.42
+      },
+      "2011-12-09": {
+        "count": 26,
+        "pct": 0.44
+      }
+    }
+  }
+}

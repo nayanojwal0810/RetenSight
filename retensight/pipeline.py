@@ -7,12 +7,23 @@ import sys
 import time
 from typing import Optional
 
+import pandas as pd
+
 from retensight.aggregation import build_invoice_aggregates
 from retensight.audit import generate_pipeline_audit, save_audit_reports
 from retensight.cleaning import clean_and_classify_transactions
 from retensight.config import PipelineConfig
 from retensight.deduplication import resolve_cross_sheet_duplicates
 from retensight.ingestion import IngestionError, load_workbook_sheets
+from retensight.rfm import (
+    build_all_rfm_snapshots,
+    save_rfm_summary_reports,
+    summarize_rfm_snapshots,
+)
+from retensight.stock_code_audit import (
+    audit_special_stock_codes,
+    save_stock_code_audit_reports,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -116,7 +127,22 @@ def run_pipeline(
         logger.exception("Audit generation or reconciliation invariant check failed: %s", exc)
         return 1
 
-    # 6. Save Processed Outputs
+    # 6. Special Stock Code Audit
+    try:
+        stock_audit_dict = audit_special_stock_codes(cleaned_tx)
+    except Exception as exc:
+        logger.exception("Special stock code audit failed: %s", exc)
+        return 1
+
+    # 7. Customer RFM Feature Snapshots across Chronological Cutoffs
+    try:
+        rfm_snapshots = build_all_rfm_snapshots(invoices_df=invoices_df)
+        rfm_summary = summarize_rfm_snapshots(rfm_snapshots)
+    except Exception as exc:
+        logger.exception("Customer RFM snapshot generation failed: %s", exc)
+        return 1
+
+    # 8. Save Processed Outputs
     try:
         output_dir.mkdir(parents=True, exist_ok=True)
         reports_dir.mkdir(parents=True, exist_ok=True)
@@ -134,13 +160,30 @@ def run_pipeline(
         cust_tx = cleaned_tx[cleaned_tx["is_commercial_customer_ready"]].copy()
         cust_tx.to_parquet(cust_parquet_path, index=False)
 
+        # Save RFM snapshots (Parquet and CSV)
+        all_rfm_records = []
+        for date_label, snapshot_df in rfm_snapshots.items():
+            compact_date = date_label.replace("-", "")
+            snap_parquet = output_dir / f"rfm_snapshot_{compact_date}.parquet"
+            snapshot_df.to_parquet(snap_parquet, index=False)
+            if export_csv:
+                snap_csv = output_dir / f"rfm_snapshot_{compact_date}.csv"
+                snapshot_df.to_csv(snap_csv, index=False)
+            all_rfm_records.append(snapshot_df)
+
+        # Combined multi-cutoff RFM dataset
+        combined_rfm = pd.concat(all_rfm_records, ignore_index=True)
+        combined_rfm.to_parquet(output_dir / "rfm_summary_all_cutoffs.parquet", index=False)
+        if export_csv:
+            combined_rfm.to_csv(output_dir / "rfm_summary_all_cutoffs.csv", index=False)
+
         # CSV exports if requested
         if export_csv:
             logger.info("Writing CSV files to '%s'...", output_dir)
             inv_csv_path = output_dir / "invoice_aggregates.csv"
             invoices_df.to_csv(inv_csv_path, index=False)
 
-            # Also export customer transactions as CSV for convenient downstream preview
+            # Also export customer transactions sample for preview
             cust_csv_path = output_dir / "customer_transactions_sample.csv"
             cust_tx.head(10000).to_csv(cust_csv_path, index=False)
 
@@ -149,6 +192,20 @@ def run_pipeline(
         md_report_path = reports_dir / "cleaning_and_reconciliation_summary.md"
         save_audit_reports(audit_dict, json_report_path, md_report_path)
 
+        # Save stock code audit reports
+        save_stock_code_audit_reports(
+            audit_dict=stock_audit_dict,
+            json_path=reports_dir / "special_stock_codes_audit.json",
+            md_path=reports_dir / "special_stock_codes_audit.md",
+        )
+
+        # Save RFM summary reports
+        save_rfm_summary_reports(
+            summary_dict=rfm_summary,
+            json_path=reports_dir / "rfm_segmentation_summary.json",
+            md_path=reports_dir / "rfm_segmentation_summary.md",
+        )
+
         # Also store copies in data/audit if data directory exists
         data_audit_dir = Path("data/audit")
         if data_audit_dir.parent.exists():
@@ -156,6 +213,16 @@ def run_pipeline(
                 audit_dict,
                 data_audit_dir / "data_quality_audit.json",
                 data_audit_dir / "cleaning_and_reconciliation_summary.md",
+            )
+            save_stock_code_audit_reports(
+                stock_audit_dict,
+                data_audit_dir / "special_stock_codes_audit.json",
+                data_audit_dir / "special_stock_codes_audit.md",
+            )
+            save_rfm_summary_reports(
+                rfm_summary,
+                data_audit_dir / "rfm_segmentation_summary.json",
+                data_audit_dir / "rfm_segmentation_summary.md",
             )
 
     except Exception as exc:
@@ -169,6 +236,7 @@ def run_pipeline(
     logger.info("Customer Model-Ready Rows   : %d", len(cust_tx))
     logger.info("Unique Invoices             : %d", len(invoices_df))
     logger.info("Distinct Customers          : %d", invoices_df["customer_id"].nunique(dropna=True))
+    logger.info("RFM Snapshots Generated     : %d cutoffs (%s)", len(rfm_snapshots), ", ".join(rfm_snapshots.keys()))
     logger.info("Gross Product Sales         : £%s", f"{audit_dict['financial_reconciliation']['gross_product_sales_gbp']:,.2f}")
     logger.info("Special Commercial Charges  : £%s", f"{audit_dict['financial_reconciliation']['special_commercial_charges_gbp']:,.2f}")
     logger.info("Total Gross Sales           : £%s", f"{audit_dict['financial_reconciliation']['gross_sales_gbp']:,.2f}")

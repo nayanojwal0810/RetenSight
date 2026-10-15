@@ -53,3 +53,12 @@ class PipelineConfig:
 
     # Performance
     excel_engine: str = "calamine"  # Falls back to openpyxl if unavailable
+
+    # RFM snapshot evaluation cutoffs (chronological evaluation windows)
+    evaluation_cutoffs: Sequence[str] = (
+        "2010-12-09 23:59:59",  # Cutoff 1: 12 months history
+        "2011-06-10 23:59:59",  # Cutoff 2: 18 months history
+        "2011-09-10 12:50:00",  # Cutoff 3: 21 months history (90d observed to dataset end)
+    )
+    full_history_cutoff: str = "2011-12-09 12:50:00"  # Complete 24 months dataset end
+    forward_target_window_days: int = 90

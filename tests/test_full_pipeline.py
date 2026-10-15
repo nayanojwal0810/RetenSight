@@ -121,3 +121,30 @@ def test_full_workbook_pipeline():
     assert np.isclose(tx_canc, -1465303.66, atol=0.01)
     assert np.isclose(tx_debt, -147614.08, atol=0.01)
     assert np.isclose(tx_net, 18909762.10, atol=0.01)
+
+    # 3. Stock code audit deliverable verification
+    stock_json = rep_dir / "special_stock_codes_audit.json"
+    stock_md = rep_dir / "special_stock_codes_audit.md"
+    assert stock_json.exists()
+    assert stock_md.exists()
+
+    # 4. RFM snapshot files and summary deliverables verification
+    rfm_summary_json = rep_dir / "rfm_segmentation_summary.json"
+    rfm_summary_md = rep_dir / "rfm_segmentation_summary.md"
+    assert rfm_summary_json.exists()
+    assert rfm_summary_md.exists()
+
+    snap_dates = ["20101209", "20110610", "20110910", "20111209"]
+    for s_date in snap_dates:
+        snap_p = out_dir / f"rfm_snapshot_{s_date}.parquet"
+        snap_c = out_dir / f"rfm_snapshot_{s_date}.csv"
+        assert snap_p.exists(), f"Missing snapshot Parquet: {snap_p}"
+        assert snap_c.exists(), f"Missing snapshot CSV: {snap_c}"
+
+    # Verify RFM snapshot 2011-12-09 properties
+    rfm_final = pd.read_parquet(out_dir / "rfm_snapshot_20111209.parquet")
+    assert len(rfm_final) == 5853, f"Expected 5,853 qualifying customers, got {len(rfm_final)}"
+    assert rfm_final["segment"].nunique() == 11
+    assert (rfm_final["frequency"] >= 1).all()
+    assert (rfm_final["recency_days"] >= 0).all()
+    assert (rfm_final["customer_tenure_days"] >= rfm_final["recency_days"]).all()

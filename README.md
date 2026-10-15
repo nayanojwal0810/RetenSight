@@ -8,7 +8,7 @@ RetenSight is an analytical decision-support system built upon transaction data 
 
 ## Current Status
 
-The data ingestion, schema validation, exact cross-sheet duplicate resolution, data-quality auditing, transaction classification, and invoice aggregation layers are implemented, tested, and validated on the complete two-year dataset.
+The data ingestion, schema validation, exact cross-sheet duplicate resolution, data-quality auditing, transaction classification, invoice aggregation, special stock code audit, and customer-level RFM segmentation layers are fully implemented, tested, and validated on the complete two-year dataset.
 
 ### Key Dataset Reconciliation Summary
 
@@ -24,10 +24,15 @@ The data ingestion, schema validation, exact cross-sheet duplicate resolution, d
 - **Bad Debt Adjustments**: -£147,614.08.
 - **All Transactions Net Value (after bad debt)**: £18,909,762.10 (Reconciles exactly to invoice totals; discrepancy: £0.00).
 - **Customer Modeling-Ready Transactions**: 809,491 rows (excludes 70 zero-revenue promotional freebies from the commercial extract).
+- **Customer RFM Snapshots**: Generated for 3 chronological evaluation cutoffs with observed 90-day forward windows (`2010-12-09`: 4,286 customers, 30.7% repeat rate; `2011-06-10`: 4,952 customers, 32.0% repeat rate; `2011-09-10`: 5,257 customers, 43.5% repeat rate) plus the full dataset end snapshot (`2011-12-09`: 5,853 customers).
 
 Detailed reports and schemas are available in:
+- [Customer RFM Feature Definitions & Segmentation](docs/rfm_feature_definitions.md)
+- [Special Stock Code & Fee Audit](docs/special_stock_code_audit.md)
 - [Data Dictionary](docs/data_dictionary.md)
 - [Cleaning Rules and Methodology](docs/cleaning_rules.md)
+- [RFM Segmentation Summary Report](reports/rfm_segmentation_summary.md)
+- [Special Stock Code Audit Report](reports/special_stock_codes_audit.md)
 - [Cleaning and Reconciliation Summary Report](reports/cleaning_and_reconciliation_summary.md)
 - [Machine-Readable Audit JSON](reports/data_quality_audit.json)
 

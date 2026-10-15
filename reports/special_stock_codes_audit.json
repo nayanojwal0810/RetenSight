@@ -1,0 +1,385 @@
+{
+  "audit_metadata": {
+    "audited_codes_count": 17,
+    "total_lines_analyzed": 5487,
+    "total_value_gbp": -86015.13
+  },
+  "stock_code_entries": [
+    {
+      "stock_code": "ADJUST",
+      "line_count": 67,
+      "total_value_gbp": 6835.24,
+      "customer_attributed_lines": 61,
+      "customer_attributed_value_gbp": 2038.12,
+      "unattributed_lines": 6,
+      "unattributed_value_gbp": 4797.12,
+      "inferred_category": "staff_clerical_adjustment",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as special commercial charge or administrative correction. Adjusts monetary value; does not increment purchase frequency.",
+      "evidence": "Descriptions specify internal staff adjustments (e.g., 'Adjustment by john on 26/01/2010'). Represents internal ledger reconciliation rather than genuine customer ordering.",
+      "top_descriptions": {
+        "Adjustment by john on 26/01/2010 16": 38,
+        "Adjustment by john on 26/01/2010 17": 26,
+        "Adjustment by Peter on 24/05/2010 1": 3
+      },
+      "sample_invoices": [
+        "495732",
+        "495733",
+        "495735"
+      ]
+    },
+    {
+      "stock_code": "ADJUST2",
+      "line_count": 3,
+      "total_value_gbp": 731.05,
+      "customer_attributed_lines": 3,
+      "customer_attributed_value_gbp": 731.05,
+      "unattributed_lines": 0,
+      "unattributed_value_gbp": 0.0,
+      "inferred_category": "staff_clerical_adjustment",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as special commercial charge. Adjusts monetary value; does not increment purchase frequency.",
+      "evidence": "Descriptions specify internal staff corrections ('Adjustment by Peter on Jun 25 2010'). Internal book balance correction.",
+      "top_descriptions": {
+        "Adjustment by Peter on Jun 25 2010": 3
+      },
+      "sample_invoices": [
+        "513564",
+        "513566",
+        "513565"
+      ]
+    },
+    {
+      "stock_code": "AMAZONFEE",
+      "line_count": 36,
+      "total_value_gbp": -221520.5,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 36,
+      "unattributed_value_gbp": -221520.5,
+      "inferred_category": "marketplace_platform_fee",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as marketplace fee. Unattributed to customers. Does not affect customer-level RFM.",
+      "evidence": "Description is 'AMAZON FEE'. Deductions taken by Amazon marketplace platform for third-party seller fees.",
+      "top_descriptions": {
+        "AMAZON FEE": 36
+      },
+      "sample_invoices": [
+        "C531400",
+        "531411",
+        "C537600"
+      ]
+    },
+    {
+      "stock_code": "B",
+      "line_count": 6,
+      "total_value_gbp": -147614.08,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 6,
+      "unattributed_value_gbp": -147614.08,
+      "inferred_category": "bad_debt_writeoff",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as bad_debt_adjustment. Separated completely from commercial revenue. Never increments customer purchase frequency or counts as positive sales.",
+      "evidence": "Description is 'Adjust bad debt'. Invoices are prefixed with 'A' (e.g. A506401). Accounting write-offs of uncollectible balances (\u00a3147,614.08).",
+      "top_descriptions": {
+        "Adjust bad debt": 6
+      },
+      "sample_invoices": [
+        "A506401",
+        "A516228",
+        "A528059"
+      ]
+    },
+    {
+      "stock_code": "BANK CHARGES",
+      "line_count": 100,
+      "total_value_gbp": -35482.25,
+      "customer_attributed_lines": 37,
+      "customer_attributed_value_gbp": 330.0,
+      "unattributed_lines": 63,
+      "unattributed_value_gbp": -35812.25,
+      "inferred_category": "banking_and_payment_fee",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as special commercial charge or administrative cost. Does not represent merchandise. Excluded from product repeat purchase frequency.",
+      "evidence": "Description is 'Bank Charges'. Wire fees, international payment processing charges, and merchant costs.",
+      "top_descriptions": {
+        "Bank Charges": 100
+      },
+      "sample_invoices": [
+        "C490943",
+        "490948",
+        "C492206"
+      ]
+    },
+    {
+      "stock_code": "CRUK",
+      "line_count": 16,
+      "total_value_gbp": -7933.43,
+      "customer_attributed_lines": 16,
+      "customer_attributed_value_gbp": -7933.43,
+      "unattributed_lines": 0,
+      "unattributed_value_gbp": 0.0,
+      "inferred_category": "charity_commission",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as administrative cancellation/settlement. Excluded from customer purchase frequency.",
+      "evidence": "Description is 'CRUK Commission'. All 16 transactions belong to Customer ID 14096 (Cancer Research UK) as commission payouts or fundraising disbursements.",
+      "top_descriptions": {
+        "CRUK Commission": 16
+      },
+      "sample_invoices": [
+        "C564763",
+        "C565382",
+        "C566216"
+      ]
+    },
+    {
+      "stock_code": "D",
+      "line_count": 173,
+      "total_value_gbp": -12879.63,
+      "customer_attributed_lines": 170,
+      "customer_attributed_value_gbp": -12785.34,
+      "unattributed_lines": 3,
+      "unattributed_value_gbp": -94.29,
+      "inferred_category": "commercial_discount",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as cancellation/discount credit or special charge. Decreases customer monetary net value. Does not increment purchase frequency.",
+      "evidence": "Description is 'Discount'. Commercial concessions and rebates granted to trade accounts. All transactions are price reductions.",
+      "top_descriptions": {
+        "Discount": 173
+      },
+      "sample_invoices": [
+        "C489535",
+        "C491428",
+        "C491845"
+      ]
+    },
+    {
+      "stock_code": "DCGSLBOY",
+      "line_count": 1,
+      "total_value_gbp": 0.0,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 1,
+      "unattributed_value_gbp": 0.0,
+      "inferred_category": "inventory_adjustment",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as inventory adjustment. Price is \u00a30.00. Excluded from customer RFM.",
+      "evidence": "Zero price inventory entry without customer attribution.",
+      "top_descriptions": {
+        "[BLANK]": 1
+      },
+      "sample_invoices": [
+        "497811"
+      ]
+    },
+    {
+      "stock_code": "DCGSLGIRL",
+      "line_count": 1,
+      "total_value_gbp": 0.0,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 1,
+      "unattributed_value_gbp": 0.0,
+      "inferred_category": "inventory_adjustment",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as inventory adjustment. Price is \u00a30.00. Excluded from customer RFM.",
+      "evidence": "Zero price inventory entry without customer attribution.",
+      "top_descriptions": {
+        "[BLANK]": 1
+      },
+      "sample_invoices": [
+        "499042"
+      ]
+    },
+    {
+      "stock_code": "DCGSSBOY",
+      "line_count": 23,
+      "total_value_gbp": 251.35,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 23,
+      "unattributed_value_gbp": 251.35,
+      "inferred_category": "physical_merchandise",
+      "is_physical_merchandise": true,
+      "increments_purchase_frequency": true,
+      "treatment_rule": "Classified as standard product merchandise. Walk-in / unattributed sales of boys party bags.",
+      "evidence": "Description is 'BOYS PARTY BAG'. Tangible party goods sold at standard retail unit prices.",
+      "top_descriptions": {
+        "BOYS PARTY BAG": 21,
+        "[BLANK]": 1,
+        "update": 1
+      },
+      "sample_invoices": [
+        "499040",
+        "512737",
+        "513099"
+      ]
+    },
+    {
+      "stock_code": "DCGSSGIRL",
+      "line_count": 25,
+      "total_value_gbp": 295.63,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 25,
+      "unattributed_value_gbp": 295.63,
+      "inferred_category": "physical_merchandise",
+      "is_physical_merchandise": true,
+      "increments_purchase_frequency": true,
+      "treatment_rule": "Classified as standard product merchandise. Walk-in / unattributed sales of girls party bags.",
+      "evidence": "Description is 'GIRLS PARTY BAG'. Tangible party goods sold at standard retail unit prices.",
+      "top_descriptions": {
+        "GIRLS PARTY BAG": 23,
+        "[BLANK]": 1,
+        "update": 1
+      },
+      "sample_invoices": [
+        "496722",
+        "512738",
+        "513099"
+      ]
+    },
+    {
+      "stock_code": "DOT",
+      "line_count": 1425,
+      "total_value_gbp": 309844.1,
+      "customer_attributed_lines": 16,
+      "customer_attributed_value_gbp": 11906.36,
+      "unattributed_lines": 1409,
+      "unattributed_value_gbp": 297937.74,
+      "inferred_category": "website_delivery_fee",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as special commercial charge. Overwhelmingly unattributed (>98% lines, \u00a3297k+). Does not represent physical merchandise and does not increment customer purchase frequency.",
+      "evidence": "Descriptions consist of 'DOTCOM POSTAGE'. Represents batch fulfillment costs for web orders. Almost entirely unattributed to individual retail customer IDs.",
+      "top_descriptions": {
+        "DOTCOM POSTAGE": 1423,
+        "[BLANK]": 2
+      },
+      "sample_invoices": [
+        "489597",
+        "489600",
+        "489601"
+      ]
+    },
+    {
+      "stock_code": "GIFT",
+      "line_count": 1,
+      "total_value_gbp": 0.0,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 1,
+      "unattributed_value_gbp": 0.0,
+      "inferred_category": "inventory_adjustment",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as inventory adjustment. Price is \u00a30.00, customer ID is missing. Excluded from customer RFM.",
+      "evidence": "Zero price administrative inventory movement without customer transaction value.",
+      "top_descriptions": {
+        "[BLANK]": 1
+      },
+      "sample_invoices": [
+        "497107"
+      ]
+    },
+    {
+      "stock_code": "M",
+      "line_count": 1403,
+      "total_value_gbp": -82935.57,
+      "customer_attributed_lines": 1096,
+      "customer_attributed_value_gbp": -185325.48,
+      "unattributed_lines": 307,
+      "unattributed_value_gbp": 102389.91,
+      "inferred_category": "manual_commercial_adjustment",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as special commercial charge when positive, cancellation/credit when negative. Adjusts customer monetary net spend. Does not count as a standard catalog merchandise purchase.",
+      "evidence": "Description is 'Manual'. Manually keyed administrative corrections, price adjustments, and bespoke wholesale charges without specific merchandise catalog SKU identification.",
+      "top_descriptions": {
+        "Manual": 1403
+      },
+      "sample_invoices": [
+        "489609",
+        "C489651",
+        "C489859"
+      ]
+    },
+    {
+      "stock_code": "PADS",
+      "line_count": 19,
+      "total_value_gbp": -36.6,
+      "customer_attributed_lines": 19,
+      "customer_attributed_value_gbp": -36.6,
+      "unattributed_lines": 0,
+      "unattributed_value_gbp": 0.0,
+      "inferred_category": "physical_merchandise",
+      "is_physical_merchandise": true,
+      "increments_purchase_frequency": true,
+      "treatment_rule": "Classified as physical merchandise. Description confirms physical cushion inserts ('PADS TO MATCH ALL CUSHIONS'). When ordered with positive quantity alongside other merchandise, it forms part of valid customer orders. In historical data, 18 lines were priced at nominal \u00a30.001 and 1 cancellation line at -\u00a336.60.",
+      "evidence": "Description is 'PADS TO MATCH ALL CUSHIONS'. Every invoice containing PADS is a multi-line customer order containing 11 to 93 other home decor items.",
+      "top_descriptions": {
+        "PADS TO MATCH ALL CUSHIONS": 19
+      },
+      "sample_invoices": [
+        "494914",
+        "496222",
+        "496473"
+      ]
+    },
+    {
+      "stock_code": "POST",
+      "line_count": 2086,
+      "total_value_gbp": 110430.41,
+      "customer_attributed_lines": 1983,
+      "customer_attributed_value_gbp": 110338.51,
+      "unattributed_lines": 103,
+      "unattributed_value_gbp": 91.9,
+      "inferred_category": "postage_and_shipping",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as special commercial charge. Adjusts customer monetary value (shipping spend). Invoices containing only postage fees (product_sales == 0) do not qualify as product repeat purchases.",
+      "evidence": "Descriptions consist exclusively of 'POSTAGE'. High customer attribution (>95% of lines). Corresponds to standard customer shipping charges incurred during checkout.",
+      "top_descriptions": {
+        "POSTAGE": 2079,
+        "[BLANK]": 7
+      },
+      "sample_invoices": [
+        "489439",
+        "489444",
+        "489447"
+      ]
+    },
+    {
+      "stock_code": "S",
+      "line_count": 102,
+      "total_value_gbp": -6000.85,
+      "customer_attributed_lines": 0,
+      "customer_attributed_value_gbp": 0.0,
+      "unattributed_lines": 102,
+      "unattributed_value_gbp": -6000.85,
+      "inferred_category": "product_sample_writeoff",
+      "is_physical_merchandise": false,
+      "increments_purchase_frequency": false,
+      "treatment_rule": "Classified as sample adjustment. Completely unattributed to customer IDs. Excluded from customer RFM.",
+      "evidence": "Description is 'SAMPLES'. Internal sample distributions and write-offs. Quantity negative, 0 customer attribution.",
+      "top_descriptions": {
+        "SAMPLES": 102
+      },
+      "sample_invoices": [
+        "C500305",
+        "C500309",
+        "C502083"
+      ]
+    }
+  ]
+}
