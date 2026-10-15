@@ -187,8 +187,8 @@ For an eligible customer $c$ in an observed forward window $(T_{\text{snapshot}}
 
 2. **90-Day Forward Commercial Spend Target ($\text{target\_spend\_90d}$):**
    $$\text{target\_spend\_90d}_c = \sum_{j \in \mathcal{F}_c} \text{commercial\_net\_spend}_j$$
-   where $\mathcal{F}_c$ is the set of customer invoices falling within $(T_{\text{snapshot}}, T_{\text{snapshot}} + 90\text{ days}]$. Strictly measures realized customer commercial net spend, excluding non-commercial administrative settlements (`CRUK`, `BANK CHARGES`, `ADJUST`) and bad-debt write-offs (`B`), while preserving standard merchandise sales, delivery fees, commercial discounts, manual adjustments, and merchandise returns. Set to `<NA>` if window is unobserved.
+   where $\mathcal{F}_c$ is the set of customer invoices falling within $(T_{\text{snapshot}}, T_{\text{snapshot}} + 90\text{ days}]$. Strictly measures realized customer commercial net spend, excluding non-commercial administrative settlements (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`) and bad-debt write-offs (`B`), while preserving standard merchandise sales, delivery fees, commercial discounts, manual adjustments, and merchandise returns. Set to `<NA>` if window is unobserved.
 
 3. **90-Day Forward Full Ledger Balance ($\text{target\_ledger\_balance\_90d}$):**
    $$\text{target\_ledger\_balance\_90d}_c = \sum_{j \in \mathcal{F}_c} \text{net\_value}_j$$
-   Separately exposes the total accounting ledger balance across all customer transactions in the forward window, inclusive of administrative settlements. Set to `<NA>` if window is unobserved.
+   Separately exposes the total accounting ledger balance across all customer transactions in the forward window, inclusive of administrative settlements (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`). Set to `<NA>` if window is unobserved.

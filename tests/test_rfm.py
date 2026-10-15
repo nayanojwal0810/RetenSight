@@ -853,6 +853,147 @@ def test_target_spend_90d_commercial_isolation_and_components() -> None:
     assert rfm_unobserved["target_ledger_balance_90d"].isna().all()
 
 
+def test_target_spend_schema_guard_and_derivation() -> None:
+    """Verifies that target_spend_90d derives safely when commercial_net_spend is absent,
+
+    and raises an actionable ValueError when derivation components are missing,
+    prohibiting silent fallback to net_value.
+    """
+    cutoff = pd.Timestamp("2010-06-30 23:59:59")
+    records = [
+        # Customer 4001: Historical purchase before cutoff
+        {
+            "invoice": "INV_H4001",
+            "invoice_date": pd.Timestamp("2010-05-01 10:00:00"),
+            "customer_id": 4001,
+            "country": "United Kingdom",
+            "line_count": 1,
+            "total_quantity": 5,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 100.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 100.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 100.0,
+            "commercial_net_spend": 100.0,
+            "invoice_type": "customer_sale",
+        },
+        # Customer 4001: Future purchase order (product £80 + shipping £10)
+        {
+            "invoice": "INV_F4001A",
+            "invoice_date": pd.Timestamp("2010-07-10 10:00:00"),
+            "customer_id": 4001,
+            "country": "United Kingdom",
+            "line_count": 2,
+            "total_quantity": 2,
+            "distinct_items": 2,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 80.0,
+            "special_charges": 10.0,
+            "shipping_value": 10.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 90.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 90.0,
+            "commercial_net_spend": 90.0,
+            "invoice_type": "customer_sale",
+        },
+        # Customer 4001: Future administrative settlement (CRUK charity payout -£40)
+        {
+            "invoice": "CINV_F4001B",
+            "invoice_date": pd.Timestamp("2010-07-20 10:00:00"),
+            "customer_id": 4001,
+            "country": "United Kingdom",
+            "line_count": 1,
+            "total_quantity": -1,
+            "distinct_items": 1,
+            "is_cancellation": True,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 0.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": -40.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 0.0,
+            "cancellation_value": -40.0,
+            "bad_debt_value": 0.0,
+            "net_value": -40.0,
+            "commercial_net_spend": 0.0,
+            "invoice_type": "customer_cancellation",
+        },
+        # Future anchor row ensuring observed window
+        {
+            "invoice": "INV_ANCHOR",
+            "invoice_date": pd.Timestamp("2010-10-01 10:00:00"),
+            "customer_id": 4002,
+            "country": "France",
+            "line_count": 1,
+            "total_quantity": 1,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 50.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 50.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 50.0,
+            "commercial_net_spend": 50.0,
+            "invoice_type": "customer_sale",
+        },
+    ]
+
+    base_df = pd.DataFrame(records)
+
+    # 1. Derivation succeeds when commercial_net_spend is dropped, but net_value, admin_settlements_value, bad_debt_value exist
+    df_no_commercial = base_df.drop(columns=["commercial_net_spend"])
+    rfm_derived = compute_customer_rfm_snapshot(
+        df_no_commercial,
+        snapshot_date=cutoff,
+        forward_target_days=90,
+    )
+    c4001 = rfm_derived[rfm_derived["customer_id"] == 4001].iloc[0]
+    # Commercial spend derived as net_value - admin_settlements_value - bad_debt_value:
+    # Future purchase: 90 - 0 - 0 = 90
+    # Future admin settlement: -40 - (-40) - 0 = 0
+    # Total derived target_spend_90d = 90.0 (NOT 50.0 which would be net_value!)
+    assert c4001["target_spend_90d"] == 90.0
+    assert c4001["target_ledger_balance_90d"] == 50.0
+
+    # 2. Schema guard raises ValueError when derivation is impossible
+    df_missing_components = df_no_commercial.drop(columns=["admin_settlements_value"])
+    with pytest.raises(ValueError, match="Cannot compute target_spend_90d"):
+        compute_customer_rfm_snapshot(
+            df_missing_components,
+            snapshot_date=cutoff,
+            forward_target_days=90,
+        )
+
+
 def test_monetary_aware_segmentation_distinctions() -> None:
     """Verifies that monetary value materially governs segment assignment:
 

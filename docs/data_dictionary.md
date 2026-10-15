@@ -137,6 +137,6 @@ Customer-level point-in-time features computed as of each chronological cutoff t
 | `rfm_score` | `string` | 3-digit concatenated RFM score code (e.g. `'555'`). |
 | `segment` | `string` | Monetary-aware CRM segment assignment (e.g. `'Champions'`, `'Can\'t Lose Them'`). |
 | `target_repeat_purchase_90d` | `Int64` (nullable) | 1 if customer placed at least 1 qualifying purchase in next 90 days, 0 if not, null if unobserved. |
-| `target_spend_90d` | `Float64` (nullable) | Customer-attributed commercial net spend in the forward 90-day window (sum of `commercial_net_spend`), strictly excluding administrative settlements and bad-debt adjustments (£); null if unobserved. |
-| `target_ledger_balance_90d` | `Float64` (nullable) | Customer total accounting ledger net balance in forward 90-day window inclusive of administrative settlements (£); null if unobserved. |
+| `target_spend_90d` | `Float64` (nullable) | Customer-attributed commercial net spend in the forward 90-day window (sum of `commercial_net_spend`), strictly excluding administrative settlements (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`) and bad-debt adjustments (`B`) (£); null if unobserved. |
+| `target_ledger_balance_90d` | `Float64` (nullable) | Customer total accounting ledger net balance in forward 90-day window inclusive of administrative settlements (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`) (£); null if unobserved. |
 | `is_target_window_observed` | `bool` | True if full 90-day forward window is observed within dataset. |

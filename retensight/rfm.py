@@ -368,10 +368,26 @@ def compute_customer_rfm_snapshot(
     cust_hist_all = hist_inv[hist_inv["has_customer_id"]].copy()
 
     # Identify component columns if present in invoice aggregates, else derive from base columns
-    has_subcomponents = "shipping_value" in cust_hist_all.columns
+    has_subcomponents = {
+        "shipping_value",
+        "discount_value",
+        "manual_value",
+        "admin_settlements_value",
+    }.issubset(cust_hist_all.columns)
     has_returns_col = "merchandise_returns_value" in cust_hist_all.columns
 
     if has_subcomponents:
+        if "commercial_net_spend" not in cust_hist_all.columns and {
+            "net_value",
+            "admin_settlements_value",
+            "bad_debt_value",
+        }.issubset(cust_hist_all.columns):
+            cust_hist_all["commercial_net_spend"] = (
+                cust_hist_all["net_value"]
+                - cust_hist_all["admin_settlements_value"]
+                - cust_hist_all["bad_debt_value"]
+            ).round(2)
+
         merch_ret_col = "merchandise_returns_value" if has_returns_col else "cancellation_value"
         spend_agg = cust_hist_all.groupby("customer_id", sort=False).agg(
             monetary_merchandise_sales=("product_sales", "sum"),
@@ -518,27 +534,51 @@ def compute_customer_rfm_snapshot(
                 & (invoices_df["invoice_date"] <= forward_end)
                 & invoices_df["has_customer_id"]
             )
-            # Commercial net spend column (strictly excludes administrative settlements and bad debt)
-            spend_col = (
-                "commercial_net_spend"
-                if "commercial_net_spend" in invoices_df.columns
-                else "net_value"
-            )
+            # Resolve or safely derive commercial net spend for target_spend_90d
+            if "commercial_net_spend" in invoices_df.columns:
+                target_spend_vals = invoices_df["commercial_net_spend"]
+            elif {
+                "net_value",
+                "admin_settlements_value",
+                "bad_debt_value",
+            }.issubset(invoices_df.columns):
+                target_spend_vals = (
+                    invoices_df["net_value"]
+                    - invoices_df["admin_settlements_value"]
+                    - invoices_df["bad_debt_value"]
+                ).round(2)
+            else:
+                missing_cols = [
+                    c
+                    for c in ["net_value", "admin_settlements_value", "bad_debt_value"]
+                    if c not in invoices_df.columns
+                ]
+                raise ValueError(
+                    "Cannot compute target_spend_90d: 'commercial_net_spend' is missing, "
+                    f"and required component columns {missing_cols} are absent to derive it. "
+                    "Silent fallback to full ledger 'net_value' is prohibited."
+                )
+
+            future_inv = invoices_df.loc[future_spend_mask, ["customer_id"]].copy()
+            future_inv["_commercial_spend"] = target_spend_vals.loc[future_inv.index]
             future_commercial_spend = (
-                invoices_df[future_spend_mask]
-                .groupby("customer_id")[spend_col]
+                future_inv.groupby("customer_id")["_commercial_spend"]
                 .sum()
                 .round(2)
                 .to_dict()
             )
+
             # Distinct full ledger balance in window (includes administrative settlements)
-            future_ledger_balance = (
-                invoices_df[future_spend_mask]
-                .groupby("customer_id")["net_value"]
-                .sum()
-                .round(2)
-                .to_dict()
-            )
+            if "net_value" in invoices_df.columns:
+                future_ledger_balance = (
+                    invoices_df[future_spend_mask]
+                    .groupby("customer_id")["net_value"]
+                    .sum()
+                    .round(2)
+                    .to_dict()
+                )
+            else:
+                future_ledger_balance = {}
 
             rfm_df["target_repeat_purchase_90d"] = rfm_df["customer_id"].isin(repeat_cust_ids).astype(int)
             rfm_df["target_spend_90d"] = rfm_df["customer_id"].map(future_commercial_spend).fillna(0.0).round(2)
