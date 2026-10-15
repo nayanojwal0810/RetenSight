@@ -176,4 +176,19 @@ RetenSight maintains three strictly chronological evaluation cutoffs with fully 
 ### Calendar Integrity Notes
 1. **Cutoff 3 Calibration**: Set to `2011-09-09 23:59:59` so that the 90-day forward window terminates at `2011-12-08 23:59:59`, leaving the dataset's final partial day (`2011-12-09`) strictly outside the target window. This ensures all 90 days are 100% observed and free of partial-day truncation bias.
 2. **Observed Repeat Rates**: The 90-day repeat-purchase rate increases from 30.73% (Cutoff 1) and 32.03% (Cutoff 2) to 43.50% (Cutoff 3). These empirical rates reflect the observed transaction patterns across these specific 90-day forward windows.
-3. **Target Exclusions**: The final history snapshot (`2011-12-09`) marks `repeat_purchase_90d` as `<NA>` and sets `is_target_window_observed = False`, completely preventing future target leakage into the production scoring table.
+3. **Target Exclusions & Censoring**: The final history snapshot (`2011-12-09`) marks `target_repeat_purchase_90d`, `target_spend_90d`, and `target_ledger_balance_90d` as `<NA>` and sets `is_target_window_observed = False`, completely preventing future target leakage or false-zero assumptions in the production scoring table.
+
+### 6.1. Forward Target Formulations
+
+For an eligible customer $c$ in an observed forward window $(T_{\text{snapshot}}, T_{\text{snapshot}} + 90\text{ days}]$:
+
+1. **90-Day Repeat Purchase Propensity Target ($\text{target\_repeat\_purchase\_90d}$):**
+   $$\text{target\_repeat\_purchase\_90d}_c = \begin{cases} 1 & \text{if } \exists \, i \text{ with } \text{customer}(i)=c, \, \text{date}(i) \in (T_{\text{snapshot}}, T_{\text{snapshot}} + 90\text{d}], \, \text{qualifying}(i) \\ 0 & \text{if no qualifying purchase in window} \\ \text{<NA>} & \text{if window is unobserved} \end{cases}$$
+
+2. **90-Day Forward Commercial Spend Target ($\text{target\_spend\_90d}$):**
+   $$\text{target\_spend\_90d}_c = \sum_{j \in \mathcal{F}_c} \text{commercial\_net\_spend}_j$$
+   where $\mathcal{F}_c$ is the set of customer invoices falling within $(T_{\text{snapshot}}, T_{\text{snapshot}} + 90\text{ days}]$. Strictly measures realized customer commercial net spend, excluding non-commercial administrative settlements (`CRUK`, `BANK CHARGES`, `ADJUST`) and bad-debt write-offs (`B`), while preserving standard merchandise sales, delivery fees, commercial discounts, manual adjustments, and merchandise returns. Set to `<NA>` if window is unobserved.
+
+3. **90-Day Forward Full Ledger Balance ($\text{target\_ledger\_balance\_90d}$):**
+   $$\text{target\_ledger\_balance\_90d}_c = \sum_{j \in \mathcal{F}_c} \text{net\_value}_j$$
+   Separately exposes the total accounting ledger balance across all customer transactions in the forward window, inclusive of administrative settlements. Set to `<NA>` if window is unobserved.

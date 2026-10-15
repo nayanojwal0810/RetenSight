@@ -518,7 +518,21 @@ def compute_customer_rfm_snapshot(
                 & (invoices_df["invoice_date"] <= forward_end)
                 & invoices_df["has_customer_id"]
             )
-            future_spend = (
+            # Commercial net spend column (strictly excludes administrative settlements and bad debt)
+            spend_col = (
+                "commercial_net_spend"
+                if "commercial_net_spend" in invoices_df.columns
+                else "net_value"
+            )
+            future_commercial_spend = (
+                invoices_df[future_spend_mask]
+                .groupby("customer_id")[spend_col]
+                .sum()
+                .round(2)
+                .to_dict()
+            )
+            # Distinct full ledger balance in window (includes administrative settlements)
+            future_ledger_balance = (
                 invoices_df[future_spend_mask]
                 .groupby("customer_id")["net_value"]
                 .sum()
@@ -527,7 +541,8 @@ def compute_customer_rfm_snapshot(
             )
 
             rfm_df["target_repeat_purchase_90d"] = rfm_df["customer_id"].isin(repeat_cust_ids).astype(int)
-            rfm_df["target_spend_90d"] = rfm_df["customer_id"].map(future_spend).fillna(0.0).round(2)
+            rfm_df["target_spend_90d"] = rfm_df["customer_id"].map(future_commercial_spend).fillna(0.0).round(2)
+            rfm_df["target_ledger_balance_90d"] = rfm_df["customer_id"].map(future_ledger_balance).fillna(0.0).round(2)
             rfm_df["is_target_window_observed"] = True
             logger.info(
                 "Observed 90-day repeat purchase rate: %d / %d (%.2f%%) repeated in (%s to %s].",
@@ -540,6 +555,7 @@ def compute_customer_rfm_snapshot(
         else:
             rfm_df["target_repeat_purchase_90d"] = pd.Series([None] * len(rfm_df), dtype="Int64")
             rfm_df["target_spend_90d"] = pd.Series([None] * len(rfm_df), dtype="Float64")
+            rfm_df["target_ledger_balance_90d"] = pd.Series([None] * len(rfm_df), dtype="Float64")
             rfm_df["is_target_window_observed"] = False
             logger.info(
                 "Forward 90-day target window (%s to %s] unobserved (dataset ends at %s). Target marked <NA>.",
@@ -550,6 +566,7 @@ def compute_customer_rfm_snapshot(
     else:
         rfm_df["target_repeat_purchase_90d"] = pd.Series([None] * len(rfm_df), dtype="Int64")
         rfm_df["target_spend_90d"] = pd.Series([None] * len(rfm_df), dtype="Float64")
+        rfm_df["target_ledger_balance_90d"] = pd.Series([None] * len(rfm_df), dtype="Float64")
         rfm_df["is_target_window_observed"] = False
 
     rfm_df["snapshot_date"] = date_str
@@ -607,6 +624,7 @@ def compute_customer_rfm_snapshot(
         "is_target_window_observed",
         "target_repeat_purchase_90d",
         "target_spend_90d",
+        "target_ledger_balance_90d",
     ]
     rfm_df = rfm_df[ordered_cols].sort_values("customer_id").reset_index(drop=True)
 

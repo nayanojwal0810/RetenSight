@@ -586,6 +586,271 @@ def test_feature_leakage_prevention_and_unobserved_targets(synthetic_invoices_fo
     )
     assert not bool(unobserved_rfm["is_target_window_observed"].iloc[0])
     assert unobserved_rfm["target_repeat_purchase_90d"].isna().all()
+    assert unobserved_rfm["target_spend_90d"].isna().all()
+    assert unobserved_rfm["target_ledger_balance_90d"].isna().all()
+
+
+def test_target_spend_90d_commercial_isolation_and_components() -> None:
+    """Verifies that target_spend_90d strictly measures forward commercial net spend:
+
+    - Future qualifying purchases contribute to target_spend_90d.
+    - Future administrative settlements (CRUK, ADJUST, BANK CHARGES) do NOT inflate or deflate target_spend_90d.
+    - Future bad-debt adjustments do NOT inflate or deflate target_spend_90d.
+    - Future commercial cancellations/returns reduce target_spend_90d by their commercial return value.
+    - target_ledger_balance_90d preserves the separate full-ledger accounting balance.
+    - Existing repeat-purchase label and unobserved-window <NA> behavior are preserved.
+    """
+    cutoff = pd.Timestamp("2010-06-30 23:59:59")
+
+    records = [
+        # Customer 3001: Historical purchase before cutoff
+        {
+            "invoice": "INV_HIST_1",
+            "invoice_date": pd.Timestamp("2010-05-01 10:00:00"),
+            "customer_id": 3001,
+            "country": "United Kingdom",
+            "line_count": 1,
+            "total_quantity": 5,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 200.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 200.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 200.0,
+            "commercial_net_spend": 200.0,
+            "invoice_type": "customer_sale",
+        },
+        # Customer 3001 Future 1: Qualifying purchase (product 120 + shipping 10 = commercial 130)
+        {
+            "invoice": "INV_FUT_1A",
+            "invoice_date": pd.Timestamp("2010-07-15 10:00:00"),
+            "customer_id": 3001,
+            "country": "United Kingdom",
+            "line_count": 2,
+            "total_quantity": 3,
+            "distinct_items": 2,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 120.0,
+            "special_charges": 10.0,
+            "shipping_value": 10.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 130.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 130.0,
+            "commercial_net_spend": 130.0,
+            "invoice_type": "customer_sale",
+        },
+        # Customer 3001 Future 2: Administrative settlement invoice (e.g. CRUK charity commission payout -£50.0)
+        # Isolated from commercial spend: commercial_net_spend = 0.0, net_value = -50.0
+        {
+            "invoice": "CINV_FUT_1B",
+            "invoice_date": pd.Timestamp("2010-08-01 10:00:00"),
+            "customer_id": 3001,
+            "country": "United Kingdom",
+            "line_count": 1,
+            "total_quantity": -1,
+            "distinct_items": 1,
+            "is_cancellation": True,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 0.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": -50.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 0.0,
+            "cancellation_value": -50.0,
+            "bad_debt_value": 0.0,
+            "net_value": -50.0,
+            "commercial_net_spend": 0.0,
+            "invoice_type": "customer_cancellation",
+        },
+        # Customer 3001 Future 3: Bad debt adjustment invoice (prefixed 'A', -£200.0)
+        # Isolated from commercial spend: commercial_net_spend = 0.0, net_value = -200.0
+        {
+            "invoice": "AINV_FUT_1C",
+            "invoice_date": pd.Timestamp("2010-08-10 10:00:00"),
+            "customer_id": 3001,
+            "country": "United Kingdom",
+            "line_count": 1,
+            "total_quantity": 0,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": True,
+            "has_customer_id": True,
+            "product_sales": 0.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 0.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": -200.0,
+            "net_value": -200.0,
+            "commercial_net_spend": 0.0,
+            "invoice_type": "bad_debt_adjustment",
+        },
+        # Customer 3001 Future 4: Commercial merchandise return (-£30.0)
+        # Commercial net spend = -30.0, net_value = -30.0
+        {
+            "invoice": "CINV_FUT_1D",
+            "invoice_date": pd.Timestamp("2010-08-20 10:00:00"),
+            "customer_id": 3001,
+            "country": "United Kingdom",
+            "line_count": 1,
+            "total_quantity": -2,
+            "distinct_items": 1,
+            "is_cancellation": True,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 0.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": -30.0,
+            "gross_sales": 0.0,
+            "cancellation_value": -30.0,
+            "bad_debt_value": 0.0,
+            "net_value": -30.0,
+            "commercial_net_spend": -30.0,
+            "invoice_type": "customer_cancellation",
+        },
+
+        # Customer 3002: Historical purchase before cutoff
+        {
+            "invoice": "INV_HIST_2",
+            "invoice_date": pd.Timestamp("2010-05-10 10:00:00"),
+            "customer_id": 3002,
+            "country": "Germany",
+            "line_count": 1,
+            "total_quantity": 2,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 100.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 100.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 100.0,
+            "commercial_net_spend": 100.0,
+            "invoice_type": "customer_sale",
+        },
+        # Customer 3002 Future: ONLY administrative settlement (+£75.0, e.g. clerical credit)
+        # No repeat product purchase!
+        {
+            "invoice": "INV_FUT_2A",
+            "invoice_date": pd.Timestamp("2010-07-20 10:00:00"),
+            "customer_id": 3002,
+            "country": "Germany",
+            "line_count": 1,
+            "total_quantity": 1,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 0.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 75.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 0.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 75.0,
+            "commercial_net_spend": 0.0,
+            "invoice_type": "customer_sale",
+        },
+
+        # Customer 3003: Anchor row to ensure forward window is fully observed (dataset max date >= forward_end)
+        {
+            "invoice": "INV_ANCHOR",
+            "invoice_date": pd.Timestamp("2010-10-01 10:00:00"),
+            "customer_id": 3003,
+            "country": "France",
+            "line_count": 1,
+            "total_quantity": 1,
+            "distinct_items": 1,
+            "is_cancellation": False,
+            "is_bad_debt": False,
+            "has_customer_id": True,
+            "product_sales": 50.0,
+            "special_charges": 0.0,
+            "shipping_value": 0.0,
+            "discount_value": 0.0,
+            "manual_value": 0.0,
+            "admin_settlements_value": 0.0,
+            "merchandise_returns_value": 0.0,
+            "gross_sales": 50.0,
+            "cancellation_value": 0.0,
+            "bad_debt_value": 0.0,
+            "net_value": 50.0,
+            "commercial_net_spend": 50.0,
+            "invoice_type": "customer_sale",
+        },
+    ]
+
+    df = pd.DataFrame(records)
+    rfm_df = compute_customer_rfm_snapshot(df, snapshot_date=cutoff, forward_target_days=90)
+
+    # 1. Customer 3001 Verification
+    c3001 = rfm_df[rfm_df["customer_id"] == 3001].iloc[0]
+    # Future qualifying purchase contributes to target_repeat_purchase_90d
+    assert c3001["target_repeat_purchase_90d"] == 1
+    # Future commercial net spend: £130 (purchase) + £0 (admin) + £0 (bad debt) - £30 (merchandise return) = £100.0
+    assert c3001["target_spend_90d"] == 100.0
+    # Future ledger balance: £130 - £50 - £200 - £30 = -£150.0
+    assert c3001["target_ledger_balance_90d"] == -150.0
+
+    # 2. Customer 3002 Verification
+    c3002 = rfm_df[rfm_df["customer_id"] == 3002].iloc[0]
+    # No qualifying product purchase -> target_repeat_purchase_90d must be 0
+    assert c3002["target_repeat_purchase_90d"] == 0
+    # Admin settlement does NOT inflate target_spend_90d
+    assert c3002["target_spend_90d"] == 0.0
+    # Full ledger balance correctly reflects +£75.0 admin settlement
+    assert c3002["target_ledger_balance_90d"] == 75.0
+
+    # 3. Target Censoring / Unobserved Window Verification
+    # Snapshot at 2010-05-15 with forward_target_days=180 reaches 2010-11-11 > max date 2010-10-01
+    rfm_unobserved = compute_customer_rfm_snapshot(
+        df,
+        snapshot_date=pd.Timestamp("2010-05-15 23:59:59"),
+        forward_target_days=180,
+    )
+    assert not bool(rfm_unobserved["is_target_window_observed"].iloc[0])
+    assert rfm_unobserved["target_repeat_purchase_90d"].isna().all()
+    assert rfm_unobserved["target_spend_90d"].isna().all()
+    assert rfm_unobserved["target_ledger_balance_90d"].isna().all()
 
 
 def test_monetary_aware_segmentation_distinctions() -> None:
