@@ -11,7 +11,7 @@ from retensight.deduplication import resolve_cross_sheet_duplicates
 
 
 def test_audit_generation_and_invariants(synthetic_sheets):
-    """Verifies that all pipeline invariants pass on consistent data."""
+    """Verifies that all pipeline invariants pass on consistent data and measures are clearly defined."""
     df1, df2 = synthetic_sheets
     combined, dedup_audit = resolve_cross_sheet_duplicates(df1, df2)
     cleaned = clean_and_classify_transactions(combined)
@@ -25,6 +25,22 @@ def test_audit_generation_and_invariants(synthetic_sheets):
     assert "invoice_breakdown" in audit
     assert "financial_reconciliation" in audit
     assert "reconciliation_invariants" in audit
+
+    # Verify distinct financial measures
+    fin = audit["financial_reconciliation"]
+    assert "gross_product_sales_gbp" in fin
+    assert "special_commercial_charges_gbp" in fin
+    assert "gross_sales_gbp" in fin
+    assert "cancellations_value_gbp" in fin
+    assert "net_commercial_value_gbp" in fin
+    assert "bad_debt_adjustments_gbp" in fin
+    assert "all_transactions_net_value_gbp" in fin
+
+    # Verify customer-ready vs attributed count invariant
+    tx = audit["transactions_breakdown"]
+    assert tx["customer_commercial_ready_transactions"] == (
+        tx["customer_attributed_transactions"] - tx["promotional_freebies_count"]
+    )
 
     # Check all invariants are True
     for inv_name, status in audit["reconciliation_invariants"].items():
@@ -70,3 +86,5 @@ def test_audit_reports_export(synthetic_sheets, tmp_path):
         md_text = f.read()
     assert "RetenSight" in md_text
     assert "PASSED [✓]" in md_text
+    assert "Gross Product Sales" in md_text
+    assert "Special Commercial Charges" in md_text

@@ -16,11 +16,14 @@ The data ingestion, schema validation, exact cross-sheet duplicate resolution, d
 - **Exact Cross-Sheet Duplicates Removed**: 22,523 rows (from the December 1–9, 2010 overlap window). Legitimate same-sheet repeated purchases are strictly preserved.
 - **Retained Transactions**: 1,044,848 rows (809,561 customer-attributed; 235,287 unattributed).
 - **Unique Invoices**: 53,628 (36,975 customer sales; 7,901 customer cancellations; 4,962 unattributed sales; 391 unattributed cancellations; 3,393 inventory write-offs; 6 bad debt adjustments).
-- **Distinct Valid Customers**: 5,942.
-- **Gross Commercial Sales**: £20,522,679.84 (Attributed: £17,431,551.16; Unattributed: £3,091,128.68).
+- **Gross Product Sales**: £19,716,362.61 (Ordinary merchandise items).
+- **Special Commercial Charges**: £806,317.23 (POST, DOT, M, BANK CHARGES, etc.).
+- **Total Gross Commercial Sales**: £20,522,679.84 (Attributed: £17,431,551.16; Unattributed: £3,091,128.68).
 - **Cancellations / Returns**: -£1,465,303.66 (Attributed: -£1,087,882.14; Unattributed: -£377,421.52).
+- **Net Commercial Value (before bad debt)**: £19,057,376.18 (Attributed: £16,343,669.02; Unattributed: £2,713,707.16).
 - **Bad Debt Adjustments**: -£147,614.08.
-- **Net Commercial Revenue**: £18,909,762.10 (Reconciles exactly to invoice totals; discrepancy: £0.00).
+- **All Transactions Net Value (after bad debt)**: £18,909,762.10 (Reconciles exactly to invoice totals; discrepancy: £0.00).
+- **Customer Modeling-Ready Transactions**: 809,491 rows (excludes 70 zero-revenue promotional freebies from the commercial extract).
 
 Detailed reports and schemas are available in:
 - [Data Dictionary](docs/data_dictionary.md)

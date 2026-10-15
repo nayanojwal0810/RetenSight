@@ -37,27 +37,45 @@ def generate_pipeline_audit(
     """
     logger.info("Computing pipeline audit metrics and reconciliation invariants...")
 
-    # Financial sums from transactions
-    tx_line_value_sum = float(transactions_df["line_total"].sum())
-    tx_gross_sales = float(
-        transactions_df[transactions_df["transaction_category"] == "standard_sale"]["line_total"].sum()
+    # Financial sums by transaction category
+    tx_prod_sales = float(
+        transactions_df[transactions_df["transaction_category"] == "standard_product_sale"][
+            "line_total"
+        ].sum()
     )
+    tx_spec_charges = float(
+        transactions_df[transactions_df["transaction_category"] == "special_commercial_charge"][
+            "line_total"
+        ].sum()
+    )
+    tx_gross_sales = float(tx_prod_sales + tx_spec_charges)
     tx_cancellations = float(
         transactions_df[transactions_df["transaction_category"] == "cancellation"]["line_total"].sum()
     )
     tx_bad_debt = float(
-        transactions_df[transactions_df["transaction_category"] == "bad_debt_adjustment"]["line_total"].sum()
+        transactions_df[transactions_df["transaction_category"] == "bad_debt_adjustment"][
+            "line_total"
+        ].sum()
     )
+    tx_all_net_value = float(transactions_df["line_total"].sum())
+    tx_net_commercial_value = float(tx_gross_sales + tx_cancellations)
 
     # Attribution breakdown
     attr_tx = transactions_df[transactions_df["has_customer_id"]]
     unattr_tx = transactions_df[~transactions_df["has_customer_id"]]
 
-    attr_gross_sales = float(
-        attr_tx[attr_tx["transaction_category"] == "standard_sale"]["line_total"].sum()
+    attr_prod_sales = float(
+        attr_tx[attr_tx["transaction_category"] == "standard_product_sale"]["line_total"].sum()
     )
-    unattr_gross_sales = float(
-        unattr_tx[unattr_tx["transaction_category"] == "standard_sale"]["line_total"].sum()
+    unattr_prod_sales = float(
+        unattr_tx[unattr_tx["transaction_category"] == "standard_product_sale"]["line_total"].sum()
+    )
+
+    attr_spec_charges = float(
+        attr_tx[attr_tx["transaction_category"] == "special_commercial_charge"]["line_total"].sum()
+    )
+    unattr_spec_charges = float(
+        unattr_tx[unattr_tx["transaction_category"] == "special_commercial_charge"]["line_total"].sum()
     )
 
     attr_cancellations = float(
@@ -68,16 +86,24 @@ def generate_pipeline_audit(
     )
 
     # Invoices metrics
-    inv_net_value_sum = float(invoices_df["net_value"].sum())
+    inv_prod_sales_sum = float(invoices_df["product_sales"].sum())
+    inv_spec_charges_sum = float(invoices_df["special_charges"].sum())
     inv_gross_sales_sum = float(invoices_df["gross_sales"].sum())
     inv_cancellation_sum = float(invoices_df["cancellation_value"].sum())
+    inv_bad_debt_sum = float(invoices_df["bad_debt_value"].sum())
+    inv_net_value_sum = float(invoices_df["net_value"].sum())
 
     distinct_customers = int(transactions_df["customer_id"].nunique(dropna=True))
     total_invoices = len(invoices_df)
     customer_invoices = int(invoices_df["has_customer_id"].sum())
     unattributed_invoices = total_invoices - customer_invoices
 
-    # Invariant verification
+    # Customer commercial / model-ready vs attributed
+    customer_commercial_ready_count = int(transactions_df["is_commercial_customer_ready"].sum())
+    customer_attributed_count = int(transactions_df["has_customer_id"].sum())
+    promotional_freebies_count = int((transactions_df["transaction_category"] == "promotional_freebie").sum())
+
+    # Component-level invariant verification (penny tolerance 0.01)
     invariants = {
         "raw_minus_duplicates_equals_retained": (
             dedup_audit.total_raw_rows - dedup_audit.cross_sheet_duplicates_removed
@@ -89,15 +115,26 @@ def generate_pipeline_audit(
         "transaction_quantities_equal_invoice_quantities": (
             int(transactions_df["quantity"].sum()) == int(invoices_df["total_quantity"].sum())
         ),
-        "transaction_net_value_equals_invoice_net_value": bool(
-            np.isclose(tx_line_value_sum, inv_net_value_sum, atol=1.0)
+        "product_sales_reconciliation": bool(
+            np.isclose(tx_prod_sales, inv_prod_sales_sum, atol=0.01)
         ),
-        "gross_plus_returns_plus_bad_debt_equals_total_value": bool(
-            np.isclose(
-                tx_gross_sales + tx_cancellations + tx_bad_debt,
-                tx_line_value_sum,
-                atol=1.0,
-            )
+        "special_charges_reconciliation": bool(
+            np.isclose(tx_spec_charges, inv_spec_charges_sum, atol=0.01)
+        ),
+        "cancellation_value_reconciliation": bool(
+            np.isclose(tx_cancellations, inv_cancellation_sum, atol=0.01)
+        ),
+        "bad_debt_value_reconciliation": bool(
+            np.isclose(tx_bad_debt, inv_bad_debt_sum, atol=0.01)
+        ),
+        "all_transactions_net_value_equals_invoice_net_value": bool(
+            np.isclose(tx_all_net_value, inv_net_value_sum, atol=0.01)
+        ),
+        "commercial_net_plus_bad_debt_equals_all_net": bool(
+            np.isclose(tx_net_commercial_value + tx_bad_debt, tx_all_net_value, atol=0.01)
+        ),
+        "customer_commercial_ready_count_invariant": (
+            customer_commercial_ready_count == customer_attributed_count - promotional_freebies_count
         ),
     }
 
@@ -125,9 +162,15 @@ def generate_pipeline_audit(
         },
         "transactions_breakdown": {
             "total_retained_transactions": len(transactions_df),
-            "customer_attributed_transactions": len(attr_tx),
+            "customer_attributed_transactions": customer_attributed_count,
+            "customer_commercial_ready_transactions": customer_commercial_ready_count,
             "unattributed_transactions": len(unattr_tx),
-            "standard_sales_count": int((transactions_df["transaction_category"] == "standard_sale").sum()),
+            "standard_product_sales_count": int(
+                (transactions_df["transaction_category"] == "standard_product_sale").sum()
+            ),
+            "special_commercial_charges_count": int(
+                (transactions_df["transaction_category"] == "special_commercial_charge").sum()
+            ),
             "cancellations_count": int((transactions_df["transaction_category"] == "cancellation").sum()),
             "bad_debt_adjustments_count": int(
                 (transactions_df["transaction_category"] == "bad_debt_adjustment").sum()
@@ -135,9 +178,7 @@ def generate_pipeline_audit(
             "inventory_adjustments_count": int(
                 (transactions_df["transaction_category"] == "inventory_adjustment").sum()
             ),
-            "promotional_freebies_count": int(
-                (transactions_df["transaction_category"] == "promotional_freebie").sum()
-            ),
+            "promotional_freebies_count": promotional_freebies_count,
             "zero_price_rows_count": int(transactions_df["is_zero_price"].sum()),
             "negative_price_rows_count": int(transactions_df["is_negative_price"].sum()),
         },
@@ -162,18 +203,26 @@ def generate_pipeline_audit(
                 (invoices_df["invoice_type"] == "bad_debt_adjustment").sum()
             ),
             "distinct_valid_customers": distinct_customers,
+            "invoices_with_positive_cancellation_lines": int(
+                invoices_df["has_positive_cancellation_line"].sum()
+            ),
         },
         "financial_reconciliation": {
-            "gross_positive_sales_gbp": round(tx_gross_sales, 2),
-            "attributed_gross_sales_gbp": round(attr_gross_sales, 2),
-            "unattributed_gross_sales_gbp": round(unattr_gross_sales, 2),
+            "gross_product_sales_gbp": round(tx_prod_sales, 2),
+            "attributed_product_sales_gbp": round(attr_prod_sales, 2),
+            "unattributed_product_sales_gbp": round(unattr_prod_sales, 2),
+            "special_commercial_charges_gbp": round(tx_spec_charges, 2),
+            "attributed_special_charges_gbp": round(attr_spec_charges, 2),
+            "unattributed_special_charges_gbp": round(unattr_spec_charges, 2),
+            "gross_sales_gbp": round(tx_gross_sales, 2),
             "cancellations_value_gbp": round(tx_cancellations, 2),
             "attributed_cancellations_gbp": round(attr_cancellations, 2),
             "unattributed_cancellations_gbp": round(unattr_cancellations, 2),
+            "net_commercial_value_gbp": round(tx_net_commercial_value, 2),
             "bad_debt_adjustments_gbp": round(tx_bad_debt, 2),
-            "net_commercial_revenue_gbp": round(tx_line_value_sum, 2),
+            "all_transactions_net_value_gbp": round(tx_all_net_value, 2),
             "invoice_net_revenue_sum_gbp": round(inv_net_value_sum, 2),
-            "revenue_discrepancy_gbp": round(abs(tx_line_value_sum - inv_net_value_sum), 4),
+            "revenue_discrepancy_gbp": round(abs(tx_all_net_value - inv_net_value_sum), 4),
         },
         "reconciliation_invariants": invariants,
     }
@@ -237,12 +286,18 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
             dedup["cross_sheet_duplicates_removed"], ing["sheet2_name"]
         ),
         "- **Retained Transactions**: {:,}".format(dedup["retained_rows_post_deduplication"]),
+        "- **Customer Commercial-Ready Transactions**: {:,} (excludes {:,} zero-revenue freebies)".format(
+            tx["customer_commercial_ready_transactions"], tx["promotional_freebies_count"]
+        ),
         "- **Distinct Valid Customers**: {:,}".format(inv["distinct_valid_customers"]),
         "- **Total Unique Invoices**: {:,}".format(inv["total_unique_invoices"]),
-        "- **Gross Commercial Sales**: {}".format(format_gbp(fin["gross_positive_sales_gbp"])),
+        "- **Gross Product Sales**: {}".format(format_gbp(fin["gross_product_sales_gbp"])),
+        "- **Special Commercial Charges**: {}".format(format_gbp(fin["special_commercial_charges_gbp"])),
+        "- **Total Gross Commercial Sales**: {}".format(format_gbp(fin["gross_sales_gbp"])),
         "- **Cancellations / Refunds**: {}".format(format_gbp(fin["cancellations_value_gbp"])),
+        "- **Net Commercial Value (before bad debt)**: {}".format(format_gbp(fin["net_commercial_value_gbp"])),
         "- **Bad Debt Adjustments**: {}".format(format_gbp(fin["bad_debt_adjustments_gbp"])),
-        "- **Net Commercial Revenue**: {}".format(format_gbp(fin["net_commercial_revenue_gbp"])),
+        "- **All Transactions Net Value (after bad debt)**: {}".format(format_gbp(fin["all_transactions_net_value_gbp"])),
         "",
         "---",
         "",
@@ -275,9 +330,13 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
         "",
         "| Category | Rows | % of Total | Description |",
         "| :--- | :--- | :--- | :--- |",
-        "| `standard_sale` | {:,} | {:.2f}% | Commercial positive sales (qty > 0, price > 0) |".format(
-            tx["standard_sales_count"],
-            (tx["standard_sales_count"] / tx["total_retained_transactions"]) * 100,
+        "| `standard_product_sale` | {:,} | {:.2f}% | Ordinary merchandise sales (qty > 0, price > 0, standard code) |".format(
+            tx["standard_product_sales_count"],
+            (tx["standard_product_sales_count"] / tx["total_retained_transactions"]) * 100,
+        ),
+        "| `special_commercial_charge` | {:,} | {:.2f}% | Commercial fees (POST, DOT, M, BANK CHARGES, etc.) |".format(
+            tx["special_commercial_charges_count"],
+            (tx["special_commercial_charges_count"] / tx["total_retained_transactions"]) * 100,
         ),
         "| `cancellation` | {:,} | {:.2f}% | Invoices starting with 'C' (returns/cancellations) |".format(
             tx["cancellations_count"],
@@ -297,10 +356,13 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
         ),
         "| **Total Retained Rows** | **{:,}** | **100.00%** | |".format(tx["total_retained_transactions"]),
         "",
-        "### Customer Attribution",
-        "- **Customer-Attributed Transactions**: {:,} ({:.2f}%)".format(
+        "### Customer Attribution & Modeling Readiness",
+        "- **Total Customer-Attributed Transactions**: {:,} ({:.2f}%)".format(
             tx["customer_attributed_transactions"],
             (tx["customer_attributed_transactions"] / tx["total_retained_transactions"]) * 100,
+        ),
+        "- **Customer Commercial-Ready Transactions**: {:,} (excludes zero-revenue promotional freebies)".format(
+            tx["customer_commercial_ready_transactions"]
         ),
         "- **Unattributed Transactions**: {:,} ({:.2f}%)".format(
             tx["unattributed_transactions"],
@@ -341,29 +403,41 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
         "",
         "| Revenue Stream | Attributed | Unattributed | Total |",
         "| :--- | :--- | :--- | :--- |",
-        "| **Gross Sales** | {} | {} | {} |".format(
-            format_gbp(fin["attributed_gross_sales_gbp"]),
-            format_gbp(fin["unattributed_gross_sales_gbp"]),
-            format_gbp(fin["gross_positive_sales_gbp"]),
+        "| **Standard Product Sales** | {} | {} | {} |".format(
+            format_gbp(fin["attributed_product_sales_gbp"]),
+            format_gbp(fin["unattributed_product_sales_gbp"]),
+            format_gbp(fin["gross_product_sales_gbp"]),
+        ),
+        "| **Special Commercial Charges** | {} | {} | {} |".format(
+            format_gbp(fin["attributed_special_charges_gbp"]),
+            format_gbp(fin["unattributed_special_charges_gbp"]),
+            format_gbp(fin["special_commercial_charges_gbp"]),
+        ),
+        "| **Total Gross Commercial Sales** | {} | {} | {} |".format(
+            format_gbp(fin["attributed_product_sales_gbp"] + fin["attributed_special_charges_gbp"]),
+            format_gbp(fin["unattributed_product_sales_gbp"] + fin["unattributed_special_charges_gbp"]),
+            format_gbp(fin["gross_sales_gbp"]),
         ),
         "| **Cancellations / Refunds** | {} | {} | {} |".format(
             format_gbp(fin["attributed_cancellations_gbp"]),
             format_gbp(fin["unattributed_cancellations_gbp"]),
             format_gbp(fin["cancellations_value_gbp"]),
         ),
+        "| **Net Commercial Value (before bad debt)** | **{}** | **{}** | **{}** |".format(
+            format_gbp(fin["attributed_product_sales_gbp"] + fin["attributed_special_charges_gbp"] + fin["attributed_cancellations_gbp"]),
+            format_gbp(fin["unattributed_product_sales_gbp"] + fin["unattributed_special_charges_gbp"] + fin["unattributed_cancellations_gbp"]),
+            format_gbp(fin["net_commercial_value_gbp"]),
+        ),
         "| **Bad Debt Adjustments** | {} | {} | {} |".format(
             format_gbp(0.0),
             format_gbp(fin["bad_debt_adjustments_gbp"]),
             format_gbp(fin["bad_debt_adjustments_gbp"]),
         ),
-        "| **Net Revenue** | **{}** | **{}** | **{}** |".format(
-            format_gbp(fin["attributed_gross_sales_gbp"] + fin["attributed_cancellations_gbp"]),
-            format_gbp(fin["unattributed_gross_sales_gbp"]
-            + fin["unattributed_cancellations_gbp"]
-            + fin["bad_debt_adjustments_gbp"]),
-            format_gbp(fin["net_commercial_revenue_gbp"]),
+        "| **All Transactions Net Value (after bad debt)** | **{}** | **{}** | **{}** |".format(
+            format_gbp(fin["attributed_product_sales_gbp"] + fin["attributed_special_charges_gbp"] + fin["attributed_cancellations_gbp"]),
+            format_gbp(fin["unattributed_product_sales_gbp"] + fin["unattributed_special_charges_gbp"] + fin["unattributed_cancellations_gbp"] + fin["bad_debt_adjustments_gbp"]),
+            format_gbp(fin["all_transactions_net_value_gbp"]),
         ),
-
         "",
         "---",
         "",

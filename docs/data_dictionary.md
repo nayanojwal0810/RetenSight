@@ -1,6 +1,6 @@
 # RetenSight Data Dictionary
 
-This document defines the schemas and definitions for the UCI Online Retail II raw source data, the cleaned transaction-level dataset, and the invoice-level aggregate table produced by the RetenSight ingestion and cleaning pipeline.
+This document defines the schemas and definitions for the UCI Online Retail II raw source data, the cleaned transaction-level dataset, the customer commercial-ready modeling extract, and the invoice-level aggregate table produced by the RetenSight ingestion and cleaning pipeline.
 
 ## 1. Raw Workbook Schema
 
@@ -32,7 +32,7 @@ Normalized, enriched, and classified transaction lines (1,044,848 rows after exa
 | `invoice` | `string` | Normalized, trimmed invoice code. |
 | `stock_code` | `string` | Normalized uppercase stock code. |
 | `description` | `string` | Normalized text description (empty string if missing). |
-| `quantity` | `int64` | Transaction quantity (positive for sales, negative for cancellations/adjustments). |
+| `quantity` | `int64` | Transaction quantity (positive for sales/charges, negative for cancellations/adjustments). |
 | `invoice_date` | `timestamp[ns]` | Standardized transaction timestamp. |
 | `price` | `float64` | Unit price in GBP (£). |
 | `line_total` | `float64` | Total line value in GBP (`quantity * price`). |
@@ -46,12 +46,24 @@ Normalized, enriched, and classified transaction lines (1,044,848 rows after exa
 | `is_negative_price` | `bool` | True if unit price is negative (< 0.0). |
 | `has_customer_id` | `bool` | True if customer_id is present and non-null. |
 | `is_special_code` | `bool` | True if stock_code is an administrative code (e.g. POST, D, M, BANK CHARGES, B). |
-| `transaction_category` | `string` | Categorical classification: `standard_sale`, `cancellation`, `bad_debt_adjustment`, `inventory_adjustment`, or `promotional_freebie`. |
-| `is_customer_analysis_ready` | `bool` | True for customer-attributed commercial transactions (sales and returns with valid customer ID). Excludes administrative adjustments. |
+| `transaction_category` | `string` | Classification: `standard_product_sale`, `special_commercial_charge`, `cancellation`, `bad_debt_adjustment`, `inventory_adjustment`, or `promotional_freebie`. |
+| `is_customer_attributed` | `bool` | True if customer ID is present (809,561 rows). |
+| `is_commercial_customer_ready` | `bool` | True for commercial sales, charges, and cancellations with customer ID (809,491 rows). Strictly excludes zero-revenue promotional freebies. |
+| `is_customer_analysis_ready` | `bool` | Alias for `is_commercial_customer_ready`. |
 
 ---
 
-## 3. Invoice-Level Aggregate Schema (`invoice_aggregates.parquet` / `.csv`)
+## 3. Customer Commercial-Ready Extract (`customer_transactions.parquet`)
+
+Filtered subset of `cleaned_transactions` where `is_commercial_customer_ready == True` (809,491 rows across 5,942 distinct customers).
+Contains:
+- 791,045 positive sales records (£17,431,551.16 total gross spend).
+- 18,446 cancellation records (-£1,087,882.14 refunded value).
+- Excludes 70 promotional freebie rows (£0.00) so they cannot act as false positive purchase signals.
+
+---
+
+## 4. Invoice-Level Aggregate Schema (`invoice_aggregates.parquet` / `.csv`)
 
 Summary table at invoice grain (53,628 unique invoices).
 
@@ -66,8 +78,12 @@ Summary table at invoice grain (53,628 unique invoices).
 | `is_cancellation` | `bool` | True if invoice starts with 'C'. |
 | `line_count` | `int64` | Total number of line items on the invoice. |
 | `total_quantity` | `int64` | Sum of all quantities on the invoice. |
-| `gross_sales` | `float64` | Sum of line value for positive-quantity lines (£). |
-| `cancellation_value` | `float64` | Sum of line value for negative-quantity lines (£). |
-| `net_value` | `float64` | Net total invoice value (`gross_sales + cancellation_value`) (£). |
+| `product_sales` | `float64` | Sum of line totals for ordinary merchandise sales (`standard_product_sale`) (£). |
+| `special_charges` | `float64` | Sum of line totals for commercial fees/postage (`special_commercial_charge`) (£). |
+| `gross_sales` | `float64` | Total commercial sales (`product_sales + special_charges`) (£). |
+| `cancellation_value` | `float64` | Sum of line totals for cancellation-coded lines (`cancellation`) (£). |
+| `bad_debt_value` | `float64` | Sum of line totals for bad debt adjustments (`bad_debt_adjustment`) (£). |
+| `net_value` | `float64` | Net total invoice value (`gross_sales + cancellation_value + bad_debt_value`) (£). |
 | `distinct_items` | `int64` | Number of distinct stock codes on the invoice. |
+| `has_positive_cancellation_line` | `bool` | True if invoice starts with 'C' but contains a positive line (e.g. `C496350`). |
 | `source_sheet` | `string` | Provenance sheet (`Year 2009-2010`, `Year 2010-2011`, or `mixed`). |

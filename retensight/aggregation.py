@@ -1,8 +1,8 @@
 """Invoice-level aggregation and reconciliation.
 
-Aggregates transaction line items to the invoice grain, computing gross sales,
-cancellation values, net revenue, and item quantities without fanouts or
-double-counting.
+Aggregates transaction line items to the invoice grain, computing product sales,
+special commercial charges, gross sales, cancellation values, bad debt values,
+and net revenue according to documented transaction classifications.
 """
 
 import logging
@@ -28,22 +28,15 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
     """
     logger.info("Aggregating %d transactions to invoice grain...", len(transactions_df))
 
-    # Helper aggregations
-    # Compute positive (gross) and negative (cancellation) line sums
-    pos_mask = transactions_df["line_total"] > 0
-    neg_mask = transactions_df["line_total"] < 0
-
-    # Calculate grouped metrics
+    # Base grouping by invoice
     grouped = transactions_df.groupby("invoice", sort=False)
 
-    # Base aggregations
     inv_df = grouped.agg(
         invoice_date=("invoice_date", "min"),
         customer_id=("customer_id", "first"),
         country=("country", "first"),
         line_count=("quantity", "count"),
         total_quantity=("quantity", "sum"),
-        net_value=("line_total", "sum"),
         distinct_items=("stock_code", "nunique"),
         is_cancellation=("is_cancellation", "first"),
         is_bad_debt=("is_bad_debt", "first"),
@@ -51,29 +44,56 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
         source_sheet_first=("source_sheet", "first"),
     ).reset_index()
 
-    # Gross sales (positive line totals) per invoice
-    gross_sales = (
-        transactions_df[pos_mask]
+    # Aggregate financial components by transaction classification (not simply sign of line_total)
+    prod_sales = (
+        transactions_df[transactions_df["transaction_category"] == "standard_product_sale"]
         .groupby("invoice", sort=False)["line_total"]
         .sum()
-        .rename("gross_sales")
+        .rename("product_sales")
     )
-
-    # Cancellation values (negative line totals) per invoice
-    cancellation_val = (
-        transactions_df[neg_mask]
+    spec_charges = (
+        transactions_df[transactions_df["transaction_category"] == "special_commercial_charge"]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("special_charges")
+    )
+    canc_val = (
+        transactions_df[transactions_df["transaction_category"] == "cancellation"]
         .groupby("invoice", sort=False)["line_total"]
         .sum()
         .rename("cancellation_value")
     )
+    bad_debt_val = (
+        transactions_df[transactions_df["transaction_category"] == "bad_debt_adjustment"]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("bad_debt_value")
+    )
+    pos_canc_flag = (
+        transactions_df[transactions_df["is_cancellation"] & (transactions_df["line_total"] > 0)]
+        .groupby("invoice", sort=False)["invoice"]
+        .count()
+        .rename("pos_canc_lines")
+    )
 
-    # Merge financial components
-    inv_df = inv_df.merge(gross_sales, on="invoice", how="left")
-    inv_df = inv_df.merge(cancellation_val, on="invoice", how="left")
+    # Merge financial components onto base invoice DataFrame
+    inv_df = inv_df.merge(prod_sales, on="invoice", how="left")
+    inv_df = inv_df.merge(spec_charges, on="invoice", how="left")
+    inv_df = inv_df.merge(canc_val, on="invoice", how="left")
+    inv_df = inv_df.merge(bad_debt_val, on="invoice", how="left")
+    inv_df = inv_df.merge(pos_canc_flag, on="invoice", how="left")
 
-    inv_df["gross_sales"] = inv_df["gross_sales"].fillna(0.0).round(2)
+    inv_df["product_sales"] = inv_df["product_sales"].fillna(0.0).round(2)
+    inv_df["special_charges"] = inv_df["special_charges"].fillna(0.0).round(2)
+    inv_df["gross_sales"] = (inv_df["product_sales"] + inv_df["special_charges"]).round(2)
     inv_df["cancellation_value"] = inv_df["cancellation_value"].fillna(0.0).round(2)
-    inv_df["net_value"] = inv_df["net_value"].round(2)
+    inv_df["bad_debt_value"] = inv_df["bad_debt_value"].fillna(0.0).round(2)
+    inv_df["net_value"] = (
+        inv_df["gross_sales"] + inv_df["cancellation_value"] + inv_df["bad_debt_value"]
+    ).round(2)
+
+    inv_df["has_positive_cancellation_line"] = inv_df["pos_canc_lines"].fillna(0) > 0
+    inv_df = inv_df.drop(columns=["pos_canc_lines"])
 
     # Resolve source sheet label
     inv_df["source_sheet"] = np.where(
@@ -83,7 +103,7 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
     )
     inv_df = inv_df.drop(columns=["source_sheet_nunique", "source_sheet_first"])
 
-    # Flags and types
+    # Customer ID presence flag
     inv_df["has_customer_id"] = inv_df["customer_id"].notna()
 
     # Determine invoice_type
@@ -112,9 +132,35 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
         f"Quantity invariant failed: {inv_df['total_quantity'].sum()} != {transactions_df['quantity'].sum()}"
     )
 
-    # Financial precision reconciliation (allowing for tiny floating point rounding)
-    assert np.isclose(inv_df["net_value"].sum(), transactions_df["line_total"].sum(), atol=1.0), (
-        f"Revenue invariant failed: {inv_df['net_value'].sum()} != {transactions_df['line_total'].sum()}"
+    # Component-level financial reconciliation against transaction categories (penny tolerance 0.01)
+    tx_prod_sales = transactions_df[
+        transactions_df["transaction_category"] == "standard_product_sale"
+    ]["line_total"].sum()
+    tx_spec_charges = transactions_df[
+        transactions_df["transaction_category"] == "special_commercial_charge"
+    ]["line_total"].sum()
+    tx_cancellation = transactions_df[
+        transactions_df["transaction_category"] == "cancellation"
+    ]["line_total"].sum()
+    tx_bad_debt = transactions_df[
+        transactions_df["transaction_category"] == "bad_debt_adjustment"
+    ]["line_total"].sum()
+    tx_net = transactions_df["line_total"].sum()
+
+    assert np.isclose(inv_df["product_sales"].sum(), tx_prod_sales, atol=0.01), (
+        f"Product sales component mismatch: {inv_df['product_sales'].sum():.2f} != {tx_prod_sales:.2f}"
+    )
+    assert np.isclose(inv_df["special_charges"].sum(), tx_spec_charges, atol=0.01), (
+        f"Special charges component mismatch: {inv_df['special_charges'].sum():.2f} != {tx_spec_charges:.2f}"
+    )
+    assert np.isclose(inv_df["cancellation_value"].sum(), tx_cancellation, atol=0.01), (
+        f"Cancellation component mismatch: {inv_df['cancellation_value'].sum():.2f} != {tx_cancellation:.2f}"
+    )
+    assert np.isclose(inv_df["bad_debt_value"].sum(), tx_bad_debt, atol=0.01), (
+        f"Bad debt component mismatch: {inv_df['bad_debt_value'].sum():.2f} != {tx_bad_debt:.2f}"
+    )
+    assert np.isclose(inv_df["net_value"].sum(), tx_net, atol=0.01), (
+        f"Net value invariant mismatch: {inv_df['net_value'].sum():.2f} != {tx_net:.2f}"
     )
 
     logger.info(

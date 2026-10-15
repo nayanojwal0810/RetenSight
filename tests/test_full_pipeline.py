@@ -1,5 +1,6 @@
 """Integration and end-to-end pipeline execution tests."""
 
+import numpy as np
 from pathlib import Path
 import pandas as pd
 import pytest
@@ -18,6 +19,7 @@ def test_pipeline_on_synthetic_workbook(tmp_path):
         (5001, "A1", "Item 1", 2, "2010-01-01 10:00:00", 10.0, 11111, "UK"),
         (5002, "A2", "Item 2", 1, "2010-12-05 12:00:00", 20.0, 22222, "UK"),  # cross-sheet dup
         ("C5003", "A1", "Item 1", -1, "2010-01-02 10:00:00", 10.0, 11111, "UK"),
+        (5005, "FREE1", "Free gift", 1, "2010-01-03 10:00:00", 0.0, 11111, "UK"),  # freebie
     ]
     s2_rows = [
         (5002, "A2", "Item 2", 1, "2010-12-05 12:00:00", 20.0, 22222, "UK"),  # duplicate copy
@@ -38,6 +40,7 @@ def test_pipeline_on_synthetic_workbook(tmp_path):
 
     assert exit_code == 0
     assert (out_dir / "cleaned_transactions.parquet").exists()
+    assert (out_dir / "customer_transactions.parquet").exists()
     assert (out_dir / "invoice_aggregates.parquet").exists()
     assert (out_dir / "invoice_aggregates.csv").exists()
     assert (rep_dir / "data_quality_audit.json").exists()
@@ -45,10 +48,16 @@ def test_pipeline_on_synthetic_workbook(tmp_path):
 
     # Reopen outputs and verify schemas and values
     tx_df = pd.read_parquet(out_dir / "cleaned_transactions.parquet")
-    assert len(tx_df) == 4  # 3 + 2 - 1 dup = 4 rows
+    assert len(tx_df) == 5  # 4 + 2 - 1 dup = 5 rows
+
+    # Customer commercial-ready excludes the promotional freebie:
+    # 4 rows with customer ID: 5001, 5002, C5003, 5005. Row 5005 is freebie -> 3 remain
+    cust_df = pd.read_parquet(out_dir / "customer_transactions.parquet")
+    assert len(cust_df) == 4  # 5001, 5002, C5003, and 5004 is customer 33333 -> 4 commercial customer rows!
+    assert (cust_df["price"] > 0).all()
 
     inv_df = pd.read_parquet(out_dir / "invoice_aggregates.parquet")
-    assert len(inv_df) == 4  # 4 distinct invoices: 5001, 5002, C5003, 5004
+    assert len(inv_df) == 5  # 5 distinct invoices: 5001, 5002, C5003, 5005, 5004
 
 
 @pytest.mark.full_data
@@ -72,19 +81,43 @@ def test_full_workbook_pipeline():
     assert exit_code == 0
 
     tx_parquet = out_dir / "cleaned_transactions.parquet"
+    cust_parquet = out_dir / "customer_transactions.parquet"
     inv_parquet = out_dir / "invoice_aggregates.parquet"
     json_rep = rep_dir / "data_quality_audit.json"
     md_rep = rep_dir / "cleaning_and_reconciliation_summary.md"
 
     assert tx_parquet.exists()
+    assert cust_parquet.exists()
     assert inv_parquet.exists()
     assert json_rep.exists()
     assert md_rep.exists()
 
     # Verify counts and invariants on actual full output
     tx_df = pd.read_parquet(tx_parquet)
+    cust_df = pd.read_parquet(cust_parquet)
     inv_df = pd.read_parquet(inv_parquet)
 
+    # 1. Row counts
     assert len(tx_df) == 1044848, f"Unexpected transactions count: {len(tx_df)}"
+    assert len(cust_df) == 809491, f"Unexpected customer commercial-ready count: {len(cust_df)}"
     assert len(inv_df) == 53628, f"Unexpected invoices count: {len(inv_df)}"
     assert inv_df["customer_id"].nunique(dropna=True) == 5942
+
+    # 2. Financial component exact reconciliation (tolerance £0.01)
+    tx_prod = tx_df[tx_df["transaction_category"] == "standard_product_sale"]["line_total"].sum()
+    tx_spec = tx_df[tx_df["transaction_category"] == "special_commercial_charge"]["line_total"].sum()
+    tx_canc = tx_df[tx_df["transaction_category"] == "cancellation"]["line_total"].sum()
+    tx_debt = tx_df[tx_df["transaction_category"] == "bad_debt_adjustment"]["line_total"].sum()
+    tx_net = tx_df["line_total"].sum()
+
+    assert np.isclose(inv_df["product_sales"].sum(), tx_prod, atol=0.01)
+    assert np.isclose(inv_df["special_charges"].sum(), tx_spec, atol=0.01)
+    assert np.isclose(inv_df["cancellation_value"].sum(), tx_canc, atol=0.01)
+    assert np.isclose(inv_df["bad_debt_value"].sum(), tx_debt, atol=0.01)
+    assert np.isclose(inv_df["net_value"].sum(), tx_net, atol=0.01)
+
+    assert np.isclose(tx_prod, 19716362.61, atol=0.01)
+    assert np.isclose(tx_spec, 806317.23, atol=0.01)
+    assert np.isclose(tx_canc, -1465303.66, atol=0.01)
+    assert np.isclose(tx_debt, -147614.08, atol=0.01)
+    assert np.isclose(tx_net, 18909762.10, atol=0.01)

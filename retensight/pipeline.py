@@ -130,8 +130,8 @@ def run_pipeline(
         cleaned_tx.to_parquet(tx_parquet_path, index=False)
         invoices_df.to_parquet(inv_parquet_path, index=False)
 
-        # Filtered customer-ready dataset
-        cust_tx = cleaned_tx[cleaned_tx["is_customer_analysis_ready"]].copy()
+        # Filtered customer commercial-ready dataset (model-ready: sales, charges, cancellations; excludes promotional freebies)
+        cust_tx = cleaned_tx[cleaned_tx["is_commercial_customer_ready"]].copy()
         cust_tx.to_parquet(cust_parquet_path, index=False)
 
         # CSV exports if requested
@@ -165,10 +165,17 @@ def run_pipeline(
     elapsed = time.time() - start_time
     logger.info("==================================================")
     logger.info("RetenSight Pipeline Finished Successfully in %.2f seconds", elapsed)
-    logger.info("Retained Transactions : %d", len(cleaned_tx))
-    logger.info("Unique Invoices       : %d", len(invoices_df))
-    logger.info("Distinct Customers    : %d", invoices_df["customer_id"].nunique(dropna=True))
-    logger.info("Net Commercial Revenue: £%s", f"{audit_dict['financial_reconciliation']['net_commercial_revenue_gbp']:,.2f}")
+    logger.info("Retained Transactions       : %d", len(cleaned_tx))
+    logger.info("Customer Model-Ready Rows   : %d", len(cust_tx))
+    logger.info("Unique Invoices             : %d", len(invoices_df))
+    logger.info("Distinct Customers          : %d", invoices_df["customer_id"].nunique(dropna=True))
+    logger.info("Gross Product Sales         : £%s", f"{audit_dict['financial_reconciliation']['gross_product_sales_gbp']:,.2f}")
+    logger.info("Special Commercial Charges  : £%s", f"{audit_dict['financial_reconciliation']['special_commercial_charges_gbp']:,.2f}")
+    logger.info("Total Gross Sales           : £%s", f"{audit_dict['financial_reconciliation']['gross_sales_gbp']:,.2f}")
+    logger.info("Cancellations / Refunds     : £%s", f"{audit_dict['financial_reconciliation']['cancellations_value_gbp']:,.2f}")
+    logger.info("Net Commercial Value        : £%s", f"{audit_dict['financial_reconciliation']['net_commercial_value_gbp']:,.2f}")
+    logger.info("Bad Debt Adjustments        : £%s", f"{audit_dict['financial_reconciliation']['bad_debt_adjustments_gbp']:,.2f}")
+    logger.info("All Transactions Net Value  : £%s", f"{audit_dict['financial_reconciliation']['all_transactions_net_value_gbp']:,.2f}")
     logger.info("==================================================")
 
     return 0

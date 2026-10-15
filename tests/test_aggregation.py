@@ -1,4 +1,4 @@
-"""Unit tests for invoice-level aggregation and reconciliation invariants."""
+"""Unit tests for invoice-level aggregation and component reconciliation invariants."""
 
 import numpy as np
 import pytest
@@ -15,47 +15,82 @@ def test_invoice_grain_uniqueness(synthetic_sheets):
     cleaned = clean_and_classify_transactions(combined)
     invoices = build_invoice_aggregates(cleaned)
 
-    # In synthetic data, invoices are:
-    # 500001, 500002, 500003, 500004, 500005, C500006, 500007, 500008, A500009, 500010, 500011
-    # Total unique invoices = 11
-    assert len(invoices) == 11
-    assert invoices["invoice"].nunique() == 11
+    # Invoices present:
+    # 500001, 500002, 500003, 500004, 500005, C500006, C500013, 500007, 500008, A500009, A500014, 500012, 500010, 500011
+    # Total unique invoices = 14
+    assert len(invoices) == invoices["invoice"].nunique()
+    assert len(invoices) == 14
 
 
-def test_invoice_reconciliation_invariants(synthetic_sheets):
-    """Verifies line count, total quantity, and revenue reconciliation between transactions and invoices."""
+def test_invoice_component_reconciliation_penny_tolerance(synthetic_sheets):
+    """Verifies that each category-specific financial component at invoice level
+
+    reconciles to the transaction-level totals within £0.01 tolerance.
+    """
     df1, df2 = synthetic_sheets
     combined, _ = resolve_cross_sheet_duplicates(df1, df2)
     cleaned = clean_and_classify_transactions(combined)
     invoices = build_invoice_aggregates(cleaned)
 
-    # 1. Line count invariant
-    assert invoices["line_count"].sum() == len(cleaned)
+    # 1. Product sales component
+    tx_prod = cleaned[cleaned["transaction_category"] == "standard_product_sale"]["line_total"].sum()
+    assert np.isclose(invoices["product_sales"].sum(), tx_prod, atol=0.01)
 
-    # 2. Total quantity invariant
-    assert invoices["total_quantity"].sum() == cleaned["quantity"].sum()
+    # 2. Special commercial charges component
+    tx_spec = cleaned[cleaned["transaction_category"] == "special_commercial_charge"]["line_total"].sum()
+    assert np.isclose(invoices["special_charges"].sum(), tx_spec, atol=0.01)
 
-    # 3. Net value invariant
+    # 3. Gross sales (product + special charges)
+    assert np.isclose(invoices["gross_sales"].sum(), tx_prod + tx_spec, atol=0.01)
+
+    # 4. Cancellation value component
+    tx_canc = cleaned[cleaned["transaction_category"] == "cancellation"]["line_total"].sum()
+    assert np.isclose(invoices["cancellation_value"].sum(), tx_canc, atol=0.01)
+
+    # 5. Bad debt value component
+    tx_debt = cleaned[cleaned["transaction_category"] == "bad_debt_adjustment"]["line_total"].sum()
+    assert np.isclose(invoices["bad_debt_value"].sum(), tx_debt, atol=0.01)
+
+    # 6. Overall net value
     assert np.isclose(invoices["net_value"].sum(), cleaned["line_total"].sum(), atol=0.01)
 
 
-def test_gross_sales_and_cancellation_separation(synthetic_sheets):
-    """Verifies gross sales and cancellation values are correctly separated."""
+def test_positive_cancellation_and_bad_debt_components(synthetic_sheets):
+    """Verifies that positive cancellation and bad-debt lines remain in their respective
+
+    category components, not relabeled as ordinary sales.
+    """
     df1, df2 = synthetic_sheets
     combined, _ = resolve_cross_sheet_duplicates(df1, df2)
     cleaned = clean_and_classify_transactions(combined)
     invoices = build_invoice_aggregates(cleaned)
 
-    # Standard sale invoice 500001: 2 * 5.0 = 10.0 gross, 0 cancellation
-    inv_1 = invoices[invoices["invoice"] == "500001"].iloc[0]
-    assert inv_1["gross_sales"] == 10.0
-    assert inv_1["cancellation_value"] == 0.0
-    assert inv_1["net_value"] == 10.0
-    assert inv_1["invoice_type"] == "customer_sale"
+    # Positive cancellation invoice C500013:
+    # line_total is +25.0 -> MUST appear in cancellation_value as +25.0, and gross_sales must be 0.0
+    inv_c13 = invoices[invoices["invoice"] == "C500013"].iloc[0]
+    assert inv_c13["cancellation_value"] == 25.0
+    assert inv_c13["gross_sales"] == 0.0
+    assert inv_c13["product_sales"] == 0.0
+    assert inv_c13["net_value"] == 25.0
+    assert inv_c13["has_positive_cancellation_line"] is True or inv_c13["has_positive_cancellation_line"] == True
 
-    # Cancellation invoice C500006: 0 gross, -5.0 cancellation
-    inv_c = invoices[invoices["invoice"] == "C500006"].iloc[0]
-    assert inv_c["gross_sales"] == 0.0
-    assert inv_c["cancellation_value"] == -5.0
-    assert inv_c["net_value"] == -5.0
-    assert inv_c["invoice_type"] == "customer_cancellation"
+    # Positive bad debt invoice A500014:
+    # line_total is +50.0 -> MUST appear in bad_debt_value as +50.0, and gross_sales must be 0.0
+    inv_a14 = invoices[invoices["invoice"] == "A500014"].iloc[0]
+    assert inv_a14["bad_debt_value"] == 50.0
+    assert inv_a14["gross_sales"] == 0.0
+    assert inv_a14["net_value"] == 50.0
+
+    # Negative bad debt invoice A500009:
+    inv_a9 = invoices[invoices["invoice"] == "A500009"].iloc[0]
+    assert inv_a9["bad_debt_value"] == -100.0
+    assert inv_a9["cancellation_value"] == 0.0
+    assert inv_a9["gross_sales"] == 0.0
+    assert inv_a9["net_value"] == -100.0
+
+    # Special charge invoice 500012 (POST):
+    inv_post = invoices[invoices["invoice"] == "500012"].iloc[0]
+    assert inv_post["product_sales"] == 0.0
+    assert inv_post["special_charges"] == 15.0
+    assert inv_post["gross_sales"] == 15.0
+    assert inv_post["net_value"] == 15.0

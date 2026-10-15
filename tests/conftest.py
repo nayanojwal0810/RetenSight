@@ -16,11 +16,14 @@ def synthetic_sheets():
        - Row B appears 1 time in Sheet 1, 2 times in Sheet 2 -> 1 removed from Sheet 2, 1 retained in Sheet 2.
     3. Legitimate same-sheet duplicates:
        - Row C appears 2 times in Sheet 1, 0 times in Sheet 2 -> both preserved in Sheet 1.
-    4. Cancellation invoice ('C10001', negative quantity, positive price).
-    5. Zero-price inventory write-off (Quantity < 0, Price == 0, Customer ID NaN).
-    6. Zero-price promotional gift (Quantity > 0, Price == 0, Customer ID populated).
-    7. Bad debt adjustment ('A10002', StockCode 'B', Price < 0, Customer ID NaN).
-    8. Null Customer ID with positive sales.
+    4. Cancellation invoice ('C500006', negative quantity, positive price).
+    5. Positive line on cancellation invoice ('C500013', quantity 1, price 25.0, positive line total).
+    6. Zero-price inventory write-off (Quantity < 0, Price == 0, Customer ID NaN).
+    7. Zero-price promotional gift (Quantity > 0, Price == 0, Customer ID populated).
+    8. Negative bad debt adjustment ('A500009', StockCode 'B', Price -100.0, Customer ID NaN).
+    9. Positive bad debt adjustment ('A500014', StockCode 'B', Price 50.0, Customer ID NaN).
+    10. Priced special stock code line ('500012', StockCode 'POST', Price 15.0, Customer ID populated).
+    11. Null Customer ID with positive sales ('500010').
     """
     cols = [
         "Invoice",
@@ -47,14 +50,20 @@ def synthetic_sheets():
         # Same-sheet duplicate in S1 (appears 2 times in S1, 0 in S2)
         ("500005", "85052", "Product C", 4, datetime(2010, 2, 1, 9, 30), 2.5, 12348, "United Kingdom"),
         ("500005", "85052", "Product C", 4, datetime(2010, 2, 1, 9, 30), 2.5, 12348, "United Kingdom"),
-        # Cancellation
+        # Standard cancellation (negative line total)
         ("C500006", "85048", "Product 1", -1, datetime(2010, 3, 1, 11, 0), 5.0, 12345, "United Kingdom"),
+        # Positive line on cancellation invoice (anomaly line)
+        ("C500013", "M", "Manual Positive", 1, datetime(2010, 9, 1, 11, 0), 25.0, 12345, "United Kingdom"),
         # Zero price inventory adjustment (NaN customer)
         ("500007", "85053", "damages", -10, datetime(2010, 4, 1, 12, 0), 0.0, None, "United Kingdom"),
         # Zero price promotional freebie (valid customer)
         ("500008", "85054", "Free gift", 1, datetime(2010, 5, 1, 13, 0), 0.0, 12349, "United Kingdom"),
-        # Bad debt adjustment ('A')
-        ("A500009", "B", "Adjust bad debt", 1, datetime(2010, 6, 1, 14, 0), -100.0, None, "United Kingdom"),
+        # Negative bad debt adjustment ('A')
+        ("A500009", "B", "Adjust bad debt negative", 1, datetime(2010, 6, 1, 14, 0), -100.0, None, "United Kingdom"),
+        # Positive bad debt adjustment ('A')
+        ("A500014", "B", "Adjust bad debt positive", 1, datetime(2010, 10, 1, 12, 0), 50.0, None, "United Kingdom"),
+        # Priced special stock code line (postage commercial fee)
+        ("500012", "POST", "POSTAGE", 1, datetime(2010, 8, 1, 10, 0), 15.0, 12345, "United Kingdom"),
         # Unattributed sale (missing customer)
         ("500010", "85055", "Product Unattr", 5, datetime(2010, 7, 1, 15, 0), 2.0, None, "United Kingdom"),
     ]

@@ -79,35 +79,45 @@ def clean_and_classify_transactions(
         cleaned["is_cancellation"],
         cleaned["is_zero_price"] & cleaned["has_customer_id"],
         cleaned["is_zero_price"] & (~cleaned["has_customer_id"]),
-        (cleaned["quantity"] > 0) & (cleaned["price"] > 0) & (~cleaned["is_cancellation"]),
+        (cleaned["quantity"] > 0) & (cleaned["price"] > 0) & (~cleaned["is_cancellation"]) & cleaned["is_special_code"],
+        (cleaned["quantity"] > 0) & (cleaned["price"] > 0) & (~cleaned["is_cancellation"]) & (~cleaned["is_special_code"]),
     ]
     categories = [
         "bad_debt_adjustment",
         "cancellation",
         "promotional_freebie",
         "inventory_adjustment",
-        "standard_sale",
+        "special_commercial_charge",
+        "standard_product_sale",
     ]
     cleaned["transaction_category"] = np.select(conditions, categories, default="other_anomaly")
 
-    # 7. Customer analysis readiness flag
-    # Ready if customer ID is present, transaction is a commercial sale/cancellation/freebie,
-    # and not an administrative or bad-debt adjustment.
-    cleaned["is_customer_analysis_ready"] = (
+    # 7. Customer analysis and modeling readiness flags
+    # Full customer attribution flag: all rows with valid customer ID (including freebies)
+    cleaned["is_customer_attributed"] = cleaned["has_customer_id"]
+
+    # Commercial customer readiness flag (model-ready):
+    # Excludes zero-revenue promotional freebies and administrative adjustments.
+    # Preserves paid product sales, special commercial charges, and cancellations.
+    cleaned["is_commercial_customer_ready"] = (
         cleaned["has_customer_id"]
         & cleaned["transaction_category"].isin(
-            ["standard_sale", "cancellation", "promotional_freebie"]
+            ["standard_product_sale", "special_commercial_charge", "cancellation"]
         )
-        & (~cleaned["is_bad_debt"])
     )
 
+    # Alias for backward compatibility
+    cleaned["is_customer_analysis_ready"] = cleaned["is_commercial_customer_ready"]
+
     logger.info(
-        "Cleaned %d transactions. Commercial sales: %d, Cancellations: %d, "
-        "Customer-attributed rows: %d.",
+        "Cleaned %d transactions. Standard product sales: %d, Special charges: %d, "
+        "Cancellations: %d, Promotional freebies: %d, Commercial customer-ready rows: %d.",
         len(cleaned),
-        (cleaned["transaction_category"] == "standard_sale").sum(),
+        (cleaned["transaction_category"] == "standard_product_sale").sum(),
+        (cleaned["transaction_category"] == "special_commercial_charge").sum(),
         (cleaned["transaction_category"] == "cancellation").sum(),
-        cleaned["has_customer_id"].sum(),
+        (cleaned["transaction_category"] == "promotional_freebie").sum(),
+        cleaned["is_commercial_customer_ready"].sum(),
     )
 
     return cleaned

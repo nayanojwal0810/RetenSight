@@ -21,10 +21,10 @@ def test_cross_sheet_exact_matching(synthetic_sheets):
 
     combined, audit = resolve_cross_sheet_duplicates(df1, df2)
 
-    assert audit.total_raw_rows == 17
+    assert audit.total_raw_rows == len(df1) + len(df2)
     assert audit.cross_sheet_duplicates_removed == 3
-    assert audit.retained_rows == 14
-    assert len(combined) == 14
+    assert audit.retained_rows == len(df1) + len(df2) - 3
+    assert len(combined) == len(df1) + len(df2) - 3
 
 
 def test_preservation_of_same_sheet_duplicates(synthetic_sheets):

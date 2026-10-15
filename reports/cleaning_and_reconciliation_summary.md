@@ -5,12 +5,16 @@
 - **Raw Rows Ingested**: 1,067,371 across 2 workbook sheets (`Year 2009-2010`: 525,461, `Year 2010-2011`: 541,910)
 - **Exact Cross-Sheet Duplicates Removed**: 22,523 (from `Year 2010-2011` overlap)
 - **Retained Transactions**: 1,044,848
+- **Customer Commercial-Ready Transactions**: 809,491 (excludes 70 zero-revenue freebies)
 - **Distinct Valid Customers**: 5,942
 - **Total Unique Invoices**: 53,628
-- **Gross Commercial Sales**: £20,522,679.84
+- **Gross Product Sales**: £19,716,362.61
+- **Special Commercial Charges**: £806,317.23
+- **Total Gross Commercial Sales**: £20,522,679.84
 - **Cancellations / Refunds**: -£1,465,303.66
+- **Net Commercial Value (before bad debt)**: £19,057,376.18
 - **Bad Debt Adjustments**: -£147,614.08
-- **Net Commercial Revenue**: £18,909,762.10
+- **All Transactions Net Value (after bad debt)**: £18,909,762.10
 
 ---
 
@@ -31,15 +35,17 @@
 
 | Category | Rows | % of Total | Description |
 | :--- | :--- | :--- | :--- |
-| `standard_sale` | 1,019,653 | 97.59% | Commercial positive sales (qty > 0, price > 0) |
+| `standard_product_sale` | 1,015,425 | 97.18% | Ordinary merchandise sales (qty > 0, price > 0, standard code) |
+| `special_commercial_charge` | 4,228 | 0.40% | Commercial fees (POST, DOT, M, BANK CHARGES, etc.) |
 | `cancellation` | 19,165 | 1.83% | Invoices starting with 'C' (returns/cancellations) |
 | `inventory_adjustment` | 5,954 | 0.57% | Administrative loss/found write-offs (price=0, no customer ID) |
 | `promotional_freebie` | 70 | 0.01% | Free gifts with customer orders (price=0, customer ID present) |
 | `bad_debt_adjustment` | 6 | 0.0006% | Invoices starting with 'A' (accounting debt write-offs) |
 | **Total Retained Rows** | **1,044,848** | **100.00%** | |
 
-### Customer Attribution
-- **Customer-Attributed Transactions**: 809,561 (77.48%)
+### Customer Attribution & Modeling Readiness
+- **Total Customer-Attributed Transactions**: 809,561 (77.48%)
+- **Customer Commercial-Ready Transactions**: 809,491 (excludes zero-revenue promotional freebies)
 - **Unattributed Transactions**: 235,287 (22.52%)
 
 ---
@@ -62,10 +68,13 @@
 
 | Revenue Stream | Attributed | Unattributed | Total |
 | :--- | :--- | :--- | :--- |
-| **Gross Sales** | £17,431,551.16 | £3,091,128.68 | £20,522,679.84 |
+| **Standard Product Sales** | £17,137,712.98 | £2,578,649.63 | £19,716,362.61 |
+| **Special Commercial Charges** | £293,838.18 | £512,479.05 | £806,317.23 |
+| **Total Gross Commercial Sales** | £17,431,551.16 | £3,091,128.68 | £20,522,679.84 |
 | **Cancellations / Refunds** | -£1,087,882.14 | -£377,421.52 | -£1,465,303.66 |
+| **Net Commercial Value (before bad debt)** | **£16,343,669.02** | **£2,713,707.16** | **£19,057,376.18** |
 | **Bad Debt Adjustments** | £0.00 | -£147,614.08 | -£147,614.08 |
-| **Net Revenue** | **£16,343,669.02** | **£2,566,093.08** | **£18,909,762.10** |
+| **All Transactions Net Value (after bad debt)** | **£16,343,669.02** | **£2,566,093.08** | **£18,909,762.10** |
 
 ---
 
@@ -74,5 +83,10 @@
 - **raw_minus_duplicates_equals_retained**: PASSED [✓]
 - **transaction_lines_equal_invoice_line_count_sum**: PASSED [✓]
 - **transaction_quantities_equal_invoice_quantities**: PASSED [✓]
-- **transaction_net_value_equals_invoice_net_value**: PASSED [✓]
-- **gross_plus_returns_plus_bad_debt_equals_total_value**: PASSED [✓]
+- **product_sales_reconciliation**: PASSED [✓]
+- **special_charges_reconciliation**: PASSED [✓]
+- **cancellation_value_reconciliation**: PASSED [✓]
+- **bad_debt_value_reconciliation**: PASSED [✓]
+- **all_transactions_net_value_equals_invoice_net_value**: PASSED [✓]
+- **commercial_net_plus_bad_debt_equals_all_net**: PASSED [✓]
+- **customer_commercial_ready_count_invariant**: PASSED [✓]
