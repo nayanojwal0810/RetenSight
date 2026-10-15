@@ -92,7 +92,29 @@ def clean_and_classify_transactions(
     ]
     cleaned["transaction_category"] = np.select(conditions, categories, default="other_anomaly")
 
-    # 7. Customer analysis and modeling readiness flags
+    # 7. Customer analysis, commercial spend, and modeling readiness flags
+    cleaned["is_shipping"] = cleaned["stock_code"].isin(set(PipelineConfig.shipping_stock_codes))
+    cleaned["is_discount"] = cleaned["stock_code"].isin(set(PipelineConfig.discount_stock_codes))
+    cleaned["is_manual"] = cleaned["stock_code"].isin(set(PipelineConfig.manual_stock_codes))
+    cleaned["is_admin_settlement"] = cleaned["stock_code"].isin(set(PipelineConfig.administrative_stock_codes))
+    cleaned["is_merchandise"] = (~cleaned["is_special_code"]) & (~cleaned["is_bad_debt"])
+
+    # Line item qualifies as a physical merchandise purchase
+    cleaned["qualifies_as_purchase_item"] = (
+        cleaned["is_merchandise"]
+        & (~cleaned["is_cancellation"])
+        & (cleaned["quantity"] > 0)
+        & (cleaned["price"] > 0)
+    )
+
+    # Line item affects customer commercial spend (excludes non-commercial admin settlements, bad debt, freebies)
+    cleaned["affects_customer_commercial_spend"] = (
+        cleaned["has_customer_id"]
+        & (~cleaned["is_bad_debt"])
+        & (~cleaned["is_admin_settlement"])
+        & (~cleaned["is_zero_price"])
+    )
+
     # Full customer attribution flag: all rows with valid customer ID (including freebies)
     cleaned["is_customer_attributed"] = cleaned["has_customer_id"]
 

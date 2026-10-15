@@ -88,6 +88,34 @@ def sample_transactions_for_audit() -> pd.DataFrame:
             "has_customer_id": False,
             "transaction_category": "bad_debt_adjustment",
         },
+        # CRUK: administrative charity commission payout
+        {
+            "invoice": "C10006",
+            "stock_code": "CRUK",
+            "description": "CRUK Commission",
+            "quantity": -1,
+            "invoice_date": pd.Timestamp("2010-01-14 15:00:00"),
+            "price": 500.0,
+            "customer_id": 14096,
+            "country": "United Kingdom",
+            "line_total": -500.0,
+            "has_customer_id": True,
+            "transaction_category": "cancellation",
+        },
+        # BANK CHARGES: financial fee
+        {
+            "invoice": "10007",
+            "stock_code": "BANK CHARGES",
+            "description": "Bank Charges",
+            "quantity": 1,
+            "invoice_date": pd.Timestamp("2010-01-15 16:00:00"),
+            "price": 15.0,
+            "customer_id": 12348,
+            "country": "United Kingdom",
+            "line_total": 15.0,
+            "has_customer_id": True,
+            "transaction_category": "special_commercial_charge",
+        },
     ]
     return pd.DataFrame(records)
 
@@ -102,6 +130,8 @@ def test_audit_special_stock_codes_invariants(sample_transactions_for_audit: pd.
     assert "PADS" in entries
     assert "D" in entries
     assert "B" in entries
+    assert "CRUK" in entries
+    assert "BANK CHARGES" in entries
 
     # POST checks
     post_e = entries["POST"]
@@ -111,6 +141,7 @@ def test_audit_special_stock_codes_invariants(sample_transactions_for_audit: pd.
     assert post_e["total_value_gbp"] == 18.0
     assert post_e["is_physical_merchandise"] is False
     assert post_e["increments_purchase_frequency"] is False
+    assert post_e["affects_customer_commercial_spend"] is True
 
     # DOT checks
     dot_e = entries["DOT"]
@@ -119,13 +150,33 @@ def test_audit_special_stock_codes_invariants(sample_transactions_for_audit: pd.
     assert dot_e["unattributed_lines"] == 1
     assert dot_e["total_value_gbp"] == 250.0
     assert dot_e["is_physical_merchandise"] is False
+    assert dot_e["affects_customer_commercial_spend"] is True
 
     # PADS checks (confirmed physical merchandise)
     pads_e = entries["PADS"]
     assert pads_e["line_count"] == 1
     assert pads_e["is_physical_merchandise"] is True
     assert pads_e["increments_purchase_frequency"] is True
+    assert pads_e["affects_customer_commercial_spend"] is True
     assert "CUSHIONS" in pads_e["evidence"]
+
+    # CRUK checks (charity commission - excluded from customer commercial spend)
+    cruk_e = entries["CRUK"]
+    assert cruk_e["line_count"] == 1
+    assert cruk_e["customer_attributed_lines"] == 1
+    assert cruk_e["total_value_gbp"] == -500.0
+    assert cruk_e["is_physical_merchandise"] is False
+    assert cruk_e["increments_purchase_frequency"] is False
+    assert cruk_e["affects_customer_commercial_spend"] is False
+
+    # BANK CHARGES checks (excluded from customer commercial spend)
+    bank_e = entries["BANK CHARGES"]
+    assert bank_e["line_count"] == 1
+    assert bank_e["customer_attributed_lines"] == 1
+    assert bank_e["total_value_gbp"] == 15.0
+    assert bank_e["is_physical_merchandise"] is False
+    assert bank_e["increments_purchase_frequency"] is False
+    assert bank_e["affects_customer_commercial_spend"] is False
 
     # Attribution reconciliation invariant
     for e in audit["stock_code_entries"]:

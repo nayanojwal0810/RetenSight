@@ -16,8 +16,9 @@
       "inferred_category": "staff_clerical_adjustment",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as special commercial charge or administrative correction. Adjusts monetary value; does not increment purchase frequency.",
-      "evidence": "Descriptions specify internal staff adjustments (e.g., 'Adjustment by john on 26/01/2010'). Represents internal ledger reconciliation rather than genuine customer ordering.",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as internal staff clerical adjustment. Excluded from customer commercial spend (isolated under administrative settlements, +\u00a32,038.12 net customer total). Preserved in business-level financial audit.",
+      "evidence": "Descriptions specify internal staff adjustments (e.g., 'Adjustment by john on 26/01/2010'). Internal book balance corrections by warehouse/accounting personnel.",
       "top_descriptions": {
         "Adjustment by john on 26/01/2010 16": 38,
         "Adjustment by john on 26/01/2010 17": 26,
@@ -40,7 +41,8 @@
       "inferred_category": "staff_clerical_adjustment",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as special commercial charge. Adjusts monetary value; does not increment purchase frequency.",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as internal staff clerical adjustment. Excluded from customer commercial spend (isolated under administrative settlements, +\u00a3731.05 customer total). Preserved in business-level financial audit.",
       "evidence": "Descriptions specify internal staff corrections ('Adjustment by Peter on Jun 25 2010'). Internal book balance correction.",
       "top_descriptions": {
         "Adjustment by Peter on Jun 25 2010": 3
@@ -62,7 +64,8 @@
       "inferred_category": "marketplace_platform_fee",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as marketplace fee. Unattributed to customers. Does not affect customer-level RFM.",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as marketplace platform fee. 100% unattributed. Excluded from customer RFM; retained in company-level financial audit.",
       "evidence": "Description is 'AMAZON FEE'. Deductions taken by Amazon marketplace platform for third-party seller fees.",
       "top_descriptions": {
         "AMAZON FEE": 36
@@ -84,8 +87,9 @@
       "inferred_category": "bad_debt_writeoff",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as bad_debt_adjustment. Separated completely from commercial revenue. Never increments customer purchase frequency or counts as positive sales.",
-      "evidence": "Description is 'Adjust bad debt'. Invoices are prefixed with 'A' (e.g. A506401). Accounting write-offs of uncollectible balances (\u00a3147,614.08).",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as bad_debt_adjustment. Separated completely from customer commercial revenue. Company-level accounting write-off of uncollectible balances (-\u00a3147,614.08). Excluded from customer RFM.",
+      "evidence": "Description is 'Adjust bad debt'. Invoices are prefixed with 'A' (e.g. A506401). 0 customer attribution.",
       "top_descriptions": {
         "Adjust bad debt": 6
       },
@@ -106,8 +110,9 @@
       "inferred_category": "banking_and_payment_fee",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as special commercial charge or administrative cost. Does not represent merchandise. Excluded from product repeat purchase frequency.",
-      "evidence": "Description is 'Bank Charges'. Wire fees, international payment processing charges, and merchant costs.",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as administrative financial fee. Excluded from customer commercial spend (isolated under administrative settlements, +\u00a3330.00 customer total). Preserved in business-level financial audit. Excluded from repeat purchase frequency.",
+      "evidence": "Description is 'Bank Charges'. Wire transfer fees, international payment processing charges, and merchant operational overhead.",
       "top_descriptions": {
         "Bank Charges": 100
       },
@@ -128,8 +133,9 @@
       "inferred_category": "charity_commission",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as administrative cancellation/settlement. Excluded from customer purchase frequency.",
-      "evidence": "Description is 'CRUK Commission'. All 16 transactions belong to Customer ID 14096 (Cancer Research UK) as commission payouts or fundraising disbursements.",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as administrative charity commission payout. Excluded from customer commercial spend (isolated under administrative settlements, -\u00a37,933.43). All 16 transactions belong to Customer ID 14096 (Cancer Research UK). Preserved in business-level financial audit.",
+      "evidence": "Description is 'CRUK Commission'. Payouts / commission disbursements to charity partner Customer 14096, not merchandise purchases or customer returns.",
       "top_descriptions": {
         "CRUK Commission": 16
       },
@@ -150,8 +156,9 @@
       "inferred_category": "commercial_discount",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as cancellation/discount credit or special charge. Decreases customer monetary net value. Does not increment purchase frequency.",
-      "evidence": "Description is 'Discount'. Commercial concessions and rebates granted to trade accounts. All transactions are price reductions.",
+      "affects_customer_commercial_spend": true,
+      "treatment_rule": "Classified as commercial discount. Reduces customer commercial net spend. Does not increment purchase frequency.",
+      "evidence": "Description is 'Discount'. Commercial concessions and rebates granted to trade accounts. Transactions reduce customer account balance.",
       "top_descriptions": {
         "Discount": 173
       },
@@ -172,6 +179,7 @@
       "inferred_category": "inventory_adjustment",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
+      "affects_customer_commercial_spend": false,
       "treatment_rule": "Classified as inventory adjustment. Price is \u00a30.00. Excluded from customer RFM.",
       "evidence": "Zero price inventory entry without customer attribution.",
       "top_descriptions": {
@@ -192,6 +200,7 @@
       "inferred_category": "inventory_adjustment",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
+      "affects_customer_commercial_spend": false,
       "treatment_rule": "Classified as inventory adjustment. Price is \u00a30.00. Excluded from customer RFM.",
       "evidence": "Zero price inventory entry without customer attribution.",
       "top_descriptions": {
@@ -212,6 +221,7 @@
       "inferred_category": "physical_merchandise",
       "is_physical_merchandise": true,
       "increments_purchase_frequency": true,
+      "affects_customer_commercial_spend": true,
       "treatment_rule": "Classified as standard product merchandise. Walk-in / unattributed sales of boys party bags.",
       "evidence": "Description is 'BOYS PARTY BAG'. Tangible party goods sold at standard retail unit prices.",
       "top_descriptions": {
@@ -236,6 +246,7 @@
       "inferred_category": "physical_merchandise",
       "is_physical_merchandise": true,
       "increments_purchase_frequency": true,
+      "affects_customer_commercial_spend": true,
       "treatment_rule": "Classified as standard product merchandise. Walk-in / unattributed sales of girls party bags.",
       "evidence": "Description is 'GIRLS PARTY BAG'. Tangible party goods sold at standard retail unit prices.",
       "top_descriptions": {
@@ -260,8 +271,9 @@
       "inferred_category": "website_delivery_fee",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as special commercial charge. Overwhelmingly unattributed (>98% lines, \u00a3297k+). Does not represent physical merchandise and does not increment customer purchase frequency.",
-      "evidence": "Descriptions consist of 'DOTCOM POSTAGE'. Represents batch fulfillment costs for web orders. Almost entirely unattributed to individual retail customer IDs.",
+      "affects_customer_commercial_spend": true,
+      "treatment_rule": "Classified as special commercial charge. Customer-attributed portion (16 lines, \u00a311,906.36 on Customer 14096) represents delivery fees and affects commercial spend. Unattributed portion (\u00a3297,937.74) remains in whole-company financial reconciliation. Does not increment purchase frequency.",
+      "evidence": "Descriptions consist of 'DOTCOM POSTAGE'. Batch fulfillment delivery fees for web orders. Overwhelmingly unattributed; customer-attributed lines belong to corporate partner account 14096.",
       "top_descriptions": {
         "DOTCOM POSTAGE": 1423,
         "[BLANK]": 2
@@ -283,6 +295,7 @@
       "inferred_category": "inventory_adjustment",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
+      "affects_customer_commercial_spend": false,
       "treatment_rule": "Classified as inventory adjustment. Price is \u00a30.00, customer ID is missing. Excluded from customer RFM.",
       "evidence": "Zero price administrative inventory movement without customer transaction value.",
       "top_descriptions": {
@@ -303,7 +316,8 @@
       "inferred_category": "manual_commercial_adjustment",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as special commercial charge when positive, cancellation/credit when negative. Adjusts customer monetary net spend. Does not count as a standard catalog merchandise purchase.",
+      "affects_customer_commercial_spend": true,
+      "treatment_rule": "Classified as special commercial charge when positive, cancellation/credit when negative. Adjusts customer commercial net spend (custom bespoke billing / concession). Does not count as a standard catalog merchandise repeat purchase.",
       "evidence": "Description is 'Manual'. Manually keyed administrative corrections, price adjustments, and bespoke wholesale charges without specific merchandise catalog SKU identification.",
       "top_descriptions": {
         "Manual": 1403
@@ -325,7 +339,8 @@
       "inferred_category": "physical_merchandise",
       "is_physical_merchandise": true,
       "increments_purchase_frequency": true,
-      "treatment_rule": "Classified as physical merchandise. Description confirms physical cushion inserts ('PADS TO MATCH ALL CUSHIONS'). When ordered with positive quantity alongside other merchandise, it forms part of valid customer orders. In historical data, 18 lines were priced at nominal \u00a30.001 and 1 cancellation line at -\u00a336.60.",
+      "affects_customer_commercial_spend": true,
+      "treatment_rule": "Classified as standard catalog physical merchandise. Description confirms physical cushion inserts ('PADS TO MATCH ALL CUSHIONS'). Ordered alongside cushion covers in multi-line customer orders. Positive lines are classified as standard_product_sale; returns as standard merchandise returns.",
       "evidence": "Description is 'PADS TO MATCH ALL CUSHIONS'. Every invoice containing PADS is a multi-line customer order containing 11 to 93 other home decor items.",
       "top_descriptions": {
         "PADS TO MATCH ALL CUSHIONS": 19
@@ -347,7 +362,8 @@
       "inferred_category": "postage_and_shipping",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as special commercial charge. Adjusts customer monetary value (shipping spend). Invoices containing only postage fees (product_sales == 0) do not qualify as product repeat purchases.",
+      "affects_customer_commercial_spend": true,
+      "treatment_rule": "Classified as special commercial charge. Shipping costs paid by customers affect customer commercial spend. Invoices containing only shipping fees (product_sales == 0) do not qualify as product repeat purchases.",
       "evidence": "Descriptions consist exclusively of 'POSTAGE'. High customer attribution (>95% of lines). Corresponds to standard customer shipping charges incurred during checkout.",
       "top_descriptions": {
         "POSTAGE": 2079,
@@ -370,7 +386,8 @@
       "inferred_category": "product_sample_writeoff",
       "is_physical_merchandise": false,
       "increments_purchase_frequency": false,
-      "treatment_rule": "Classified as sample adjustment. Completely unattributed to customer IDs. Excluded from customer RFM.",
+      "affects_customer_commercial_spend": false,
+      "treatment_rule": "Classified as sample adjustment. Completely unattributed. Excluded from customer RFM.",
       "evidence": "Description is 'SAMPLES'. Internal sample distributions and write-offs. Quantity negative, 0 customer attribution.",
       "top_descriptions": {
         "SAMPLES": 102

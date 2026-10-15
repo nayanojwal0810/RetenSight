@@ -35,8 +35,8 @@
 
 | Category | Rows | % of Total | Description |
 | :--- | :--- | :--- | :--- |
-| `standard_product_sale` | 1,015,425 | 97.18% | Ordinary merchandise sales (qty > 0, price > 0, standard code) |
-| `special_commercial_charge` | 4,228 | 0.40% | Commercial fees (POST, DOT, M, BANK CHARGES, etc.) |
+| `standard_product_sale` | 1,015,442 | 97.19% | Ordinary merchandise sales (qty > 0, price > 0, standard code) |
+| `special_commercial_charge` | 4,211 | 0.40% | Commercial fees (POST, DOT, M, BANK CHARGES, etc.) |
 | `cancellation` | 19,165 | 1.83% | Invoices starting with 'C' (returns/cancellations) |
 | `inventory_adjustment` | 5,954 | 0.57% | Administrative loss/found write-offs (price=0, no customer ID) |
 | `promotional_freebie` | 70 | 0.01% | Free gifts with customer orders (price=0, customer ID present) |

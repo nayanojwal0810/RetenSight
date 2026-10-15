@@ -10,6 +10,8 @@ import logging
 import numpy as np
 import pandas as pd
 
+from retensight.config import PipelineConfig
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,11 +78,41 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
         .rename("pos_canc_lines")
     )
 
+    # Sub-component aggregations for explicit traceability
+    shipping_val = (
+        transactions_df[transactions_df["stock_code"].isin(PipelineConfig.shipping_stock_codes)]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("shipping_value")
+    )
+    discount_val = (
+        transactions_df[transactions_df["stock_code"].isin(PipelineConfig.discount_stock_codes)]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("discount_value")
+    )
+    manual_val = (
+        transactions_df[transactions_df["stock_code"].isin(PipelineConfig.manual_stock_codes)]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("manual_value")
+    )
+    admin_val = (
+        transactions_df[transactions_df["stock_code"].isin(PipelineConfig.administrative_stock_codes)]
+        .groupby("invoice", sort=False)["line_total"]
+        .sum()
+        .rename("admin_settlements_value")
+    )
+
     # Merge financial components onto base invoice DataFrame
     inv_df = inv_df.merge(prod_sales, on="invoice", how="left")
     inv_df = inv_df.merge(spec_charges, on="invoice", how="left")
     inv_df = inv_df.merge(canc_val, on="invoice", how="left")
     inv_df = inv_df.merge(bad_debt_val, on="invoice", how="left")
+    inv_df = inv_df.merge(shipping_val, on="invoice", how="left")
+    inv_df = inv_df.merge(discount_val, on="invoice", how="left")
+    inv_df = inv_df.merge(manual_val, on="invoice", how="left")
+    inv_df = inv_df.merge(admin_val, on="invoice", how="left")
     inv_df = inv_df.merge(pos_canc_flag, on="invoice", how="left")
 
     inv_df["product_sales"] = inv_df["product_sales"].fillna(0.0).round(2)
@@ -88,8 +120,18 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
     inv_df["gross_sales"] = (inv_df["product_sales"] + inv_df["special_charges"]).round(2)
     inv_df["cancellation_value"] = inv_df["cancellation_value"].fillna(0.0).round(2)
     inv_df["bad_debt_value"] = inv_df["bad_debt_value"].fillna(0.0).round(2)
+    inv_df["shipping_value"] = inv_df["shipping_value"].fillna(0.0).round(2)
+    inv_df["discount_value"] = inv_df["discount_value"].fillna(0.0).round(2)
+    inv_df["manual_value"] = inv_df["manual_value"].fillna(0.0).round(2)
+    inv_df["admin_settlements_value"] = inv_df["admin_settlements_value"].fillna(0.0).round(2)
+
     inv_df["net_value"] = (
         inv_df["gross_sales"] + inv_df["cancellation_value"] + inv_df["bad_debt_value"]
+    ).round(2)
+
+    # Primary customer commercial spend measure (excludes bad debt and non-commercial admin settlements)
+    inv_df["commercial_net_spend"] = (
+        inv_df["net_value"] - inv_df["admin_settlements_value"] - inv_df["bad_debt_value"]
     ).round(2)
 
     inv_df["has_positive_cancellation_line"] = inv_df["pos_canc_lines"].fillna(0) > 0
@@ -162,6 +204,11 @@ def build_invoice_aggregates(transactions_df: pd.DataFrame) -> pd.DataFrame:
     assert np.isclose(inv_df["net_value"].sum(), tx_net, atol=0.01), (
         f"Net value invariant mismatch: {inv_df['net_value'].sum():.2f} != {tx_net:.2f}"
     )
+    assert np.isclose(
+        inv_df["commercial_net_spend"] + inv_df["admin_settlements_value"] + inv_df["bad_debt_value"],
+        inv_df["net_value"],
+        atol=0.01,
+    ).all(), "Commercial net spend reconciliation failed at invoice grain."
 
     logger.info(
         "Built %d invoice aggregate records across %d customers (Customer sales: %d, Cancellations: %d).",

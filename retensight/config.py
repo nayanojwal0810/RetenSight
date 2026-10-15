@@ -30,6 +30,7 @@ class PipelineConfig:
     )
 
     # Special stock codes representing administrative or service charges
+    # Note: PADS is physical cushion merchandise and is excluded from special administrative codes.
     special_stock_codes: Sequence[str] = (
         "POST",
         "D",
@@ -43,8 +44,25 @@ class PipelineConfig:
         "ADJUST2",
         "B",
         "TEST",
-        "PADS",
         "GIFT",
+    )
+
+    # Sub-classification taxonomy for customer commercial spend vs administrative entries
+    administrative_stock_codes: Sequence[str] = (
+        "CRUK",
+        "ADJUST",
+        "ADJUST2",
+        "BANK CHARGES",
+    )
+    shipping_stock_codes: Sequence[str] = (
+        "POST",
+        "DOT",
+    )
+    discount_stock_codes: Sequence[str] = (
+        "D",
+    )
+    manual_stock_codes: Sequence[str] = (
+        "M",
     )
 
     # Output options
@@ -54,11 +72,11 @@ class PipelineConfig:
     # Performance
     excel_engine: str = "calamine"  # Falls back to openpyxl if unavailable
 
-    # RFM snapshot evaluation cutoffs (chronological evaluation windows)
+    # RFM snapshot evaluation cutoffs (chronological evaluation windows with full 90-day observation)
     evaluation_cutoffs: Sequence[str] = (
-        "2010-12-09 23:59:59",  # Cutoff 1: 12 months history
-        "2011-06-10 23:59:59",  # Cutoff 2: 18 months history
-        "2011-09-10 12:50:00",  # Cutoff 3: 21 months history (90d observed to dataset end)
+        "2010-12-09 23:59:59",  # Cutoff 1: 12 months history (target: 2010-12-10 to 2011-03-09 23:59:59)
+        "2011-06-10 23:59:59",  # Cutoff 2: 18 months history (target: 2011-06-11 to 2011-09-08 23:59:59)
+        "2011-09-09 23:59:59",  # Cutoff 3: 21 months history (target: 2011-09-10 to 2011-12-08 23:59:59)
     )
-    full_history_cutoff: str = "2011-12-09 12:50:00"  # Complete 24 months dataset end
+    full_history_cutoff: str = "2011-12-09 12:50:00"  # Complete 24 months dataset end (target unobserved)
     forward_target_window_days: int = 90

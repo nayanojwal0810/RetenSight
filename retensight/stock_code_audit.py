@@ -2,7 +2,7 @@
 
 Analyzes line counts, financial totals, customer attribution, transaction categories,
 representative descriptions, and invoice samples to establish an evidence-based
-classification and treatment rule for each code.
+classification and customer-spend treatment rule for each code.
 """
 
 from dataclasses import asdict, dataclass
@@ -33,6 +33,7 @@ class StockCodeAuditEntry:
     inferred_category: str
     is_physical_merchandise: bool
     increments_purchase_frequency: bool
+    affects_customer_commercial_spend: bool
     treatment_rule: str
     evidence: str
     top_descriptions: Dict[str, int]
@@ -45,9 +46,11 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "postage_and_shipping",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
-            "Classified as special commercial charge. Adjusts customer monetary value (shipping spend). "
-            "Invoices containing only postage fees (product_sales == 0) do not qualify as product repeat purchases."
+            "Classified as special commercial charge. Shipping costs paid by customers affect customer "
+            "commercial spend. Invoices containing only shipping fees (product_sales == 0) do not qualify "
+            "as product repeat purchases."
         ),
         "evidence": (
             "Descriptions consist exclusively of 'POSTAGE'. High customer attribution (>95% of lines). "
@@ -58,22 +61,26 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "website_delivery_fee",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
-            "Classified as special commercial charge. Overwhelmingly unattributed (>98% lines, £297k+). "
-            "Does not represent physical merchandise and does not increment customer purchase frequency."
+            "Classified as special commercial charge. Customer-attributed portion (16 lines, £11,906.36 "
+            "on Customer 14096) represents delivery fees and affects commercial spend. Unattributed portion "
+            "(£297,937.74) remains in whole-company financial reconciliation. Does not increment purchase frequency."
         ),
         "evidence": (
-            "Descriptions consist of 'DOTCOM POSTAGE'. Represents batch fulfillment costs for web orders. "
-            "Almost entirely unattributed to individual retail customer IDs."
+            "Descriptions consist of 'DOTCOM POSTAGE'. Batch fulfillment delivery fees for web orders. "
+            "Overwhelmingly unattributed; customer-attributed lines belong to corporate partner account 14096."
         ),
     },
     "M": {
         "inferred_category": "manual_commercial_adjustment",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
             "Classified as special commercial charge when positive, cancellation/credit when negative. "
-            "Adjusts customer monetary net spend. Does not count as a standard catalog merchandise purchase."
+            "Adjusts customer commercial net spend (custom bespoke billing / concession). "
+            "Does not count as a standard catalog merchandise repeat purchase."
         ),
         "evidence": (
             "Description is 'Manual'. Manually keyed administrative corrections, price adjustments, and "
@@ -84,58 +91,70 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "commercial_discount",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
-            "Classified as cancellation/discount credit or special charge. Decreases customer monetary net value. "
+            "Classified as commercial discount. Reduces customer commercial net spend. "
             "Does not increment purchase frequency."
         ),
         "evidence": (
             "Description is 'Discount'. Commercial concessions and rebates granted to trade accounts. "
-            "All transactions are price reductions."
+            "Transactions reduce customer account balance."
         ),
     },
     "BANK CHARGES": {
         "inferred_category": "banking_and_payment_fee",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as special commercial charge or administrative cost. Does not represent merchandise. "
-            "Excluded from product repeat purchase frequency."
+            "Classified as administrative financial fee. Excluded from customer commercial spend "
+            "(isolated under administrative settlements, +£330.00 customer total). "
+            "Preserved in business-level financial audit. Excluded from repeat purchase frequency."
         ),
         "evidence": (
-            "Description is 'Bank Charges'. Wire fees, international payment processing charges, and merchant costs."
+            "Description is 'Bank Charges'. Wire transfer fees, international payment processing charges, "
+            "and merchant operational overhead."
         ),
     },
     "CRUK": {
         "inferred_category": "charity_commission",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as administrative cancellation/settlement. Excluded from customer purchase frequency."
+            "Classified as administrative charity commission payout. Excluded from customer commercial spend "
+            "(isolated under administrative settlements, -£7,933.43). All 16 transactions belong to Customer ID 14096 "
+            "(Cancer Research UK). Preserved in business-level financial audit."
         ),
         "evidence": (
-            "Description is 'CRUK Commission'. All 16 transactions belong to Customer ID 14096 (Cancer Research UK) "
-            "as commission payouts or fundraising disbursements."
+            "Description is 'CRUK Commission'. Payouts / commission disbursements to charity partner Customer 14096, "
+            "not merchandise purchases or customer returns."
         ),
     },
     "ADJUST": {
         "inferred_category": "staff_clerical_adjustment",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as special commercial charge or administrative correction. Adjusts monetary value; "
-            "does not increment purchase frequency."
+            "Classified as internal staff clerical adjustment. Excluded from customer commercial spend "
+            "(isolated under administrative settlements, +£2,038.12 net customer total). "
+            "Preserved in business-level financial audit."
         ),
         "evidence": (
             "Descriptions specify internal staff adjustments (e.g., 'Adjustment by john on 26/01/2010'). "
-            "Represents internal ledger reconciliation rather than genuine customer ordering."
+            "Internal book balance corrections by warehouse/accounting personnel."
         ),
     },
     "ADJUST2": {
         "inferred_category": "staff_clerical_adjustment",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as special commercial charge. Adjusts monetary value; does not increment purchase frequency."
+            "Classified as internal staff clerical adjustment. Excluded from customer commercial spend "
+            "(isolated under administrative settlements, +£731.05 customer total). "
+            "Preserved in business-level financial audit."
         ),
         "evidence": (
             "Descriptions specify internal staff corrections ('Adjustment by Peter on Jun 25 2010'). "
@@ -146,21 +165,24 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "bad_debt_writeoff",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as bad_debt_adjustment. Separated completely from commercial revenue. "
-            "Never increments customer purchase frequency or counts as positive sales."
+            "Classified as bad_debt_adjustment. Separated completely from customer commercial revenue. "
+            "Company-level accounting write-off of uncollectible balances (-£147,614.08). Excluded from customer RFM."
         ),
         "evidence": (
             "Description is 'Adjust bad debt'. Invoices are prefixed with 'A' (e.g. A506401). "
-            "Accounting write-offs of uncollectible balances (£147,614.08)."
+            "0 customer attribution."
         ),
     },
     "AMAZONFEE": {
         "inferred_category": "marketplace_platform_fee",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as marketplace fee. Unattributed to customers. Does not affect customer-level RFM."
+            "Classified as marketplace platform fee. 100% unattributed. Excluded from customer RFM; "
+            "retained in company-level financial audit."
         ),
         "evidence": (
             "Description is 'AMAZON FEE'. Deductions taken by Amazon marketplace platform for third-party seller fees."
@@ -170,8 +192,9 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "product_sample_writeoff",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
-            "Classified as sample adjustment. Completely unattributed to customer IDs. Excluded from customer RFM."
+            "Classified as sample adjustment. Completely unattributed. Excluded from customer RFM."
         ),
         "evidence": (
             "Description is 'SAMPLES'. Internal sample distributions and write-offs. Quantity negative, 0 customer attribution."
@@ -181,10 +204,11 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "physical_merchandise",
         "is_physical_merchandise": True,
         "increments_purchase_frequency": True,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
-            "Classified as physical merchandise. Description confirms physical cushion inserts ('PADS TO MATCH ALL CUSHIONS'). "
-            "When ordered with positive quantity alongside other merchandise, it forms part of valid customer orders. "
-            "In historical data, 18 lines were priced at nominal £0.001 and 1 cancellation line at -£36.60."
+            "Classified as standard catalog physical merchandise. Description confirms physical cushion inserts "
+            "('PADS TO MATCH ALL CUSHIONS'). Ordered alongside cushion covers in multi-line customer orders. "
+            "Positive lines are classified as standard_product_sale; returns as standard merchandise returns."
         ),
         "evidence": (
             "Description is 'PADS TO MATCH ALL CUSHIONS'. Every invoice containing PADS is a multi-line customer order "
@@ -195,6 +219,7 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "inventory_adjustment",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
             "Classified as inventory adjustment. Price is £0.00, customer ID is missing. Excluded from customer RFM."
         ),
@@ -206,6 +231,7 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "physical_merchandise",
         "is_physical_merchandise": True,
         "increments_purchase_frequency": True,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
             "Classified as standard product merchandise. Walk-in / unattributed sales of boys party bags."
         ),
@@ -217,6 +243,7 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "physical_merchandise",
         "is_physical_merchandise": True,
         "increments_purchase_frequency": True,
+        "affects_customer_commercial_spend": True,
         "treatment_rule": (
             "Classified as standard product merchandise. Walk-in / unattributed sales of girls party bags."
         ),
@@ -228,6 +255,7 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "inventory_adjustment",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
             "Classified as inventory adjustment. Price is £0.00. Excluded from customer RFM."
         ),
@@ -239,6 +267,7 @@ STOCK_CODE_TAXONOMY: Dict[str, Dict[str, Any]] = {
         "inferred_category": "inventory_adjustment",
         "is_physical_merchandise": False,
         "increments_purchase_frequency": False,
+        "affects_customer_commercial_spend": False,
         "treatment_rule": (
             "Classified as inventory adjustment. Price is £0.00. Excluded from customer RFM."
         ),
@@ -316,7 +345,8 @@ def audit_special_stock_codes(
                 "inferred_category": "ambiguous_or_unclassified",
                 "is_physical_merchandise": False,
                 "increments_purchase_frequency": False,
-                "treatment_rule": "Subject to review; excluded from product repeat purchase frequency.",
+                "affects_customer_commercial_spend": False,
+                "treatment_rule": "Subject to review; excluded from customer repeat purchase frequency.",
                 "evidence": "No documented taxonomy entry available.",
             },
         )
@@ -332,6 +362,7 @@ def audit_special_stock_codes(
             inferred_category=tax_info["inferred_category"],
             is_physical_merchandise=tax_info["is_physical_merchandise"],
             increments_purchase_frequency=tax_info["increments_purchase_frequency"],
+            affects_customer_commercial_spend=tax_info["affects_customer_commercial_spend"],
             treatment_rule=tax_info["treatment_rule"],
             evidence=tax_info["evidence"],
             top_descriptions=top_desc,
@@ -392,21 +423,22 @@ def save_stock_code_audit_reports(
         f"- **Total Net Value Analyzed:** £{meta['total_value_gbp']:,.2f}",
         "",
         "This audit examines non-standard, service, and administrative stock codes to prevent non-product fees ",
-        "or staff adjustments from artificially inflating customer purchase frequency in RFM segmentation.",
+        "or staff adjustments from artificially inflating customer purchase frequency or distorting customer commercial spend.",
         "",
         "## Summary Audit Table",
         "",
-        "| Stock Code | Lines | Total Value (£) | Attributed Value (£) | Unattributed Value (£) | Inferred Nature | Physical Merchandise? | Increments Frequency? |",
-        "| :--- | ---: | ---: | ---: | ---: | :--- | :---: | :---: |",
+        "| Stock Code | Lines | Total Value (£) | Attributed Value (£) | Unattributed Value (£) | Inferred Nature | Physical Merchandise? | Increments Frequency? | Affects Customer Commercial Spend? |",
+        "| :--- | ---: | ---: | ---: | ---: | :--- | :---: | :---: | :---: |",
     ]
 
     for e in entries:
         merch_str = "Yes" if e["is_physical_merchandise"] else "No"
         freq_str = "Yes" if e["increments_purchase_frequency"] else "No"
+        spend_str = "Yes" if e["affects_customer_commercial_spend"] else "No (Admin / Accounting only)"
         md_lines.append(
             f"| `{e['stock_code']}` | {e['line_count']:,} | £{e['total_value_gbp']:,.2f} | "
             f"£{e['customer_attributed_value_gbp']:,.2f} | £{e['unattributed_value_gbp']:,.2f} | "
-            f"`{e['inferred_category']}` | {merch_str} | {freq_str} |"
+            f"`{e['inferred_category']}` | {merch_str} | {freq_str} | {spend_str} |"
         )
 
     md_lines.extend([
@@ -423,6 +455,7 @@ def save_stock_code_audit_reports(
             f"- **Inferred Category:** `{e['inferred_category']}`",
             f"- **Physical Merchandise:** {'Yes' if e['is_physical_merchandise'] else 'No'}",
             f"- **Increments Frequency:** {'Yes (on qualifying invoice)' if e['increments_purchase_frequency'] else 'No (Excluded from repeat purchase events)'}",
+            f"- **Affects Customer Commercial Spend:** {'Yes (Included in net commercial spend)' if e['affects_customer_commercial_spend'] else 'No (Isolated under administrative settlements)'}",
             f"- **Transaction Volume:** {e['line_count']:,} lines (Customer Attributed: {e['customer_attributed_lines']:,}, Unattributed: {e['unattributed_lines']:,})",
             f"- **Net Financial Value:** £{e['total_value_gbp']:,.2f} (Customer Attributed: £{e['customer_attributed_value_gbp']:,.2f}, Unattributed: £{e['unattributed_value_gbp']:,.2f})",
             f"- **Representative Invoices:** {sample_invs}",
@@ -435,11 +468,11 @@ def save_stock_code_audit_reports(
     md_lines.extend([
         "## Methodological Conclusions for Customer RFM Pipeline",
         "",
-        "1. **Postage and Freight (`POST`, `DOT`):** Shipping fees constitute commercial revenue and contribute to total monetary spend, but invoices containing purely postage fees without physical items do not represent product repurchase events.",
-        "2. **Manual Adjustments & Discounts (`M`, `D`):** Administrative entries adjust net monetary value (credits/debits), but lack SKU merchandise definitions and must not increment purchase frequency.",
-        "3. **Bad Debt & Banking Fees (`B`, `BANK CHARGES`):** Overhead finance items. Bad debt is completely excluded from customer spend. Bank charges adjust finance costs but never increment frequency.",
-        "4. **Cushion Pads (`PADS`):** Confirmed as physical merchandise ('PADS TO MATCH ALL CUSHIONS'). When ordered in multi-line purchases alongside cushions, it represents legitimate customer goods.",
-        "5. **Staff Adjustments (`ADJUST`, `ADJUST2`):** Clerical internal balance corrections by specific employees. Excluded from customer purchase events.",
+        "1. **Postage and Freight (`POST`, `DOT`):** Shipping fees constitute commercial revenue and contribute to customer commercial spend, but invoices containing purely postage fees without physical items do not represent product repeat purchases.",
+        "2. **Manual Adjustments & Discounts (`M`, `D`):** Commercial entries adjust customer net commercial spend (credits/debits), but lack catalog SKU merchandise definitions and do not increment purchase frequency.",
+        "3. **Administrative Settlements (`CRUK`, `ADJUST`, `ADJUST2`, `BANK CHARGES`):** Clerical balance adjustments, bank processing fees, and charity commission payouts are isolated from customer commercial spend. They are preserved in whole-company financial reconciliation and tracked separately under `monetary_admin_settlements`.",
+        "4. **Cushion Pads (`PADS`):** Confirmed as physical catalog merchandise ('PADS TO MATCH ALL CUSHIONS'). Reclassified as `standard_product_sale` (or merchandise return if cancelled).",
+        "5. **Overhead / Unattributed Items (`B`, `AMAZONFEE`, `S`):** Bad debt adjustments, platform seller fees, and non-commercial sample distributions have 0 customer attribution and remain strictly in business accounting auditing.",
         "",
     ])
 

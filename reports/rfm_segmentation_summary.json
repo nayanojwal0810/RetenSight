@@ -7,23 +7,25 @@
       "median_recency_days": 51.0,
       "mean_frequency": 4.43,
       "median_frequency": 2.0,
-      "mean_net_monetary_gbp": 1967.89,
-      "total_net_monetary_gbp": 8434360.82,
+      "mean_net_commercial_spend_gbp": 1967.33,
+      "total_net_commercial_spend_gbp": 8431965.25,
+      "mean_avg_order_value_gbp": 378.61,
+      "median_avg_order_value_gbp": 289.06,
       "is_target_window_observed": true,
       "repeat_purchasers_90d": 1317,
       "repeat_purchase_rate_pct": 30.73,
       "segment_counts": {
-        "Champions": 843,
-        "Potential Loyalists": 619,
-        "Lost": 581,
-        "About To Sleep": 509,
-        "Promising": 454,
-        "At Risk": 432,
-        "Loyal Customers": 399,
-        "New Customers": 249,
-        "Hibernating": 157,
-        "Can't Lose Them": 23,
-        "Negative or Zero Spend": 20
+        "Champions": 786,
+        "Potential Loyalists": 584,
+        "Lost": 562,
+        "Promising": 471,
+        "About To Sleep": 463,
+        "Loyal Customers": 432,
+        "Can't Lose Them": 316,
+        "Hibernating": 306,
+        "At Risk": 216,
+        "New Customers": 131,
+        "Negative or Zero Spend": 19
       }
     },
     "2011-06-10": {
@@ -33,49 +35,53 @@
       "median_recency_days": 144.0,
       "mean_frequency": 5.27,
       "median_frequency": 3.0,
-      "mean_net_monetary_gbp": 2316.73,
-      "total_net_monetary_gbp": 11472463.65,
+      "mean_net_commercial_spend_gbp": 2316.24,
+      "total_net_commercial_spend_gbp": 11470023.08,
+      "mean_avg_order_value_gbp": 375.51,
+      "median_avg_order_value_gbp": 282.86,
       "is_target_window_observed": true,
       "repeat_purchasers_90d": 1586,
       "repeat_purchase_rate_pct": 32.03,
       "segment_counts": {
-        "Champions": 1124,
-        "About To Sleep": 664,
-        "Lost": 616,
-        "Loyal Customers": 589,
-        "Potential Loyalists": 587,
-        "At Risk": 455,
-        "Promising": 399,
-        "New Customers": 268,
-        "Hibernating": 200,
-        "Can't Lose Them": 29,
-        "Negative or Zero Spend": 21
+        "Champions": 1042,
+        "About To Sleep": 614,
+        "Loyal Customers": 606,
+        "Lost": 600,
+        "Potential Loyalists": 544,
+        "Promising": 415,
+        "Hibernating": 397,
+        "Can't Lose Them": 320,
+        "At Risk": 252,
+        "New Customers": 142,
+        "Negative or Zero Spend": 20
       }
     },
-    "2011-09-10": {
-      "snapshot_date": "2011-09-10",
+    "2011-09-09": {
+      "snapshot_date": "2011-09-09",
       "eligible_customers": 5257,
-      "mean_recency_days": 206.4,
+      "mean_recency_days": 205.9,
       "median_recency_days": 163.0,
       "mean_frequency": 5.71,
       "median_frequency": 3.0,
-      "mean_net_monetary_gbp": 2522.86,
-      "total_net_monetary_gbp": 13262651.64,
+      "mean_net_commercial_spend_gbp": 2522.35,
+      "total_net_commercial_spend_gbp": 13259983.01,
+      "mean_avg_order_value_gbp": 371.55,
+      "median_avg_order_value_gbp": 278.45,
       "is_target_window_observed": true,
-      "repeat_purchasers_90d": 2289,
-      "repeat_purchase_rate_pct": 43.54,
+      "repeat_purchasers_90d": 2287,
+      "repeat_purchase_rate_pct": 43.5,
       "segment_counts": {
-        "Champions": 1253,
-        "About To Sleep": 649,
-        "Lost": 649,
-        "Potential Loyalists": 612,
-        "Loyal Customers": 580,
-        "At Risk": 533,
-        "Promising": 469,
-        "New Customers": 236,
-        "Hibernating": 210,
-        "Can't Lose Them": 44,
-        "Negative or Zero Spend": 22
+        "Champions": 1139,
+        "Loyal Customers": 635,
+        "Lost": 634,
+        "About To Sleep": 609,
+        "Potential Loyalists": 570,
+        "Promising": 454,
+        "Hibernating": 438,
+        "Can't Lose Them": 333,
+        "At Risk": 311,
+        "New Customers": 113,
+        "Negative or Zero Spend": 21
       }
     },
     "2011-12-09": {
@@ -85,224 +91,536 @@
       "median_recency_days": 94.0,
       "mean_frequency": 6.25,
       "median_frequency": 3.0,
-      "mean_net_monetary_gbp": 2806.6,
-      "total_net_monetary_gbp": 16427051.43,
+      "mean_net_commercial_spend_gbp": 2807.48,
+      "total_net_commercial_spend_gbp": 16432195.66,
+      "mean_avg_order_value_gbp": 386.74,
+      "median_avg_order_value_gbp": 281.44,
       "is_target_window_observed": false,
       "repeat_purchasers_90d": null,
       "repeat_purchase_rate_pct": null,
       "segment_counts": {
-        "Champions": 1393,
-        "Loyal Customers": 747,
-        "Potential Loyalists": 709,
-        "Lost": 709,
-        "About To Sleep": 676,
-        "At Risk": 642,
-        "Promising": 417,
-        "New Customers": 235,
-        "Hibernating": 234,
-        "Can't Lose Them": 65,
-        "Negative or Zero Spend": 26
+        "Champions": 1257,
+        "Loyal Customers": 798,
+        "Lost": 695,
+        "Potential Loyalists": 646,
+        "About To Sleep": 642,
+        "Promising": 467,
+        "Hibernating": 458,
+        "At Risk": 399,
+        "Can't Lose Them": 362,
+        "New Customers": 104,
+        "Negative or Zero Spend": 25
       }
     }
   },
   "segment_distribution_cross_cutoff": {
     "Champions": {
       "2010-12-09": {
-        "count": 843,
-        "pct": 19.67
+        "count": 786,
+        "pct": 18.34
       },
       "2011-06-10": {
-        "count": 1124,
-        "pct": 22.7
+        "count": 1042,
+        "pct": 21.04
       },
-      "2011-09-10": {
-        "count": 1253,
-        "pct": 23.83
+      "2011-09-09": {
+        "count": 1139,
+        "pct": 21.67
       },
       "2011-12-09": {
-        "count": 1393,
-        "pct": 23.8
+        "count": 1257,
+        "pct": 21.48
       }
     },
     "Loyal Customers": {
-      "2010-12-09": {
-        "count": 399,
-        "pct": 9.31
-      },
-      "2011-06-10": {
-        "count": 589,
-        "pct": 11.89
-      },
-      "2011-09-10": {
-        "count": 580,
-        "pct": 11.03
-      },
-      "2011-12-09": {
-        "count": 747,
-        "pct": 12.76
-      }
-    },
-    "Potential Loyalists": {
-      "2010-12-09": {
-        "count": 619,
-        "pct": 14.44
-      },
-      "2011-06-10": {
-        "count": 587,
-        "pct": 11.85
-      },
-      "2011-09-10": {
-        "count": 612,
-        "pct": 11.64
-      },
-      "2011-12-09": {
-        "count": 709,
-        "pct": 12.11
-      }
-    },
-    "New Customers": {
-      "2010-12-09": {
-        "count": 249,
-        "pct": 5.81
-      },
-      "2011-06-10": {
-        "count": 268,
-        "pct": 5.41
-      },
-      "2011-09-10": {
-        "count": 236,
-        "pct": 4.49
-      },
-      "2011-12-09": {
-        "count": 235,
-        "pct": 4.02
-      }
-    },
-    "Promising": {
-      "2010-12-09": {
-        "count": 454,
-        "pct": 10.59
-      },
-      "2011-06-10": {
-        "count": 399,
-        "pct": 8.06
-      },
-      "2011-09-10": {
-        "count": 469,
-        "pct": 8.92
-      },
-      "2011-12-09": {
-        "count": 417,
-        "pct": 7.12
-      }
-    },
-    "About To Sleep": {
-      "2010-12-09": {
-        "count": 509,
-        "pct": 11.88
-      },
-      "2011-06-10": {
-        "count": 664,
-        "pct": 13.41
-      },
-      "2011-09-10": {
-        "count": 649,
-        "pct": 12.35
-      },
-      "2011-12-09": {
-        "count": 676,
-        "pct": 11.55
-      }
-    },
-    "At Risk": {
       "2010-12-09": {
         "count": 432,
         "pct": 10.08
       },
       "2011-06-10": {
-        "count": 455,
-        "pct": 9.19
+        "count": 606,
+        "pct": 12.24
       },
-      "2011-09-10": {
-        "count": 533,
-        "pct": 10.14
+      "2011-09-09": {
+        "count": 635,
+        "pct": 12.08
+      },
+      "2011-12-09": {
+        "count": 798,
+        "pct": 13.63
+      }
+    },
+    "Potential Loyalists": {
+      "2010-12-09": {
+        "count": 584,
+        "pct": 13.63
+      },
+      "2011-06-10": {
+        "count": 544,
+        "pct": 10.99
+      },
+      "2011-09-09": {
+        "count": 570,
+        "pct": 10.84
+      },
+      "2011-12-09": {
+        "count": 646,
+        "pct": 11.04
+      }
+    },
+    "New Customers": {
+      "2010-12-09": {
+        "count": 131,
+        "pct": 3.06
+      },
+      "2011-06-10": {
+        "count": 142,
+        "pct": 2.87
+      },
+      "2011-09-09": {
+        "count": 113,
+        "pct": 2.15
+      },
+      "2011-12-09": {
+        "count": 104,
+        "pct": 1.78
+      }
+    },
+    "Promising": {
+      "2010-12-09": {
+        "count": 471,
+        "pct": 10.99
+      },
+      "2011-06-10": {
+        "count": 415,
+        "pct": 8.38
+      },
+      "2011-09-09": {
+        "count": 454,
+        "pct": 8.64
+      },
+      "2011-12-09": {
+        "count": 467,
+        "pct": 7.98
+      }
+    },
+    "About To Sleep": {
+      "2010-12-09": {
+        "count": 463,
+        "pct": 10.8
+      },
+      "2011-06-10": {
+        "count": 614,
+        "pct": 12.4
+      },
+      "2011-09-09": {
+        "count": 609,
+        "pct": 11.58
       },
       "2011-12-09": {
         "count": 642,
         "pct": 10.97
       }
     },
-    "Can't Lose Them": {
+    "At Risk": {
       "2010-12-09": {
-        "count": 23,
-        "pct": 0.54
+        "count": 216,
+        "pct": 5.04
       },
       "2011-06-10": {
-        "count": 29,
-        "pct": 0.59
+        "count": 252,
+        "pct": 5.09
       },
-      "2011-09-10": {
-        "count": 44,
-        "pct": 0.84
+      "2011-09-09": {
+        "count": 311,
+        "pct": 5.92
       },
       "2011-12-09": {
-        "count": 65,
-        "pct": 1.11
+        "count": 399,
+        "pct": 6.82
+      }
+    },
+    "Can't Lose Them": {
+      "2010-12-09": {
+        "count": 316,
+        "pct": 7.37
+      },
+      "2011-06-10": {
+        "count": 320,
+        "pct": 6.46
+      },
+      "2011-09-09": {
+        "count": 333,
+        "pct": 6.33
+      },
+      "2011-12-09": {
+        "count": 362,
+        "pct": 6.18
       }
     },
     "Hibernating": {
       "2010-12-09": {
-        "count": 157,
-        "pct": 3.66
+        "count": 306,
+        "pct": 7.14
       },
       "2011-06-10": {
-        "count": 200,
-        "pct": 4.04
+        "count": 397,
+        "pct": 8.02
       },
-      "2011-09-10": {
-        "count": 210,
-        "pct": 3.99
+      "2011-09-09": {
+        "count": 438,
+        "pct": 8.33
       },
       "2011-12-09": {
-        "count": 234,
-        "pct": 4.0
+        "count": 458,
+        "pct": 7.83
       }
     },
     "Lost": {
       "2010-12-09": {
-        "count": 581,
-        "pct": 13.56
+        "count": 562,
+        "pct": 13.11
       },
       "2011-06-10": {
-        "count": 616,
-        "pct": 12.44
+        "count": 600,
+        "pct": 12.12
       },
-      "2011-09-10": {
-        "count": 649,
-        "pct": 12.35
+      "2011-09-09": {
+        "count": 634,
+        "pct": 12.06
       },
       "2011-12-09": {
-        "count": 709,
-        "pct": 12.11
+        "count": 695,
+        "pct": 11.87
       }
     },
     "Negative or Zero Spend": {
       "2010-12-09": {
-        "count": 20,
-        "pct": 0.47
+        "count": 19,
+        "pct": 0.44
       },
       "2011-06-10": {
-        "count": 21,
-        "pct": 0.42
+        "count": 20,
+        "pct": 0.4
       },
-      "2011-09-10": {
-        "count": 22,
-        "pct": 0.42
+      "2011-09-09": {
+        "count": 21,
+        "pct": 0.4
       },
       "2011-12-09": {
-        "count": 26,
-        "pct": 0.44
+        "count": 25,
+        "pct": 0.43
       }
+    }
+  },
+  "admin_settlements_sensitivity": {
+    "2010-12-09": {
+      "affected_customers_count": 39,
+      "affected_customers_pct": 0.91,
+      "total_admin_settlements_gbp": 2395.57,
+      "sample_affected_customers": [
+        {
+          "customer_id": 12346,
+          "net_commercial_spend": 38.82,
+          "admin_settlements": -103.5,
+          "total_account_balance": -64.68,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12454,
+          "net_commercial_spend": 4318.96,
+          "admin_settlements": -26.25,
+          "total_account_balance": 4292.71,
+          "assigned_segment": "Potential Loyalists"
+        },
+        {
+          "customer_id": 12471,
+          "net_commercial_spend": 19166.6,
+          "admin_settlements": 41.09,
+          "total_account_balance": 19207.69,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12497,
+          "net_commercial_spend": 5205.4,
+          "admin_settlements": -36.75,
+          "total_account_balance": 5168.65,
+          "assigned_segment": "Promising"
+        },
+        {
+          "customer_id": 12600,
+          "net_commercial_spend": 2393.13,
+          "admin_settlements": -18.38,
+          "total_account_balance": 2374.75,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12647,
+          "net_commercial_spend": 14028.62,
+          "admin_settlements": -15.75,
+          "total_account_balance": 14012.87,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12696,
+          "net_commercial_spend": 851.91,
+          "admin_settlements": -50.76,
+          "total_account_balance": 801.15,
+          "assigned_segment": "About To Sleep"
+        },
+        {
+          "customer_id": 12709,
+          "net_commercial_spend": 20933.93,
+          "admin_settlements": 84.58,
+          "total_account_balance": 21018.51,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12745,
+          "net_commercial_spend": 723.85,
+          "admin_settlements": 201.56,
+          "total_account_balance": 925.41,
+          "assigned_segment": "About To Sleep"
+        },
+        {
+          "customer_id": 12748,
+          "net_commercial_spend": 20510.49,
+          "admin_settlements": 387.54,
+          "total_account_balance": 20898.03,
+          "assigned_segment": "Champions"
+        }
+      ]
+    },
+    "2011-06-10": {
+      "affected_customers_count": 41,
+      "affected_customers_pct": 0.83,
+      "total_admin_settlements_gbp": 2440.57,
+      "sample_affected_customers": [
+        {
+          "customer_id": 12346,
+          "net_commercial_spend": 38.82,
+          "admin_settlements": -103.5,
+          "total_account_balance": -64.68,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12454,
+          "net_commercial_spend": 4318.96,
+          "admin_settlements": -26.25,
+          "total_account_balance": 4292.71,
+          "assigned_segment": "Can't Lose Them"
+        },
+        {
+          "customer_id": 12471,
+          "net_commercial_spend": 26922.64,
+          "admin_settlements": 41.09,
+          "total_account_balance": 26963.73,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12497,
+          "net_commercial_spend": 5205.4,
+          "admin_settlements": -36.75,
+          "total_account_balance": 5168.65,
+          "assigned_segment": "Can't Lose Them"
+        },
+        {
+          "customer_id": 12600,
+          "net_commercial_spend": 3614.59,
+          "admin_settlements": -18.38,
+          "total_account_balance": 3596.21,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12647,
+          "net_commercial_spend": 15309.23,
+          "admin_settlements": -15.75,
+          "total_account_balance": 15293.48,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12696,
+          "net_commercial_spend": 851.91,
+          "admin_settlements": -50.76,
+          "total_account_balance": 801.15,
+          "assigned_segment": "About To Sleep"
+        },
+        {
+          "customer_id": 12709,
+          "net_commercial_spend": 25343.29,
+          "admin_settlements": 84.58,
+          "total_account_balance": 25427.87,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12745,
+          "net_commercial_spend": 723.85,
+          "admin_settlements": 201.56,
+          "total_account_balance": 925.41,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12748,
+          "net_commercial_spend": 28307.38,
+          "admin_settlements": 387.54,
+          "total_account_balance": 28694.92,
+          "assigned_segment": "Champions"
+        }
+      ]
+    },
+    "2011-09-09": {
+      "affected_customers_count": 44,
+      "affected_customers_pct": 0.84,
+      "total_admin_settlements_gbp": 2668.63,
+      "sample_affected_customers": [
+        {
+          "customer_id": 12346,
+          "net_commercial_spend": 38.82,
+          "admin_settlements": -103.5,
+          "total_account_balance": -64.68,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12454,
+          "net_commercial_spend": 4318.96,
+          "admin_settlements": -26.25,
+          "total_account_balance": 4292.71,
+          "assigned_segment": "Can't Lose Them"
+        },
+        {
+          "customer_id": 12471,
+          "net_commercial_spend": 29501.2,
+          "admin_settlements": 41.09,
+          "total_account_balance": 29542.29,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12497,
+          "net_commercial_spend": 5205.4,
+          "admin_settlements": -36.75,
+          "total_account_balance": 5168.65,
+          "assigned_segment": "Can't Lose Them"
+        },
+        {
+          "customer_id": 12600,
+          "net_commercial_spend": 4235.19,
+          "admin_settlements": -18.38,
+          "total_account_balance": 4216.81,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12647,
+          "net_commercial_spend": 15893.63,
+          "admin_settlements": -15.75,
+          "total_account_balance": 15877.88,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12696,
+          "net_commercial_spend": 851.91,
+          "admin_settlements": -50.76,
+          "total_account_balance": 801.15,
+          "assigned_segment": "About To Sleep"
+        },
+        {
+          "customer_id": 12709,
+          "net_commercial_spend": 27247.55,
+          "admin_settlements": 84.58,
+          "total_account_balance": 27332.13,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12745,
+          "net_commercial_spend": 723.85,
+          "admin_settlements": 201.56,
+          "total_account_balance": 925.41,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12748,
+          "net_commercial_spend": 32158.06,
+          "admin_settlements": 387.54,
+          "total_account_balance": 32545.6,
+          "assigned_segment": "Champions"
+        }
+      ]
+    },
+    "2011-12-09": {
+      "affected_customers_count": 48,
+      "affected_customers_pct": 0.82,
+      "total_admin_settlements_gbp": -5144.23,
+      "sample_affected_customers": [
+        {
+          "customer_id": 12346,
+          "net_commercial_spend": 38.82,
+          "admin_settlements": -103.5,
+          "total_account_balance": -64.68,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12454,
+          "net_commercial_spend": 4318.96,
+          "admin_settlements": -26.25,
+          "total_account_balance": 4292.71,
+          "assigned_segment": "Potential Loyalists"
+        },
+        {
+          "customer_id": 12471,
+          "net_commercial_spend": 37924.52,
+          "admin_settlements": 41.09,
+          "total_account_balance": 37965.61,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12497,
+          "net_commercial_spend": 6248.5,
+          "admin_settlements": -36.75,
+          "total_account_balance": 6211.75,
+          "assigned_segment": "Loyal Customers"
+        },
+        {
+          "customer_id": 12600,
+          "net_commercial_spend": 4897.67,
+          "admin_settlements": -18.38,
+          "total_account_balance": 4879.29,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12647,
+          "net_commercial_spend": 16729.74,
+          "admin_settlements": -15.75,
+          "total_account_balance": 16713.99,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12696,
+          "net_commercial_spend": 851.91,
+          "admin_settlements": -50.76,
+          "total_account_balance": 801.15,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12709,
+          "net_commercial_spend": 29705.33,
+          "admin_settlements": 84.58,
+          "total_account_balance": 29789.91,
+          "assigned_segment": "Champions"
+        },
+        {
+          "customer_id": 12745,
+          "net_commercial_spend": 723.85,
+          "admin_settlements": 201.56,
+          "total_account_balance": 925.41,
+          "assigned_segment": "Hibernating"
+        },
+        {
+          "customer_id": 12748,
+          "net_commercial_spend": 47589.19,
+          "admin_settlements": 387.54,
+          "total_account_balance": 47976.73,
+          "assigned_segment": "Champions"
+        }
+      ]
     }
   }
 }

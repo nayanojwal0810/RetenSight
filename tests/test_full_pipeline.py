@@ -134,7 +134,7 @@ def test_full_workbook_pipeline():
     assert rfm_summary_json.exists()
     assert rfm_summary_md.exists()
 
-    snap_dates = ["20101209", "20110610", "20110910", "20111209"]
+    snap_dates = ["20101209", "20110610", "20110909", "20111209"]
     for s_date in snap_dates:
         snap_p = out_dir / f"rfm_snapshot_{s_date}.parquet"
         snap_c = out_dir / f"rfm_snapshot_{s_date}.csv"
@@ -148,3 +148,41 @@ def test_full_workbook_pipeline():
     assert (rfm_final["frequency"] >= 1).all()
     assert (rfm_final["recency_days"] >= 0).all()
     assert (rfm_final["customer_tenure_days"] >= rfm_final["recency_days"]).all()
+
+    # Verify component reconciliation and conventional AOV metrics
+    reconciled_net = (
+        rfm_final["monetary_merchandise_sales"]
+        + rfm_final["monetary_shipping"]
+        + rfm_final["monetary_discounts"]
+        + rfm_final["monetary_returns"]
+        + rfm_final["monetary_manual_charges"]
+    )
+    assert np.allclose(rfm_final["net_commercial_spend"], reconciled_net, atol=0.01)
+
+    reconciled_balance = rfm_final["net_commercial_spend"] + rfm_final["monetary_admin_settlements"]
+    assert np.allclose(rfm_final["total_account_balance"], reconciled_balance, atol=0.01)
+
+    # Conventional AOV must be strictly positive since qualifying gross sales > 0
+    assert (rfm_final["avg_order_value"] > 0).all()
+    assert np.allclose(
+        rfm_final["avg_order_value"],
+        rfm_final["qualifying_orders_gross_sales"] / rfm_final["frequency"],
+        atol=0.01,
+    )
+
+    # Check unobserved future target at final history cutoff
+    assert rfm_final["target_repeat_purchase_90d"].isna().all()
+    assert not bool(rfm_final["is_target_window_observed"].iloc[0])
+
+    # Check observed target rates on historical evaluation cutoffs
+    rfm_c1 = pd.read_parquet(out_dir / "rfm_snapshot_20101209.parquet")
+    rate_c1 = rfm_c1["target_repeat_purchase_90d"].mean()
+    assert np.isclose(rate_c1, 0.3073, atol=0.005)
+
+    rfm_c2 = pd.read_parquet(out_dir / "rfm_snapshot_20110610.parquet")
+    rate_c2 = rfm_c2["target_repeat_purchase_90d"].mean()
+    assert np.isclose(rate_c2, 0.3203, atol=0.005)
+
+    rfm_c3 = pd.read_parquet(out_dir / "rfm_snapshot_20110909.parquet")
+    rate_c3 = rfm_c3["target_repeat_purchase_90d"].mean()
+    assert np.isclose(rate_c3, 0.4350, atol=0.005)

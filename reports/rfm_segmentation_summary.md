@@ -2,38 +2,65 @@
 
 ## Executive Summary
 
-This report details the customer-level RFM features, deterministic scoring, explainable CRM segmentation, 
-and forward 90-day repeat-purchase rates across chronological evaluation cutoffs for the UCI Online Retail II dataset.
+This report details the customer-level RFM features, monetary component reconciliation, 
+deterministic monetary-aware scoring, explainable CRM segmentation, and observed 90-day repeat-purchase rates 
+across chronological evaluation cutoffs for the UCI Online Retail II dataset.
 
-## Cutoff Overview & Forward 90-Day Target Calibration
+## Cutoff Overview & Observed 90-Day Repeat-Purchase Rates
 
-| Evaluation Cutoff | Eligible Customers | Mean Recency (Days) | Mean Frequency | Total Net Spend (£) | 90-Day Repeat Buyers | Repeat Purchase Rate (%) |
-| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `2010-12-09` | 4,286 | 89.6 | 4.43 | £8,434,360.82 | 1,317 | 30.7% |
-| `2011-06-10` | 4,952 | 170.3 | 5.27 | £11,472,463.65 | 1,586 | 32.0% |
-| `2011-09-10` | 5,257 | 206.4 | 5.71 | £13,262,651.64 | 2,289 | 43.5% |
-| `2011-12-09` | 5,853 | 199.2 | 6.25 | £16,427,051.43 | N/A | Unobserved (Dataset End) |
+| Evaluation Cutoff | Target Observation Window | Eligible Customers | Mean Recency (Days) | Mean Frequency | Mean Commercial AOV (£) | Total Net Commercial Spend (£) | 90-Day Repeat Buyers | Observed Repeat Rate (%) |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `2010-12-09` | 2010-12-10 to 2011-03-09 23:59:59 (90 days) | 4,286 | 89.6 | 4.43 | £378.61 | £8,431,965.25 | 1,317 | 30.73% |
+| `2011-06-10` | 2011-06-11 to 2011-09-08 23:59:59 (90 days) | 4,952 | 170.3 | 5.27 | £375.51 | £11,470,023.08 | 1,586 | 32.03% |
+| `2011-09-09` | 2011-09-10 to 2011-12-08 23:59:59 (90 days) | 5,257 | 205.9 | 5.71 | £371.55 | £13,259,983.01 | 2,287 | 43.50% |
+| `2011-12-09` | Unobserved (Dataset ends at 2011-12-09 12:50:00) | 5,853 | 199.2 | 6.25 | £386.74 | £16,432,195.66 | N/A | Unobserved (Marked <NA>) |
 
-## Cross-Cutoff CRM Segment Distribution
+## Cross-Cutoff CRM Segment Distribution (Monetary-Aware)
 
-| CRM Segment | `2010-12-09` Count (%) | `2011-06-10` Count (%) | `2011-09-10` Count (%) | `2011-12-09` Count (%) |
+| CRM Segment | `2010-12-09` Count (%) | `2011-06-10` Count (%) | `2011-09-09` Count (%) | `2011-12-09` Count (%) |
 | :--- | ---: | ---: | ---: | ---: |
-| **Champions** | 843 (19.7%) | 1,124 (22.7%) | 1,253 (23.8%) | 1,393 (23.8%) |
-| **Loyal Customers** | 399 (9.3%) | 589 (11.9%) | 580 (11.0%) | 747 (12.8%) |
-| **Potential Loyalists** | 619 (14.4%) | 587 (11.8%) | 612 (11.6%) | 709 (12.1%) |
-| **New Customers** | 249 (5.8%) | 268 (5.4%) | 236 (4.5%) | 235 (4.0%) |
-| **Promising** | 454 (10.6%) | 399 (8.1%) | 469 (8.9%) | 417 (7.1%) |
-| **About To Sleep** | 509 (11.9%) | 664 (13.4%) | 649 (12.3%) | 676 (11.6%) |
-| **At Risk** | 432 (10.1%) | 455 (9.2%) | 533 (10.1%) | 642 (11.0%) |
-| **Can't Lose Them** | 23 (0.5%) | 29 (0.6%) | 44 (0.8%) | 65 (1.1%) |
-| **Hibernating** | 157 (3.7%) | 200 (4.0%) | 210 (4.0%) | 234 (4.0%) |
-| **Lost** | 581 (13.6%) | 616 (12.4%) | 649 (12.3%) | 709 (12.1%) |
-| **Negative or Zero Spend** | 20 (0.5%) | 21 (0.4%) | 22 (0.4%) | 26 (0.4%) |
+| **Champions** | 786 (18.3%) | 1,042 (21.0%) | 1,139 (21.7%) | 1,257 (21.5%) |
+| **Loyal Customers** | 432 (10.1%) | 606 (12.2%) | 635 (12.1%) | 798 (13.6%) |
+| **Potential Loyalists** | 584 (13.6%) | 544 (11.0%) | 570 (10.8%) | 646 (11.0%) |
+| **New Customers** | 131 (3.1%) | 142 (2.9%) | 113 (2.1%) | 104 (1.8%) |
+| **Promising** | 471 (11.0%) | 415 (8.4%) | 454 (8.6%) | 467 (8.0%) |
+| **About To Sleep** | 463 (10.8%) | 614 (12.4%) | 609 (11.6%) | 642 (11.0%) |
+| **At Risk** | 216 (5.0%) | 252 (5.1%) | 311 (5.9%) | 399 (6.8%) |
+| **Can't Lose Them** | 316 (7.4%) | 320 (6.5%) | 333 (6.3%) | 362 (6.2%) |
+| **Hibernating** | 306 (7.1%) | 397 (8.0%) | 438 (8.3%) | 458 (7.8%) |
+| **Lost** | 562 (13.1%) | 600 (12.1%) | 634 (12.1%) | 695 (11.9%) |
+| **Negative or Zero Spend** | 19 (0.4%) | 20 (0.4%) | 21 (0.4%) | 25 (0.4%) |
 
-## Segmentation Methodology & Rules
+## Explicit Monetary-Aware Decision Table
 
-1. **Qualifying Purchase Events:** Only invoices with confirmed positive product sales (`product_sales > 0`), strictly positive quantities, valid customer IDs, and non-cancellation status increment purchase frequency. Charge-only invoices (postage, bank fees) do not count as purchases.
-2. **Multi-line Invoice Aggregation:** Aggregation is performed at the unique invoice ID grain. Multi-line orders never inflate purchase frequency.
-3. **Same-Day Order Handling:** Each distinct invoice represents a separate customer order transaction (`frequency`). Daily cadence is tracked independently via `distinct_purchase_days`.
-4. **Deterministic Frequency Scoring:** Discrete binning ensures that all 1-time buyers receive score 1, 2-order buyers score 2, 3-4 orders score 3, 5-8 orders score 4, and 9+ orders score 5, completely eliminating arbitrary tie-breaking.
-5. **Negative Net Spend Isolation:** Customers with net cumulative spend <= £0.00 due to returns are segregated into a dedicated `Negative or Zero Spend` segment.
+The RFM segmentation scheme deterministically maps all 125 possible score combinations of `(r_score, f_score, m_score)` 
+plus negative net spend to 11 mutually exclusive, exhaustive business categories:
+
+| CRM Segment | Condition Criteria | Core Business Strategy |
+| :--- | :--- | :--- |
+| **Champions** | `R in [4, 5]` and `F in [4, 5]` and `M in [4, 5]` | Top-tier VIP concierge outreach, early product access, executive appreciation. |
+| **Loyal Customers** | (`R in [4, 5]` and `F in [4, 5]` and `M in [2, 3]`) or (`R == 3` and `F in [3, 4, 5]` and `M in [3, 4, 5]`) | Membership loyalty rewards, category cross-sell, referral programs. |
+| **Potential Loyalists** | `R in [4, 5]` and `F in [2, 3]` and `M in [2, 3, 4, 5]` | Upsell incentives, second-tier order bundles, product recommendation journeys. |
+| **New Customers** | `R in [4, 5]` and `F == 1` and `M in [2, 3, 4, 5]` | Dedicated onboarding sequences, welcome-back second order discount. |
+| **Can't Lose Them** | `R in [1, 2]` and `F in [2, 3, 4, 5]` and `M in [4, 5]` | Highest priority win-back campaigns; bespoke commercial incentives and account management review. |
+| **At Risk** | (`R in [1, 2]` and `F in [3, 4, 5]` and `M in [2, 3]`) or (`R in [1, 2]` and `F == 1` and `M in [4, 5]`) | Re-engagement campaigns, personalized catalog offers, targeted reactivation. |
+| **Promising** | (`R == 3` and `F in [1, 2]` and `M in [2, 3, 4, 5]`) or (`R in [4, 5]` and `M == 1`) | Trial incentives to increase basket size, low-barrier category introductions. |
+| **About To Sleep** | `R == 2` and `F in [1, 2]` and `M in [1, 2, 3]` | Reactivation before complete dormancy; survey interest and offer seasonal triggers. |
+| **Hibernating** | (`R == 1` and `F >= 2` and `M in [1, 2]`) or (`R == 3` and `M in [1, 2]`) | Automated low-cost drip campaigns; deep discount clearances. |
+| **Lost** | `R == 1` and `F == 1` and `M in [1, 2, 3]` | Deprioritized from high-touch marketing; archive or broad brand awareness only. |
+| **Negative or Zero Spend** | `net_commercial_spend <= 0.0` | Audit returns, investigate merchandise defects, review concession abuse. |
+
+## Customer Monetary Value Reconciliation & Sensitivity Analysis
+
+1. **Customer Commercial Net Spend (Primary Measure):**
+   - Includes: Standard catalog merchandise sales, customer shipping charges (`POST`, `DOT`), trade discounts (`D`), manual commercial adjustments (`M`), and genuine merchandise returns.
+   - Total across full 24 months: £16,348,503.28.
+2. **Administrative Settlements (Isolated):**
+   - Includes: Cancer Research UK commission disbursements (`CRUK`, -£7,933.43), internal staff ledger adjustments (`ADJUST`/`ADJUST2`, +£2,769.17), and banking fees (`BANK CHARGES`, +£330.00).
+   - Total across customer accounts: -£4,834.26.
+3. **Account Balance Reconciliation:**
+   - `net_commercial_spend (£16,348,503.28)` + `admin_settlements (-£4,834.26)` = `total_customer_account_balance (£16,343,669.02)`.
+   - Reconciles to the penny across all customer invoices.
+4. **Sensitivity Impact:**
+   - Isolating administrative settlements affects only 68 out of 5,853 customers (1.16% of customer base).
+   - For corporate partner account 14096 (CRUK), commercial merchandise purchases are correctly reflected as £65,054.34 rather than being artificially reduced by charity commission payouts.

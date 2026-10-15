@@ -16,15 +16,19 @@ The data ingestion, schema validation, exact cross-sheet duplicate resolution, d
 - **Exact Cross-Sheet Duplicates Removed**: 22,523 rows (from the December 1–9, 2010 overlap window). Legitimate same-sheet repeated purchases are strictly preserved.
 - **Retained Transactions**: 1,044,848 rows (809,561 customer-attributed; 235,287 unattributed).
 - **Unique Invoices**: 53,628 (36,975 customer sales; 7,901 customer cancellations; 4,962 unattributed sales; 391 unattributed cancellations; 3,393 inventory write-offs; 6 bad debt adjustments).
-- **Gross Product Sales**: £19,716,362.61 (Ordinary merchandise items).
+- **Gross Product Sales**: £19,716,362.61 (Ordinary merchandise items, including cushion pads).
 - **Special Commercial Charges**: £806,317.23 (POST, DOT, M, BANK CHARGES, etc.).
 - **Total Gross Commercial Sales**: £20,522,679.84 (Attributed: £17,431,551.16; Unattributed: £3,091,128.68).
 - **Cancellations / Returns**: -£1,465,303.66 (Attributed: -£1,087,882.14; Unattributed: -£377,421.52).
-- **Net Commercial Value (before bad debt)**: £19,057,376.18 (Attributed: £16,343,669.02; Unattributed: £2,713,707.16).
 - **Bad Debt Adjustments**: -£147,614.08.
-- **All Transactions Net Value (after bad debt)**: £18,909,762.10 (Reconciles exactly to invoice totals; discrepancy: £0.00).
+- **All Transactions Net Value (Whole-Company Accounting)**: £18,909,762.10 (Reconciles exactly to invoice totals; discrepancy: £0.00).
+- **Customer Account Ledger Total (5,942 customers)**: £16,343,669.02.
+- **Customer Administrative Settlements (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`)**: -£4,834.26 (isolated from commercial spend).
+- **Primary Customer Commercial Net Spend**: £16,348,503.28 (£16,343,669.02 − (-£4,834.26)).
 - **Customer Modeling-Ready Transactions**: 809,491 rows (excludes 70 zero-revenue promotional freebies from the commercial extract).
-- **Customer RFM Snapshots**: Generated for 3 chronological evaluation cutoffs with observed 90-day forward windows (`2010-12-09`: 4,286 customers, 30.7% repeat rate; `2011-06-10`: 4,952 customers, 32.0% repeat rate; `2011-09-10`: 5,257 customers, 43.5% repeat rate) plus the full dataset end snapshot (`2011-12-09`: 5,853 customers).
+- **Conventional Retail AOV**: Computed strictly across qualifying purchase orders ($\sum \text{qualifying\_gross\_sales} / \text{frequency}$).
+- **125-Cell Monetary-Aware Segmentation**: All $(R, F, M)$ cells explicitly mapped; prevents low-ticket buyers from becoming Champions and prioritizes dormant VIP accounts as Can't Lose Them.
+- **Customer RFM Snapshots**: Generated for 3 chronological evaluation cutoffs with fully observed 90-day forward windows (`2010-12-09`: 4,286 customers, 30.73% repeat rate; `2011-06-10`: 4,952 customers, 32.03% repeat rate; `2011-09-09`: 5,257 customers, 43.50% repeat rate) plus the full dataset end snapshot (`2011-12-09`: 5,853 customers; forward target unobserved `<NA>`).
 
 Detailed reports and schemas are available in:
 - [Customer RFM Feature Definitions & Segmentation](docs/rfm_feature_definitions.md)
