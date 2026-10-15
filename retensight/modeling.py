@@ -1,10 +1,10 @@
 """Leakage-safe repeat-purchase propensity modeling and CRM queue evaluation."""
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -250,7 +250,7 @@ def evaluate_predictions(
     model_name : str
         Model identifier (e.g. 'RFM Baseline' or 'Expanded Model').
     split_name : str
-        Split identifier (e.g. 'Validation' or 'Holdout').
+        Split identifier (e.g. 'Validation' or 'Retrospective Temporal Evaluation').
     snapshot_date : str
         Date string of snapshot cutoff.
 
@@ -369,37 +369,42 @@ def extract_coefficients(
 
 
 def evaluate_crm_queue_policies(
-    holdout_df: pd.DataFrame,
+    eval_df: pd.DataFrame,
     predicted_repeat_prob: np.ndarray,
+    model_name: str,
+    evaluation_split: str,
     capacities: Sequence[float] = (0.01, 0.05, 0.10, 0.20),
 ) -> pd.DataFrame:
     """Evaluates CRM customer prioritization policies under fixed capacity constraints.
 
-    Evaluated policies on final temporal holdout:
+    Evaluated policies:
     1. Risk-first: prioritize lowest predicted repeat-purchase probabilities (1 - p).
     2. Value-aware: prioritize by expected commercial value at risk (1 - p) * max(0, spend).
     3. Hybrid: combine 50% risk percentile rank + 50% positive value percentile rank.
-    4. Random selection baseline: analytical expectation based on cohort base rates.
+    4. Random baseline (analytical expectation): based on cohort base rates and actual fraction.
 
     Parameters
     ----------
-    holdout_df : pd.DataFrame
-        Holdout customer snapshot dataframe.
+    eval_df : pd.DataFrame
+        Customer snapshot evaluation dataframe.
     predicted_repeat_prob : np.ndarray
-        Predicted repeat-purchase probabilities for holdout customers.
+        Predicted repeat-purchase probabilities for evaluated customers.
+    model_name : str
+        Model name ('RFM Baseline' or 'Expanded Model').
+    evaluation_split : str
+        Evaluation split name ('Validation' or 'Retrospective Temporal Evaluation').
     capacities : Sequence[float]
         Outreach capacity fractions (e.g. 0.01, 0.05, 0.10, 0.20).
 
     Returns
     -------
     pd.DataFrame
-        Policy comparison table.
+        Policy comparison table with identifying split and model columns.
     """
-    df = holdout_df.copy()
+    df = eval_df.copy()
     n = len(df)
     total_non_repeaters = int((df["target_repeat_purchase_90d"] == 0).sum())
     total_commercial_spend = float(df["net_commercial_spend"].sum())
-    base_non_repeat_rate = total_non_repeaters / n
 
     # Prioritization scores
     df["_p_repeat"] = predicted_repeat_prob
@@ -416,6 +421,7 @@ def evaluate_crm_queue_policies(
 
     for cap in capacities:
         k = max(1, int(round(cap * n)))
+        actual_fraction = k / n
 
         # 1. Risk-first
         rf_order = df.sort_values(
@@ -441,9 +447,9 @@ def evaluate_crm_queue_policies(
         hy_non_rep = int((hy_order["target_repeat_purchase_90d"] == 0).sum())
         hy_spend = float(hy_order["net_commercial_spend"].sum())
 
-        # 4. Random baseline (analytical expectation)
-        rnd_non_rep = round(k * base_non_repeat_rate, 1)
-        rnd_spend = round(cap * total_commercial_spend, 2)
+        # 4. Random baseline (analytical expectation using actual selected customer fraction)
+        rnd_non_rep = round(actual_fraction * total_non_repeaters, 1)
+        rnd_spend = round(actual_fraction * total_commercial_spend, 2)
 
         policy_configs = [
             ("Risk-first", rf_non_rep, rf_spend),
@@ -459,6 +465,8 @@ def evaluate_crm_queue_policies(
 
             results.append(
                 {
+                    "evaluation_split": evaluation_split,
+                    "model_name": model_name,
                     "outreach_capacity": f"{int(round(cap * 100))}%",
                     "outreach_capacity_fraction": cap,
                     "selected_count": k,
@@ -575,7 +583,6 @@ def run_repeat_purchase_modeling(
     snapshots: Dict[str, pd.DataFrame] = {}
     for date_key, path in snapshot_files.items():
         if not path.exists():
-            # Try CSV fallback if parquet missing
             csv_path = path.with_suffix(".csv")
             if csv_path.exists():
                 snapshots[date_key] = pd.read_csv(csv_path)
@@ -649,8 +656,8 @@ def run_repeat_purchase_modeling(
     logger.info("  RFM Baseline   - ROC-AUC: %.4f, PR-AUC: %.4f, Brier: %.4f", res_rfm_val.roc_auc, res_rfm_val.average_precision, res_rfm_val.brier_score)
     logger.info("  Expanded Model - ROC-AUC: %.4f, PR-AUC: %.4f, Brier: %.4f", res_exp_val.roc_auc, res_exp_val.average_precision, res_exp_val.brier_score)
 
-    # 6. Final Temporal Holdout Stage
-    # Fit on combined Cutoff 1 and Cutoff 2 (9,238 observations), evaluate ONCE on Cutoff 3 (2011-09-09)
+    # 6. Retrospective Temporal Evaluation Stage
+    # Fit on combined Cutoff 1 and Cutoff 2 (9,238 observations), evaluate on Cutoff 3 (2011-09-09)
     train_holdout_df = pd.concat([train_val_df, eval_val_df], ignore_index=True)
     eval_holdout_df = snapshots["2011-09-09"]
 
@@ -658,7 +665,7 @@ def run_repeat_purchase_modeling(
     y_eval_ho = eval_holdout_df["target_repeat_purchase_90d"].values.astype(int)
     cust_eval_ho = eval_holdout_df["customer_id"].values
 
-    # Fit RFM Baseline on Holdout Train
+    # Fit RFM Baseline on Combined Historical Data
     pipe_rfm_ho = build_modeling_pipeline(random_state=random_state)
     X_tr_rfm_ho = train_holdout_df[list(RFM_BASELINE_FEATURES)].values
     X_ev_rfm_ho = eval_holdout_df[list(RFM_BASELINE_FEATURES)].values
@@ -671,11 +678,11 @@ def run_repeat_purchase_modeling(
         y_prob=prob_rfm_ho,
         customer_ids=cust_eval_ho,
         model_name="RFM Baseline",
-        split_name="Temporal Holdout",
+        split_name="Retrospective Temporal Evaluation",
         snapshot_date="2011-09-09",
     )
 
-    # Fit Expanded Model on Holdout Train
+    # Fit Expanded Model on Combined Historical Data
     pipe_exp_ho = build_modeling_pipeline(random_state=random_state)
     X_tr_exp_ho = train_holdout_df[list(EXPANDED_FEATURES)].values
     X_ev_exp_ho = eval_holdout_df[list(EXPANDED_FEATURES)].values
@@ -688,26 +695,53 @@ def run_repeat_purchase_modeling(
         y_prob=prob_exp_ho,
         customer_ids=cust_eval_ho,
         model_name="Expanded Model",
-        split_name="Temporal Holdout",
+        split_name="Retrospective Temporal Evaluation",
         snapshot_date="2011-09-09",
     )
 
-    logger.info("Temporal Holdout Stage Results:")
+    logger.info("Retrospective Temporal Evaluation Results:")
     logger.info("  RFM Baseline   - ROC-AUC: %.4f, PR-AUC: %.4f, Brier: %.4f", res_rfm_ho.roc_auc, res_rfm_ho.average_precision, res_rfm_ho.brier_score)
     logger.info("  Expanded Model - ROC-AUC: %.4f, PR-AUC: %.4f, Brier: %.4f", res_exp_ho.roc_auc, res_exp_ho.average_precision, res_exp_ho.brier_score)
 
-    # 7. Calibration Table (Expanded Model on Temporal Holdout)
+    # 7. Calibration Table (Expanded Model on Retrospective Temporal Cohort)
     calib_table = compute_calibration_table(y_eval_ho, prob_exp_ho, n_bins=10)
 
-    # 8. Coefficients & Odds Ratios (Expanded Model fitted on Holdout Training Data)
+    # 8. Coefficients & Odds Ratios (fitted on Combined Historical Data)
     coef_table_exp = extract_coefficients(pipe_exp_ho, EXPANDED_FEATURES)
     coef_table_rfm = extract_coefficients(pipe_rfm_ho, RFM_BASELINE_FEATURES)
 
-    # 9. CRM Queue Policy Evaluation at Fixed Capacities
-    policy_comparison_df = evaluate_crm_queue_policies(
-        holdout_df=eval_holdout_df,
-        predicted_repeat_prob=prob_exp_ho,
+    # 9. CRM Queue Policy Evaluation at Fixed Capacities across both Models and both Splits
+    policy_rfm_val = evaluate_crm_queue_policies(
+        eval_df=eval_val_df,
+        predicted_repeat_prob=prob_rfm_val,
+        model_name="RFM Baseline",
+        evaluation_split="Validation",
         capacities=(0.01, 0.05, 0.10, 0.20),
+    )
+    policy_exp_val = evaluate_crm_queue_policies(
+        eval_df=eval_val_df,
+        predicted_repeat_prob=prob_exp_val,
+        model_name="Expanded Model",
+        evaluation_split="Validation",
+        capacities=(0.01, 0.05, 0.10, 0.20),
+    )
+    policy_rfm_ho = evaluate_crm_queue_policies(
+        eval_df=eval_holdout_df,
+        predicted_repeat_prob=prob_rfm_ho,
+        model_name="RFM Baseline",
+        evaluation_split="Retrospective Temporal Evaluation",
+        capacities=(0.01, 0.05, 0.10, 0.20),
+    )
+    policy_exp_ho = evaluate_crm_queue_policies(
+        eval_df=eval_holdout_df,
+        predicted_repeat_prob=prob_exp_ho,
+        model_name="Expanded Model",
+        evaluation_split="Retrospective Temporal Evaluation",
+        capacities=(0.01, 0.05, 0.10, 0.20),
+    )
+    policy_comparison_df = pd.concat(
+        [policy_rfm_val, policy_exp_val, policy_rfm_ho, policy_exp_ho],
+        ignore_index=True,
     )
 
     # 10. Compile Metrics Table
@@ -734,7 +768,6 @@ def run_repeat_purchase_modeling(
     model_config_data = {
         "model_type": "LogisticRegression (scikit-learn)",
         "solver": "lbfgs",
-        "penalty": "l2",
         "C": 1.0,
         "max_iter": 1000,
         "random_state": random_state,
@@ -751,11 +784,11 @@ def run_repeat_purchase_modeling(
                 "val_samples": len(eval_val_df),
                 "window_gap_days": 93,
             },
-            "temporal_holdout_stage": {
+            "retrospective_temporal_stage": {
                 "train_cutoffs": ["2010-12-09 23:59:59", "2011-06-10 23:59:59"],
                 "train_samples": len(train_holdout_df),
-                "holdout_cutoff": "2011-09-09 23:59:59",
-                "holdout_samples": len(eval_holdout_df),
+                "evaluation_cutoff": "2011-09-09 23:59:59",
+                "evaluation_samples": len(eval_holdout_df),
                 "window_gap_days": 1,
             },
         },
@@ -764,7 +797,17 @@ def run_repeat_purchase_modeling(
             "expanded_features": list(EXPANDED_FEATURES),
             "prohibited_columns_guarded": list(PROHIBITED_FEATURE_COLUMNS),
         },
-        "selected_model_by_validation": "Expanded Model",
+        "recommended_default_model": "RFM Baseline",
+        "challenger_model": "Expanded Model",
+        "selection_rationale": (
+            "Model selection is governed strictly by the validation stage (2011-06-10). "
+            "While the 16-feature Expanded model yields slight statistical gains in validation ROC-AUC (+0.0053) "
+            "and Brier score (-0.0011), it offers negligible practical improvement in validation CRM queue prioritization "
+            "(e.g., only 3 additional non-repeaters captured under Risk-first at 10% capacity, and 7 under Hybrid, "
+            "while capturing £768.8k less historical spend under Value-aware). "
+            "The simpler 3-feature RFM Baseline is recommended as the default operational model for parsimony and maintainability, "
+            "retaining the Expanded model as an analytical challenger."
+        ),
     }
 
     with open(config_json_path, "w", encoding="utf-8") as fp:
@@ -831,26 +874,30 @@ def _generate_markdown_report(
     md.append("# RetenSight — Repeat-Purchase Propensity Modeling and CRM Queue Evaluation Report\n\n")
     md.append("## Executive Summary\n\n")
     md.append(
-        "This report documents the design, implementation, and rigorous evaluation of two leakage-safe, "
-        "explainable logistic regression models developed to predict whether an active e-commerce customer will make "
+        "This report documents the design, implementation, and empirical evaluation of two leakage-safe, "
+        "explainable logistic regression models developed to estimate whether an active e-commerce customer will make "
         "at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.\n\n"
     )
     md.append(
-        "- **RFM Baseline Model:** Built strictly from Recency ($R$), Frequency ($F$), and net commercial spend ($M$).\n"
+        "- **RFM Baseline Model:** Formulated strictly from Recency ($R$), Frequency ($F$), and net commercial spend ($M$).\n"
         "- **Expanded Model:** Extends the baseline with 13 additional point-in-time purchasing cadence, basket size, "
         "order value, cancellation behavior, and financial component features (16 total features).\n"
-        "- **Validation-Governed Selection:** The Expanded model demonstrated superior discriminative power "
-        "(ROC-AUC 0.8079 vs 0.8026, PR-AUC 0.6993 vs 0.6928) and improved calibration (Brier score 0.1583 vs 0.1594) "
-        "on the chronological validation set (`2011-06-10`). In accordance with pre-specified protocol, "
-        "model selection was frozen prior to holdout evaluation.\n"
-        "- **Final Temporal Holdout Evaluation (`2011-09-09`):** Evaluated strictly once on the 5,257-customer holdout. "
-        "Both models confirmed exceptional decile discrimination, achieving an ~89.7% repeat rate in the top decile "
-        "(over double the random base rate of 43.50%) and a ~91.0% non-purchase rate in the bottom decile.\n"
-        "- **CRM Queue Prioritization:** Evaluated Risk-first, Value-aware, and Hybrid outreach policies across fixed "
-        "capacity budgets (1%, 5%, 10%, 20%). Risk-first delivers peak non-repeat capture precision (~90.7%) but captures "
-        "negligible historical value (<1%). Value-aware protects substantial commercial revenue (up to 54.0% of cohort spend) "
-        "with lower non-repeat precision. The Hybrid policy achieves an optimal operational balance, delivering 71.5%–84.9% "
-        "non-repeat precision while safeguarding £165k–£1.79M of commercial customer spend.\n\n"
+        "- **Validation-Governed Model Recommendation:** Model selection is governed exclusively by the `2011-06-10` validation cohort. "
+        "While the Expanded model achieves slight statistical improvements in validation ROC-AUC (0.8079 vs 0.8026) and "
+        "Brier calibration score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain "
+        "(e.g., capturing only 3 additional non-repeaters under Risk-first at 10% capacity, and 7 under Hybrid, while capturing £768.8k "
+        "less historical spend under Value-aware). In accordance with parsimony and decision utility principles, the **simpler 3-feature RFM Baseline "
+        "is recommended as the operational default**, retaining the Expanded model as an analytical challenger.\n"
+        "- **Retrospective Temporal Evaluation (`2011-09-09`):** The later chronological evaluation cohort was inspected during exploratory "
+        "development and is presented transparently as a retrospective temporal evaluation rather than a prospective holdout. "
+        "Both models demonstrate robust ranking separation in this cohort, achieving an 89.73% repeat rate in the top decile "
+        "(compared to a 43.50% cohort base rate) and a 90.68%–91.06% non-purchase rate in the bottom decile.\n"
+        "- **CRM Outreach Prioritization Trade-offs:** Evaluated Risk-first, Value-aware, and Hybrid outreach policies across fixed "
+        "capacity budgets (1%, 5%, 10%, 20%). Risk-first achieves the highest non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) "
+        "but captures negligible historical commercial spend (<1%). Value-aware targets major historical commercial accounts "
+        "(representing 35%–41% of cohort commercial spend at 10% capacity) with lower non-repeat precision. The Hybrid policy achieves "
+        "an intermediate balance (81%–82% non-repeat precision in validation, representing ~7.4% of cohort historical spend). "
+        "No single policy is universally superior across all business goals; the appropriate policy depends on commercial intervention costs and account value.\n\n"
     )
 
     md.append("## 1. Strictly Chronological Walk-Forward Evaluation Design\n\n")
@@ -861,20 +908,21 @@ def _generate_markdown_report(
     md.append("| Phase | Training Period / Cutoff | Forward Target Window | Evaluation Snapshot Cutoff | Cohort Size ($N$) | Observed Repeaters ($y=1$) | Base Rate |\n")
     md.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
     md.append("| **Validation Stage** | `2010-12-09 23:59:59` | `2010-12-10` to `2011-03-09` | `2011-06-10 23:59:59` | 4,952 | 1,586 | 32.03% |\n")
-    md.append("| **Temporal Holdout Stage** | `2010-12-09` + `2011-06-10` (9,238 rows) | `2011-06-11` to `2011-09-08` | `2011-09-09 23:59:59` | 5,257 | 2,287 | 43.50% |\n")
+    md.append("| **Retrospective Temporal Stage** | `2010-12-09` + `2011-06-10` (9,238 rows) | `2011-06-11` to `2011-09-08` | `2011-09-09 23:59:59` | 5,257 | 2,287 | 43.50% |\n")
     md.append("| **Unobserved Production** | — | Unobserved (`2011-12-10` to `2012-03-08`) | `2011-12-09 12:50:00` | 5,853 | *None (<NA>)* | *Unobserved* |\n\n")
 
-    md.append("### Chronological Separation Verification\n\n")
+    md.append("### Chronological Separation and Methodological Integrity\n\n")
     md.append(
         "- **Validation Boundary:** Cutoff 1 target window closes on `2011-03-09 23:59:59`, exactly 93 days prior to the "
         "Cutoff 2 evaluation scoring date (`2011-06-10 23:59:59`). No overlap exists.\n"
-        "- **Holdout Boundary:** Cutoff 2 target window closes on `2011-09-08 23:59:59`, exactly 1 day prior to the "
-        "Cutoff 3 holdout scoring date (`2011-09-09 23:59:59`). No overlap exists.\n"
+        "- **Retrospective Evaluation Boundary:** Cutoff 2 target window closes on `2011-09-08 23:59:59`, exactly 1 day prior to the "
+        "Cutoff 3 scoring date (`2011-09-09 23:59:59`). No overlap exists.\n"
+        "- **Cohort Base-Rate Shift:** The observed 90-day repeat rate shifts from 32.03% in the `2011-06-10` cohort to 43.50% in the "
+        "`2011-09-09` cohort. The causal explanation for this shift is unknown from this observational analysis.\n"
         "- **Repeated Observations:** Customers active across multiple cutoffs appear as distinct point-in-time scoring "
-        "observations. Under standard CRM operations, customer states are re-scored periodically. Customer ID is never "
-        "used as a predictive feature.\n"
-        "- **Holdout Integrity:** Holdout labels (`2011-09-09`) were strictly locked and never used for feature selection, "
-        "hyperparameter tuning, or model selection.\n\n"
+        "observations. Customer ID is never used as a predictive feature.\n"
+        "- **Evaluation Freeze:** Model recommendations and policy choices were derived solely from the validation stage. "
+        "The retrospective temporal cohort was not used to select features, tune hyperparameters, or adjust decision thresholds.\n\n"
     )
 
     md.append("## 2. Feature Engineering and Leakage Exclusion\n\n")
@@ -909,31 +957,34 @@ def _generate_markdown_report(
 
     md.append("### Key Analytical Insights\n\n")
     md.append(
-        "1. **Validation Superiority of Expanded Model:** On the `2011-06-10` validation set, the Expanded Model outperforms "
-        "the RFM Baseline across ROC-AUC (0.8079 vs 0.8026), PR-AUC (0.6993 vs 0.6928), and Brier calibration score "
-        "(0.1583 vs 0.1594). Basket depth and multi-day purchasing cadence provide distinct predictive lift over invoice counts alone.\n"
-        "2. **Decile Discrimination:** In the holdout period, both models exhibit strong separation. The top decile "
-        "achieves an 89.73% repeat rate (vs 43.50% base rate), while the bottom decile isolates customers with a 90.68%–91.06% "
-        "non-purchase rate.\n"
-        "3. **Seasonal Shift and Calibration:** The holdout repeat base rate (43.50%) is elevated relative to the training "
-        "period (30.73%–32.03%) due to Q4 autumn/holiday seasonal demand acceleration. Despite this retail macro-shift, "
-        "rank ordering and decile calibration remain strictly monotonic.\n\n"
+        "1. **Validation Metrics Comparison:** On the `2011-06-10` validation set, the Expanded Model achieves slightly higher "
+        "ROC-AUC (0.8079 vs 0.8026) and average precision (0.6993 vs 0.6928), with a marginally lower Brier score (0.1583 vs 0.1594). "
+        "However, the top-decile repeat rate is virtually identical (85.45% Expanded vs 85.66% Baseline).\n"
+        "2. **Retrospective Temporal Performance:** On the `2011-09-09` cohort, both models achieve identical top-decile repeat precision (89.73%), "
+        "and the RFM Baseline exhibits a slightly higher bottom-decile non-purchase rate (91.06% vs 90.68%). ROC-AUC and average precision "
+        "remain modestly higher for the Expanded model (0.7869 vs 0.7815, and 0.7545 vs 0.7478).\n"
+        "3. **Practical Utility Conclusion:** Across both evaluation cohorts, the predictive differences between the two models are minor. "
+        "The additional complexity of maintaining 16 features does not produce a commensurate gain in practical customer ranking.\n\n"
     )
 
-    md.append("## 4. Calibration Evidence (Expanded Model on Temporal Holdout)\n\n")
+    md.append("## 4. Calibration Evidence and Underprediction Analysis\n\n")
+    md.append("### Retrospective Temporal Cohort Decile Calibration (`2011-09-09`)\n\n")
     md.append(_df_to_markdown(calib_df))
     md.append("\n\n")
     md.append(
-        "> **Calibration Note:** Calibration bins demonstrate strict monotonic increase in observed repeat rates "
-        "across all 10 predicted probability deciles (from 9.32% in Decile 1 to 89.73% in Decile 10). "
-        "The conservative probability predictions in intermediate deciles reflect the training set's baseline environment "
-        "(~31% repeat rate) prior to Q4 seasonal shopping surges.\n\n"
+        "> [!IMPORTANT]\n"
+        "> **Calibration Finding:** Across all 10 reported deciles in the `2011-09-09` evaluation cohort, the observed repeat rate "
+        "exceeds the mean predicted probability. This demonstrates **systematic probability underprediction**, driven by the shift "
+        "in cohort repeat rate from ~31%–32% in training to 43.50% in this evaluation window. "
+        "While predicted probabilities maintain strict monotonic ordering across deciles (from 4.40% in Decile 1 to 85.64% in Decile 10), "
+        "they are not well-calibrated in an absolute sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted "
+        "to this cohort, and raw probabilities must be interpreted with this underprediction in mind.\n\n"
     )
 
     md.append("## 5. Model Explainability and Standardized Coefficients\n\n")
     md.append(
-        "The table below shows the standardized logistic regression coefficients $\\beta_j$ and corresponding odds ratios "
-        "$\\exp(\\beta_j)$ per 1 standard deviation increase in the signed-log transformed feature.\n\n"
+        "The tables below report standardized logistic regression coefficients $\\beta_j$ and odds ratios $\\exp(\\beta_j)$ "
+        "per 1 standard deviation increase in the signed-log transformed feature.\n\n"
     )
     md.append("### Expanded Model Coefficients\n\n")
     md.append(_df_to_markdown(coef_exp_df))
@@ -945,44 +996,61 @@ def _generate_markdown_report(
 
     md.append(
         "> [!IMPORTANT]\n"
-        "> **Observational Disclaimer:** These coefficients reflect conditional predictive associations in historical "
-        "transaction data, **not causal effects**. A positive coefficient indicates that customers with higher historical "
-        "engagement were more likely to repeat under historical conditions. It does not imply that incentivizing a customer "
-        "to buy more will causally increase their repeat propensity by that odds ratio.\n\n"
+        "> **Observational Disclaimer:** These coefficients reflect conditional statistical associations in observational "
+        "transaction data, **not causal mechanisms**. A positive coefficient indicates that customers with higher historical "
+        "engagement were more likely to repeat under historical conditions. It does not imply that marketing actions designed "
+        "to increase frequency or spend will causally alter repeat purchase propensity by that odds ratio.\n\n"
     )
 
     md.append("## 6. CRM Outreach Queue Prioritization Policies\n\n")
     md.append(
-        "Under limited operational outreach capacity (e.g. call center, targeted mail, personalized retention incentive), "
-        "four policies were compared on the final temporal holdout (5,257 eligible customers, 2,970 non-repeaters, £13.26M historical spend):\n\n"
+        "To evaluate decision utility under capacity constraints, four targeting policies were simulated across both evaluation cohorts "
+        "at 1%, 5%, 10%, and 20% capacity budgets. Below is the primary comparison at **10% outreach capacity**:\n\n"
     )
-    md.append(_df_to_markdown(policy_df))
+
+    # Focus table on 10% capacity
+    policy_10pct = policy_df[policy_df["outreach_capacity"] == "10%"].copy()
+    md.append(_df_to_markdown(policy_10pct))
     md.append("\n\n")
-
-    md.append("### CRM Policy Strategic Comparison\n")
     md.append(
-        "- **Risk-First Policy:** Ideal when outreach capacity is highly constrained and the goal is strictly non-repeat capture "
-        "accuracy (e.g., automated reactivation surveys). Captures non-repeaters with ~90.7% precision at 10% capacity, "
-        "but targets low-tenure, one-time shoppers representing only £82.6k (0.62%) of historical revenue.\n"
-        "- **Value-Aware Policy:** Ideal for high-touch account management where losing an account is catastrophic. "
-        "Targets major commercial accounts (£4.85M at 10% capacity, £7.15M at 20% capacity). However, because high spenders "
-        "naturally repeat more frequently, non-repeat precision is lower (36.7%–38.3%).\n"
-        "- **Hybrid Policy (Recommended for CRM Retention):** Blends normalized risk rank and commercial spend rank ($0.5 \\times \\text{Risk} + 0.5 \\times \\text{Value}$). "
-        "Achieves 75.9% non-repeat capture precision at 10% capacity (vs 56.5% random baseline) while capturing £897k "
-        "of commercial customer spend. At 20% capacity, it protects £1.79M of spend with 71.5% non-repeat precision.\n"
-        "- **Random Baseline:** Represents uninformed outreach, capturing non-repeaters exactly at the base rate (56.5%) "
-        "and spend strictly proportional to capacity.\n"
+        "*Note: Full comparison tables across all capacities (1%, 5%, 10%, 20%) are available in "
+        "`reports/crm_queue_policy_comparison.csv`.*\n\n"
     )
 
-    md.append("## 7. Operational Limitations and Deployment Safeguards\n")
+    md.append("### CRM Policy Decision Outcomes and Trade-Offs\n\n")
     md.append(
-        "1. **No Causal Uplift Claims:** Transaction data reflects organic retail behavior. Predictions identify who is at risk "
-        "of not repeating, not who will respond positively to marketing intervention.\n"
-        "2. **Seasonal Calibration Drift:** When scoring Q4 (autumn/holiday) cohorts, predicted probabilities will trend "
-        "conservative due to retail holiday surges. Priority ranks remain robust, but absolute probability thresholds "
-        "should account for seasonal baselines.\n"
-        "3. **Unobserved Cutoffs:** The `2011-12-09` snapshot represents production scoring as of dataset end. Forward labels "
-        "are strictly unobserved and were excluded from training and evaluation.\n"
+        "- **RFM Baseline vs. Expanded Model in Validation (10% Capacity):**\n"
+        "  - Under **Risk-First**, the Expanded model captures 473 non-repeaters (95.56% non-repeat rate) versus 470 for the RFM Baseline (94.95%), "
+        "a gain of only 3 additional accounts out of 495 contacts.\n"
+        "  - Under **Hybrid**, the Expanded model captures 408 non-repeaters (82.42% non-repeat rate) versus 401 for the RFM Baseline (81.01%), "
+        "a gain of only 7 accounts, with nearly identical historical spend represented (£844.9k vs £854.9k).\n"
+        "  - Under **Value-Aware**, the RFM Baseline captures substantially more historical commercial spend (£4.74M, 41.29% of cohort spend) "
+        "than the Expanded model (£3.97M, 34.59% of cohort spend), while capturing 236 non-repeaters versus 253.\n"
+        "- **Trade-Off Summary across Policies:**\n"
+        "  - **Risk-First Policy:** Maximizes non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) "
+        "by targeting customers with lowest predicted return likelihood. However, these customers are primarily low-value, one-time shoppers "
+        "representing <1% of cohort historical commercial spend.\n"
+        "  - **Value-Aware Policy:** Prioritizes accounts with the highest historical commercial spend at risk, representing 35%–41% of cohort "
+        "commercial spend at 10% capacity. Because high spenders repeat more often than average, non-repeat precision is lower (37%–51%).\n"
+        "  - **Hybrid Policy:** Combines normalized risk rank and spend rank ($0.5 \\times \\text{Risk} + 0.5 \\times \\text{Spend}$), achieving "
+        "74%–82% non-repeat precision while representing 6.8%–7.5% of cohort historical spend.\n"
+        "  - **Policy Selection Depends on Operating Context:** No single policy serves all objectives. The appropriate CRM policy depends on operational constraints, "
+        "intervention costs, and account value. Low-cost automated re-engagement favors Risk-First; high-touch account management favors Value-Aware; "
+        "budget-constrained marketing campaigns favor Hybrid.\n\n"
+    )
+
+    md.append("## 7. Operational Limitations and Deployment Safeguards\n\n")
+    md.append(
+        "1. **No Causal Uplift or Preserved Revenue Claims:** Observed figures represent historical commercial spend associated with "
+        "selected customers. They do not measure incremental retention, campaign uplift, causal impact, profit, or customer lifetime value. "
+        "Observational data cannot establish how customers would respond to intervention.\n"
+        "2. **Retrospective Status of Later Evaluation Cohort:** The `2011-09-09` cohort was inspected during development and serves as "
+        "a retrospective temporal benchmark. It must not be treated as a prospective holdout benchmark.\n"
+        "3. **Probability Underprediction:** Predicted probabilities exhibit systematic underprediction in cohorts with higher repeat base rates. "
+        "While ranking discrimination remains effective for queue prioritization, raw probability values should not be interpreted as absolute "
+        "calibrated propensities.\n"
+        "4. **Unobserved Cutoff:** The `2011-12-09` snapshot represents production scoring as of dataset conclusion. Forward labels are strictly "
+        "unobserved and were excluded from all training, validation, and evaluation.\n"
     )
 
     with open(report_path, "w", encoding="utf-8") as fp:

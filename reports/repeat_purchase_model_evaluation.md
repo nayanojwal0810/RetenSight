@@ -2,13 +2,13 @@
 
 ## Executive Summary
 
-This report documents the design, implementation, and rigorous evaluation of two leakage-safe, explainable logistic regression models developed to predict whether an active e-commerce customer will make at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.
+This report documents the design, implementation, and empirical evaluation of two leakage-safe, explainable logistic regression models developed to estimate whether an active e-commerce customer will make at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.
 
-- **RFM Baseline Model:** Built strictly from Recency ($R$), Frequency ($F$), and net commercial spend ($M$).
+- **RFM Baseline Model:** Formulated strictly from Recency ($R$), Frequency ($F$), and net commercial spend ($M$).
 - **Expanded Model:** Extends the baseline with 13 additional point-in-time purchasing cadence, basket size, order value, cancellation behavior, and financial component features (16 total features).
-- **Validation-Governed Selection:** The Expanded model demonstrated superior discriminative power (ROC-AUC 0.8079 vs 0.8026, PR-AUC 0.6993 vs 0.6928) and improved calibration (Brier score 0.1583 vs 0.1594) on the chronological validation set (`2011-06-10`). In accordance with pre-specified protocol, model selection was frozen prior to holdout evaluation.
-- **Final Temporal Holdout Evaluation (`2011-09-09`):** Evaluated strictly once on the 5,257-customer holdout. Both models confirmed exceptional decile discrimination, achieving an ~89.7% repeat rate in the top decile (over double the random base rate of 43.50%) and a ~91.0% non-purchase rate in the bottom decile.
-- **CRM Queue Prioritization:** Evaluated Risk-first, Value-aware, and Hybrid outreach policies across fixed capacity budgets (1%, 5%, 10%, 20%). Risk-first delivers peak non-repeat capture precision (~90.7%) but captures negligible historical value (<1%). Value-aware protects substantial commercial revenue (up to 54.0% of cohort spend) with lower non-repeat precision. The Hybrid policy achieves an optimal operational balance, delivering 71.5%–84.9% non-repeat precision while safeguarding £165k–£1.79M of commercial customer spend.
+- **Validation-Governed Model Recommendation:** Model selection is governed exclusively by the `2011-06-10` validation cohort. While the Expanded model achieves slight statistical improvements in validation ROC-AUC (0.8079 vs 0.8026) and Brier calibration score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain (e.g., capturing only 3 additional non-repeaters under Risk-first at 10% capacity, and 7 under Hybrid, while capturing £768.8k less historical spend under Value-aware). In accordance with parsimony and decision utility principles, the **simpler 3-feature RFM Baseline is recommended as the operational default**, retaining the Expanded model as an analytical challenger.
+- **Retrospective Temporal Evaluation (`2011-09-09`):** The later chronological evaluation cohort was inspected during exploratory development and is presented transparently as a retrospective temporal evaluation rather than a prospective holdout. Both models demonstrate robust ranking separation in this cohort, achieving an 89.73% repeat rate in the top decile (compared to a 43.50% cohort base rate) and a 90.68%–91.06% non-purchase rate in the bottom decile.
+- **CRM Outreach Prioritization Trade-offs:** Evaluated Risk-first, Value-aware, and Hybrid outreach policies across fixed capacity budgets (1%, 5%, 10%, 20%). Risk-first achieves the highest non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) but captures negligible historical commercial spend (<1%). Value-aware targets major historical commercial accounts (representing 35%–41% of cohort commercial spend at 10% capacity) with lower non-repeat precision. The Hybrid policy achieves an intermediate balance (81%–82% non-repeat precision in validation, representing ~7.4% of cohort historical spend). No single policy is universally superior across all business goals; the appropriate policy depends on commercial intervention costs and account value.
 
 ## 1. Strictly Chronological Walk-Forward Evaluation Design
 
@@ -17,15 +17,16 @@ To guarantee zero look-ahead bias and eliminate all future information leakage, 
 | Phase | Training Period / Cutoff | Forward Target Window | Evaluation Snapshot Cutoff | Cohort Size ($N$) | Observed Repeaters ($y=1$) | Base Rate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Validation Stage** | `2010-12-09 23:59:59` | `2010-12-10` to `2011-03-09` | `2011-06-10 23:59:59` | 4,952 | 1,586 | 32.03% |
-| **Temporal Holdout Stage** | `2010-12-09` + `2011-06-10` (9,238 rows) | `2011-06-11` to `2011-09-08` | `2011-09-09 23:59:59` | 5,257 | 2,287 | 43.50% |
+| **Retrospective Temporal Stage** | `2010-12-09` + `2011-06-10` (9,238 rows) | `2011-06-11` to `2011-09-08` | `2011-09-09 23:59:59` | 5,257 | 2,287 | 43.50% |
 | **Unobserved Production** | — | Unobserved (`2011-12-10` to `2012-03-08`) | `2011-12-09 12:50:00` | 5,853 | *None (<NA>)* | *Unobserved* |
 
-### Chronological Separation Verification
+### Chronological Separation and Methodological Integrity
 
 - **Validation Boundary:** Cutoff 1 target window closes on `2011-03-09 23:59:59`, exactly 93 days prior to the Cutoff 2 evaluation scoring date (`2011-06-10 23:59:59`). No overlap exists.
-- **Holdout Boundary:** Cutoff 2 target window closes on `2011-09-08 23:59:59`, exactly 1 day prior to the Cutoff 3 holdout scoring date (`2011-09-09 23:59:59`). No overlap exists.
-- **Repeated Observations:** Customers active across multiple cutoffs appear as distinct point-in-time scoring observations. Under standard CRM operations, customer states are re-scored periodically. Customer ID is never used as a predictive feature.
-- **Holdout Integrity:** Holdout labels (`2011-09-09`) were strictly locked and never used for feature selection, hyperparameter tuning, or model selection.
+- **Retrospective Evaluation Boundary:** Cutoff 2 target window closes on `2011-09-08 23:59:59`, exactly 1 day prior to the Cutoff 3 scoring date (`2011-09-09 23:59:59`). No overlap exists.
+- **Cohort Base-Rate Shift:** The observed 90-day repeat rate shifts from 32.03% in the `2011-06-10` cohort to 43.50% in the `2011-09-09` cohort. The causal explanation for this shift is unknown from this observational analysis.
+- **Repeated Observations:** Customers active across multiple cutoffs appear as distinct point-in-time scoring observations. Customer ID is never used as a predictive feature.
+- **Evaluation Freeze:** Model recommendations and policy choices were derived solely from the validation stage. The retrospective temporal cohort was not used to select features, tune hyperparameters, or adjust decision thresholds.
 
 ## 2. Feature Engineering and Leakage Exclusion
 
@@ -47,20 +48,22 @@ The following columns are strictly excluded from all training and feature matric
 
 ### Performance Metrics Comparison Table
 
-| model_name     | split_name       | snapshot_date | sample_count | positive_count | negative_count | base_rate | roc_auc | average_precision | brier_score | log_loss | top_decile_precision | bottom_decile_non_purchase_rate | decile_count |
-| -------------- | ---------------- | ------------- | ------------ | -------------- | -------------- | --------- | ------- | ----------------- | ----------- | -------- | -------------------- | ------------------------------- | ------------ |
-| RFM Baseline   | Validation       | 2011-06-10    | 4952         | 1586           | 3366           | 0.3203    | 0.8026  | 0.6928            | 0.1594      | 0.4877   | 0.8566               | 0.9495                          | 495          |
-| Expanded Model | Validation       | 2011-06-10    | 4952         | 1586           | 3366           | 0.3203    | 0.8079  | 0.6993            | 0.1583      | 0.483    | 0.8545               | 0.9556                          | 495          |
-| RFM Baseline   | Temporal Holdout | 2011-09-09    | 5257         | 2287           | 2970           | 0.435     | 0.7815  | 0.7478            | 0.2055      | 0.6068   | 0.8973               | 0.9106                          | 526          |
-| Expanded Model | Temporal Holdout | 2011-09-09    | 5257         | 2287           | 2970           | 0.435     | 0.7869  | 0.7545            | 0.2036      | 0.6048   | 0.8973               | 0.9068                          | 526          |
+| model_name     | split_name                        | snapshot_date | sample_count | positive_count | negative_count | base_rate | roc_auc | average_precision | brier_score | log_loss | top_decile_precision | bottom_decile_non_purchase_rate | decile_count |
+| -------------- | --------------------------------- | ------------- | ------------ | -------------- | -------------- | --------- | ------- | ----------------- | ----------- | -------- | -------------------- | ------------------------------- | ------------ |
+| RFM Baseline   | Validation                        | 2011-06-10    | 4952         | 1586           | 3366           | 0.3203    | 0.8026  | 0.6928            | 0.1594      | 0.4877   | 0.8566               | 0.9495                          | 495          |
+| Expanded Model | Validation                        | 2011-06-10    | 4952         | 1586           | 3366           | 0.3203    | 0.8079  | 0.6993            | 0.1583      | 0.483    | 0.8545               | 0.9556                          | 495          |
+| RFM Baseline   | Retrospective Temporal Evaluation | 2011-09-09    | 5257         | 2287           | 2970           | 0.435     | 0.7815  | 0.7478            | 0.2055      | 0.6068   | 0.8973               | 0.9106                          | 526          |
+| Expanded Model | Retrospective Temporal Evaluation | 2011-09-09    | 5257         | 2287           | 2970           | 0.435     | 0.7869  | 0.7545            | 0.2036      | 0.6048   | 0.8973               | 0.9068                          | 526          |
 
 ### Key Analytical Insights
 
-1. **Validation Superiority of Expanded Model:** On the `2011-06-10` validation set, the Expanded Model outperforms the RFM Baseline across ROC-AUC (0.8079 vs 0.8026), PR-AUC (0.6993 vs 0.6928), and Brier calibration score (0.1583 vs 0.1594). Basket depth and multi-day purchasing cadence provide distinct predictive lift over invoice counts alone.
-2. **Decile Discrimination:** In the holdout period, both models exhibit strong separation. The top decile achieves an 89.73% repeat rate (vs 43.50% base rate), while the bottom decile isolates customers with a 90.68%–91.06% non-purchase rate.
-3. **Seasonal Shift and Calibration:** The holdout repeat base rate (43.50%) is elevated relative to the training period (30.73%–32.03%) due to Q4 autumn/holiday seasonal demand acceleration. Despite this retail macro-shift, rank ordering and decile calibration remain strictly monotonic.
+1. **Validation Metrics Comparison:** On the `2011-06-10` validation set, the Expanded Model achieves slightly higher ROC-AUC (0.8079 vs 0.8026) and average precision (0.6993 vs 0.6928), with a marginally lower Brier score (0.1583 vs 0.1594). However, the top-decile repeat rate is virtually identical (85.45% Expanded vs 85.66% Baseline).
+2. **Retrospective Temporal Performance:** On the `2011-09-09` cohort, both models achieve identical top-decile repeat precision (89.73%), and the RFM Baseline exhibits a slightly higher bottom-decile non-purchase rate (91.06% vs 90.68%). ROC-AUC and average precision remain modestly higher for the Expanded model (0.7869 vs 0.7815, and 0.7545 vs 0.7478).
+3. **Practical Utility Conclusion:** Across both evaluation cohorts, the predictive differences between the two models are minor. The additional complexity of maintaining 16 features does not produce a commensurate gain in practical customer ranking.
 
-## 4. Calibration Evidence (Expanded Model on Temporal Holdout)
+## 4. Calibration Evidence and Underprediction Analysis
+
+### Retrospective Temporal Cohort Decile Calibration (`2011-09-09`)
 
 | decile                         | sample_count | mean_predicted_prob | observed_repeat_rate | abs_calibration_error |
 | ------------------------------ | ------------ | ------------------- | -------------------- | --------------------- |
@@ -75,11 +78,12 @@ The following columns are strictly excluded from all training and feature matric
 | (0.544, 0.733]                 | 526          | 0.631               | 0.7605               | 0.1295                |
 | (0.733, 0.999]                 | 526          | 0.8564              | 0.8973               | 0.0409                |
 
-> **Calibration Note:** Calibration bins demonstrate strict monotonic increase in observed repeat rates across all 10 predicted probability deciles (from 9.32% in Decile 1 to 89.73% in Decile 10). The conservative probability predictions in intermediate deciles reflect the training set's baseline environment (~31% repeat rate) prior to Q4 seasonal shopping surges.
+> [!IMPORTANT]
+> **Calibration Finding:** Across all 10 reported deciles in the `2011-09-09` evaluation cohort, the observed repeat rate exceeds the mean predicted probability. This demonstrates **systematic probability underprediction**, driven by the shift in cohort repeat rate from ~31%–32% in training to 43.50% in this evaluation window. While predicted probabilities maintain strict monotonic ordering across deciles (from 4.40% in Decile 1 to 85.64% in Decile 10), they are not well-calibrated in an absolute sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted to this cohort, and raw probabilities must be interpreted with this underprediction in mind.
 
 ## 5. Model Explainability and Standardized Coefficients
 
-The table below shows the standardized logistic regression coefficients $\beta_j$ and corresponding odds ratios $\exp(\beta_j)$ per 1 standard deviation increase in the signed-log transformed feature.
+The tables below report standardized logistic regression coefficients $\beta_j$ and odds ratios $\exp(\beta_j)$ per 1 standard deviation increase in the signed-log transformed feature.
 
 ### Expanded Model Coefficients
 
@@ -111,37 +115,48 @@ The table below shows the standardized logistic regression coefficients $\beta_j
 | recency_days         | -0.4501                  | 0.6375            | Decreases Propensity | signed_log + standard_scaler |
 
 > [!IMPORTANT]
-> **Observational Disclaimer:** These coefficients reflect conditional predictive associations in historical transaction data, **not causal effects**. A positive coefficient indicates that customers with higher historical engagement were more likely to repeat under historical conditions. It does not imply that incentivizing a customer to buy more will causally increase their repeat propensity by that odds ratio.
+> **Observational Disclaimer:** These coefficients reflect conditional statistical associations in observational transaction data, **not causal mechanisms**. A positive coefficient indicates that customers with higher historical engagement were more likely to repeat under historical conditions. It does not imply that marketing actions designed to increase frequency or spend will causally alter repeat purchase propensity by that odds ratio.
 
 ## 6. CRM Outreach Queue Prioritization Policies
 
-Under limited operational outreach capacity (e.g. call center, targeted mail, personalized retention incentive), four policies were compared on the final temporal holdout (5,257 eligible customers, 2,970 non-repeaters, £13.26M historical spend):
+To evaluate decision utility under capacity constraints, four targeting policies were simulated across both evaluation cohorts at 1%, 5%, 10%, and 20% capacity budgets. Below is the primary comparison at **10% outreach capacity**:
 
-| outreach_capacity | outreach_capacity_fraction | selected_count | policy                       | selected_non_repeaters | selected_non_repeat_rate | share_of_all_non_repeaters_captured | historical_commercial_value_gbp | share_of_cohort_commercial_value |
-| ----------------- | -------------------------- | -------------- | ---------------------------- | ---------------------- | ------------------------ | ----------------------------------- | ------------------------------- | -------------------------------- |
-| 1%                | 0.01                       | 53             | Risk-first                   | 48.0                   | 0.9057                   | 0.0162                              | 934.83                          | 0.0001                           |
-| 1%                | 0.01                       | 53             | Value-aware                  | 21.0                   | 0.3962                   | 0.0071                              | 1508385.6                       | 0.1138                           |
-| 1%                | 0.01                       | 53             | Hybrid                       | 45.0                   | 0.8491                   | 0.0152                              | 164966.98                       | 0.0124                           |
-| 1%                | 0.01                       | 53             | Random baseline (analytical) | 29.9                   | 0.5642                   | 0.0101                              | 132599.83                       | 0.01                             |
-| 5%                | 0.05                       | 263            | Risk-first                   | 237.0                  | 0.9011                   | 0.0798                              | 28592.26                        | 0.0022                           |
-| 5%                | 0.05                       | 263            | Value-aware                  | 100.0                  | 0.3802                   | 0.0337                              | 3450419.4                       | 0.2602                           |
-| 5%                | 0.05                       | 263            | Hybrid                       | 195.0                  | 0.7414                   | 0.0657                              | 531104.88                       | 0.0401                           |
-| 5%                | 0.05                       | 263            | Random baseline (analytical) | 148.6                  | 0.565                    | 0.05                                | 662999.15                       | 0.05                             |
-| 10%               | 0.1                        | 526            | Risk-first                   | 477.0                  | 0.9068                   | 0.1606                              | 82584.55                        | 0.0062                           |
-| 10%               | 0.1                        | 526            | Value-aware                  | 193.0                  | 0.3669                   | 0.065                               | 4848157.89                      | 0.3656                           |
-| 10%               | 0.1                        | 526            | Hybrid                       | 399.0                  | 0.7586                   | 0.1343                              | 897205.33                       | 0.0677                           |
-| 10%               | 0.1                        | 526            | Random baseline (analytical) | 297.2                  | 0.565                    | 0.1001                              | 1325998.3                       | 0.1                              |
-| 20%               | 0.2                        | 1051           | Risk-first                   | 907.0                  | 0.863                    | 0.3054                              | 236568.69                       | 0.0178                           |
-| 20%               | 0.2                        | 1051           | Value-aware                  | 403.0                  | 0.3834                   | 0.1357                              | 7154456.78                      | 0.5396                           |
-| 20%               | 0.2                        | 1051           | Hybrid                       | 751.0                  | 0.7146                   | 0.2529                              | 1786090.05                      | 0.1347                           |
-| 20%               | 0.2                        | 1051           | Random baseline (analytical) | 593.8                  | 0.565                    | 0.1999                              | 2651996.6                       | 0.2                              |
+| evaluation_split                  | model_name     | outreach_capacity | outreach_capacity_fraction | selected_count | policy                       | selected_non_repeaters | selected_non_repeat_rate | share_of_all_non_repeaters_captured | historical_commercial_value_gbp | share_of_cohort_commercial_value |
+| --------------------------------- | -------------- | ----------------- | -------------------------- | -------------- | ---------------------------- | ---------------------- | ------------------------ | ----------------------------------- | ------------------------------- | -------------------------------- |
+| Validation                        | RFM Baseline   | 10%               | 0.1                        | 495            | Risk-first                   | 470.0                  | 0.9495                   | 0.1396                              | 53442.99                        | 0.0047                           |
+| Validation                        | RFM Baseline   | 10%               | 0.1                        | 495            | Value-aware                  | 236.0                  | 0.4768                   | 0.0701                              | 4736269.92                      | 0.4129                           |
+| Validation                        | RFM Baseline   | 10%               | 0.1                        | 495            | Hybrid                       | 401.0                  | 0.8101                   | 0.1191                              | 854894.49                       | 0.0745                           |
+| Validation                        | RFM Baseline   | 10%               | 0.1                        | 495            | Random baseline (analytical) | 336.5                  | 0.6798                   | 0.1                                 | 1146539.06                      | 0.1                              |
+| Validation                        | Expanded Model | 10%               | 0.1                        | 495            | Risk-first                   | 473.0                  | 0.9556                   | 0.1405                              | 73706.57                        | 0.0064                           |
+| Validation                        | Expanded Model | 10%               | 0.1                        | 495            | Value-aware                  | 253.0                  | 0.5111                   | 0.0752                              | 3967461.89                      | 0.3459                           |
+| Validation                        | Expanded Model | 10%               | 0.1                        | 495            | Hybrid                       | 408.0                  | 0.8242                   | 0.1212                              | 844946.5                        | 0.0737                           |
+| Validation                        | Expanded Model | 10%               | 0.1                        | 495            | Random baseline (analytical) | 336.5                  | 0.6798                   | 0.1                                 | 1146539.06                      | 0.1                              |
+| Retrospective Temporal Evaluation | RFM Baseline   | 10%               | 0.1                        | 526            | Risk-first                   | 479.0                  | 0.9106                   | 0.1613                              | 60843.24                        | 0.0046                           |
+| Retrospective Temporal Evaluation | RFM Baseline   | 10%               | 0.1                        | 526            | Value-aware                  | 181.0                  | 0.3441                   | 0.0609                              | 5944424.7                       | 0.4483                           |
+| Retrospective Temporal Evaluation | RFM Baseline   | 10%               | 0.1                        | 526            | Hybrid                       | 391.0                  | 0.7433                   | 0.1316                              | 940834.32                       | 0.071                            |
+| Retrospective Temporal Evaluation | RFM Baseline   | 10%               | 0.1                        | 526            | Random baseline (analytical) | 297.2                  | 0.565                    | 0.1001                              | 1326755.01                      | 0.1001                           |
+| Retrospective Temporal Evaluation | Expanded Model | 10%               | 0.1                        | 526            | Risk-first                   | 477.0                  | 0.9068                   | 0.1606                              | 82584.55                        | 0.0062                           |
+| Retrospective Temporal Evaluation | Expanded Model | 10%               | 0.1                        | 526            | Value-aware                  | 193.0                  | 0.3669                   | 0.065                               | 4848157.89                      | 0.3656                           |
+| Retrospective Temporal Evaluation | Expanded Model | 10%               | 0.1                        | 526            | Hybrid                       | 399.0                  | 0.7586                   | 0.1343                              | 897205.33                       | 0.0677                           |
+| Retrospective Temporal Evaluation | Expanded Model | 10%               | 0.1                        | 526            | Random baseline (analytical) | 297.2                  | 0.565                    | 0.1001                              | 1326755.01                      | 0.1001                           |
 
-### CRM Policy Strategic Comparison
-- **Risk-First Policy:** Ideal when outreach capacity is highly constrained and the goal is strictly non-repeat capture accuracy (e.g., automated reactivation surveys). Captures non-repeaters with ~90.7% precision at 10% capacity, but targets low-tenure, one-time shoppers representing only £82.6k (0.62%) of historical revenue.
-- **Value-Aware Policy:** Ideal for high-touch account management where losing an account is catastrophic. Targets major commercial accounts (£4.85M at 10% capacity, £7.15M at 20% capacity). However, because high spenders naturally repeat more frequently, non-repeat precision is lower (36.7%–38.3%).
-- **Hybrid Policy (Recommended for CRM Retention):** Blends normalized risk rank and commercial spend rank ($0.5 \times \text{Risk} + 0.5 \times \text{Value}$). Achieves 75.9% non-repeat capture precision at 10% capacity (vs 56.5% random baseline) while capturing £897k of commercial customer spend. At 20% capacity, it protects £1.79M of spend with 71.5% non-repeat precision.
-- **Random Baseline:** Represents uninformed outreach, capturing non-repeaters exactly at the base rate (56.5%) and spend strictly proportional to capacity.
+*Note: Full comparison tables across all capacities (1%, 5%, 10%, 20%) are available in `reports/crm_queue_policy_comparison.csv`.*
+
+### CRM Policy Decision Outcomes and Trade-Offs
+
+- **RFM Baseline vs. Expanded Model in Validation (10% Capacity):**
+  - Under **Risk-First**, the Expanded model captures 473 non-repeaters (95.56% non-repeat rate) versus 470 for the RFM Baseline (94.95%), a gain of only 3 additional accounts out of 495 contacts.
+  - Under **Hybrid**, the Expanded model captures 408 non-repeaters (82.42% non-repeat rate) versus 401 for the RFM Baseline (81.01%), a gain of only 7 accounts, with nearly identical historical spend represented (£844.9k vs £854.9k).
+  - Under **Value-Aware**, the RFM Baseline captures substantially more historical commercial spend (£4.74M, 41.29% of cohort spend) than the Expanded model (£3.97M, 34.59% of cohort spend), while capturing 236 non-repeaters versus 253.
+- **Trade-Off Summary across Policies:**
+  - **Risk-First Policy:** Maximizes non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) by targeting customers with lowest predicted return likelihood. However, these customers are primarily low-value, one-time shoppers representing <1% of cohort historical commercial spend.
+  - **Value-Aware Policy:** Prioritizes accounts with the highest historical commercial spend at risk, representing 35%–41% of cohort commercial spend at 10% capacity. Because high spenders repeat more often than average, non-repeat precision is lower (37%–51%).
+  - **Hybrid Policy:** Combines normalized risk rank and spend rank ($0.5 \times \text{Risk} + 0.5 \times \text{Spend}$), achieving 74%–82% non-repeat precision while representing 6.8%–7.5% of cohort historical spend.
+  - **Policy Selection Depends on Operating Context:** No single policy serves all objectives. The appropriate CRM policy depends on operational constraints, intervention costs, and account value. Low-cost automated re-engagement favors Risk-First; high-touch account management favors Value-Aware; budget-constrained marketing campaigns favor Hybrid.
+
 ## 7. Operational Limitations and Deployment Safeguards
-1. **No Causal Uplift Claims:** Transaction data reflects organic retail behavior. Predictions identify who is at risk of not repeating, not who will respond positively to marketing intervention.
-2. **Seasonal Calibration Drift:** When scoring Q4 (autumn/holiday) cohorts, predicted probabilities will trend conservative due to retail holiday surges. Priority ranks remain robust, but absolute probability thresholds should account for seasonal baselines.
-3. **Unobserved Cutoffs:** The `2011-12-09` snapshot represents production scoring as of dataset end. Forward labels are strictly unobserved and were excluded from training and evaluation.
+
+1. **No Causal Uplift or Preserved Revenue Claims:** Observed figures represent historical commercial spend associated with selected customers. They do not measure incremental retention, campaign uplift, causal impact, profit, or customer lifetime value. Observational data cannot establish how customers would respond to intervention.
+2. **Retrospective Status of Later Evaluation Cohort:** The `2011-09-09` cohort was inspected during development and serves as a retrospective temporal benchmark. It must not be treated as a prospective holdout benchmark.
+3. **Probability Underprediction:** Predicted probabilities exhibit systematic underprediction in cohorts with higher repeat base rates. While ranking discrimination remains effective for queue prioritization, raw probability values should not be interpreted as absolute calibrated propensities.
+4. **Unobserved Cutoff:** The `2011-12-09` snapshot represents production scoring as of dataset conclusion. Forward labels are strictly unobserved and were excluded from all training, validation, and evaluation.

@@ -1,7 +1,6 @@
 {
   "model_type": "LogisticRegression (scikit-learn)",
   "solver": "lbfgs",
-  "penalty": "l2",
   "C": 1.0,
   "max_iter": 1000,
   "random_state": 42,
@@ -18,14 +17,14 @@
       "val_samples": 4952,
       "window_gap_days": 93
     },
-    "temporal_holdout_stage": {
+    "retrospective_temporal_stage": {
       "train_cutoffs": [
         "2010-12-09 23:59:59",
         "2011-06-10 23:59:59"
       ],
       "train_samples": 9238,
-      "holdout_cutoff": "2011-09-09 23:59:59",
-      "holdout_samples": 5257,
+      "evaluation_cutoff": "2011-09-09 23:59:59",
+      "evaluation_samples": 5257,
       "window_gap_days": 1
     }
   },
@@ -70,5 +69,7 @@
       "country"
     ]
   },
-  "selected_model_by_validation": "Expanded Model"
+  "recommended_default_model": "RFM Baseline",
+  "challenger_model": "Expanded Model",
+  "selection_rationale": "Model selection is governed strictly by the validation stage (2011-06-10). While the 16-feature Expanded model yields slight statistical gains in validation ROC-AUC (+0.0053) and Brier score (-0.0011), it offers negligible practical improvement in validation CRM queue prioritization (e.g., only 3 additional non-repeaters captured under Risk-first at 10% capacity, and 7 under Hybrid, while capturing \u00a3768.8k less historical spend under Value-aware). The simpler 3-feature RFM Baseline is recommended as the default operational model for parsimony and maintainability, retaining the Expanded model as an analytical challenger."
 }

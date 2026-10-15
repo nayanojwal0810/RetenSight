@@ -1,17 +1,65 @@
-outreach_capacity,outreach_capacity_fraction,selected_count,policy,selected_non_repeaters,selected_non_repeat_rate,share_of_all_non_repeaters_captured,historical_commercial_value_gbp,share_of_cohort_commercial_value
-1%,0.01,53,Risk-first,48.0,0.9057,0.0162,934.83,0.0001
-1%,0.01,53,Value-aware,21.0,0.3962,0.0071,1508385.6,0.1138
-1%,0.01,53,Hybrid,45.0,0.8491,0.0152,164966.98,0.0124
-1%,0.01,53,Random baseline (analytical),29.9,0.5642,0.0101,132599.83,0.01
-5%,0.05,263,Risk-first,237.0,0.9011,0.0798,28592.26,0.0022
-5%,0.05,263,Value-aware,100.0,0.3802,0.0337,3450419.4,0.2602
-5%,0.05,263,Hybrid,195.0,0.7414,0.0657,531104.88,0.0401
-5%,0.05,263,Random baseline (analytical),148.6,0.565,0.05,662999.15,0.05
-10%,0.1,526,Risk-first,477.0,0.9068,0.1606,82584.55,0.0062
-10%,0.1,526,Value-aware,193.0,0.3669,0.065,4848157.89,0.3656
-10%,0.1,526,Hybrid,399.0,0.7586,0.1343,897205.33,0.0677
-10%,0.1,526,Random baseline (analytical),297.2,0.565,0.1001,1325998.3,0.1
-20%,0.2,1051,Risk-first,907.0,0.863,0.3054,236568.69,0.0178
-20%,0.2,1051,Value-aware,403.0,0.3834,0.1357,7154456.78,0.5396
-20%,0.2,1051,Hybrid,751.0,0.7146,0.2529,1786090.05,0.1347
-20%,0.2,1051,Random baseline (analytical),593.8,0.565,0.1999,2651996.6,0.2
+evaluation_split,model_name,outreach_capacity,outreach_capacity_fraction,selected_count,policy,selected_non_repeaters,selected_non_repeat_rate,share_of_all_non_repeaters_captured,historical_commercial_value_gbp,share_of_cohort_commercial_value
+Validation,RFM Baseline,1%,0.01,50,Risk-first,48.0,0.96,0.0143,-5941.99,-0.0005
+Validation,RFM Baseline,1%,0.01,50,Value-aware,27.0,0.54,0.008,1106275.51,0.0964
+Validation,RFM Baseline,1%,0.01,50,Hybrid,44.0,0.88,0.0131,155122.02,0.0135
+Validation,RFM Baseline,1%,0.01,50,Random baseline (analytical),34.0,0.68,0.0101,115812.03,0.0101
+Validation,RFM Baseline,5%,0.05,248,Risk-first,236.0,0.9516,0.0701,13389.11,0.0012
+Validation,RFM Baseline,5%,0.05,248,Value-aware,113.0,0.4556,0.0336,3296973.86,0.2874
+Validation,RFM Baseline,5%,0.05,248,Hybrid,204.0,0.8226,0.0606,489314.03,0.0427
+Validation,RFM Baseline,5%,0.05,248,Random baseline (analytical),168.6,0.6798,0.0501,574427.65,0.0501
+Validation,RFM Baseline,10%,0.1,495,Risk-first,470.0,0.9495,0.1396,53442.99,0.0047
+Validation,RFM Baseline,10%,0.1,495,Value-aware,236.0,0.4768,0.0701,4736269.92,0.4129
+Validation,RFM Baseline,10%,0.1,495,Hybrid,401.0,0.8101,0.1191,854894.49,0.0745
+Validation,RFM Baseline,10%,0.1,495,Random baseline (analytical),336.5,0.6798,0.1,1146539.06,0.1
+Validation,RFM Baseline,20%,0.2,990,Risk-first,930.0,0.9394,0.2763,185925.42,0.0162
+Validation,RFM Baseline,20%,0.2,990,Value-aware,460.0,0.4646,0.1367,6582091.85,0.5739
+Validation,RFM Baseline,20%,0.2,990,Hybrid,792.0,0.8,0.2353,1604848.28,0.1399
+Validation,RFM Baseline,20%,0.2,990,Random baseline (analytical),672.9,0.6797,0.1999,2293078.12,0.1999
+Validation,Expanded Model,1%,0.01,50,Risk-first,48.0,0.96,0.0143,942.86,0.0001
+Validation,Expanded Model,1%,0.01,50,Value-aware,29.0,0.58,0.0086,820627.23,0.0715
+Validation,Expanded Model,1%,0.01,50,Hybrid,44.0,0.88,0.0131,138782.88,0.0121
+Validation,Expanded Model,1%,0.01,50,Random baseline (analytical),34.0,0.68,0.0101,115812.03,0.0101
+Validation,Expanded Model,5%,0.05,248,Risk-first,237.0,0.9556,0.0704,22464.28,0.002
+Validation,Expanded Model,5%,0.05,248,Value-aware,123.0,0.496,0.0365,2927522.66,0.2552
+Validation,Expanded Model,5%,0.05,248,Hybrid,206.0,0.8306,0.0612,481243.52,0.042
+Validation,Expanded Model,5%,0.05,248,Random baseline (analytical),168.6,0.6798,0.0501,574427.65,0.0501
+Validation,Expanded Model,10%,0.1,495,Risk-first,473.0,0.9556,0.1405,73706.57,0.0064
+Validation,Expanded Model,10%,0.1,495,Value-aware,253.0,0.5111,0.0752,3967461.89,0.3459
+Validation,Expanded Model,10%,0.1,495,Hybrid,408.0,0.8242,0.1212,844946.5,0.0737
+Validation,Expanded Model,10%,0.1,495,Random baseline (analytical),336.5,0.6798,0.1,1146539.06,0.1
+Validation,Expanded Model,20%,0.2,990,Risk-first,934.0,0.9434,0.2775,212259.09,0.0185
+Validation,Expanded Model,20%,0.2,990,Value-aware,493.0,0.498,0.1465,5598942.68,0.4881
+Validation,Expanded Model,20%,0.2,990,Hybrid,803.0,0.8111,0.2386,1600291.49,0.1395
+Validation,Expanded Model,20%,0.2,990,Random baseline (analytical),672.9,0.6797,0.1999,2293078.12,0.1999
+Retrospective Temporal Evaluation,RFM Baseline,1%,0.01,53,Risk-first,46.0,0.8679,0.0155,-6140.27,-0.0005
+Retrospective Temporal Evaluation,RFM Baseline,1%,0.01,53,Value-aware,20.0,0.3774,0.0067,1688202.28,0.1273
+Retrospective Temporal Evaluation,RFM Baseline,1%,0.01,53,Hybrid,42.0,0.7925,0.0141,162228.89,0.0122
+Retrospective Temporal Evaluation,RFM Baseline,1%,0.01,53,Random baseline (analytical),29.9,0.5642,0.0101,133684.44,0.0101
+Retrospective Temporal Evaluation,RFM Baseline,5%,0.05,263,Risk-first,236.0,0.8973,0.0795,14982.02,0.0011
+Retrospective Temporal Evaluation,RFM Baseline,5%,0.05,263,Value-aware,94.0,0.3574,0.0316,4146057.3,0.3127
+Retrospective Temporal Evaluation,RFM Baseline,5%,0.05,263,Hybrid,203.0,0.7719,0.0684,536176.88,0.0404
+Retrospective Temporal Evaluation,RFM Baseline,5%,0.05,263,Random baseline (analytical),148.6,0.565,0.05,663377.5,0.05
+Retrospective Temporal Evaluation,RFM Baseline,10%,0.1,526,Risk-first,479.0,0.9106,0.1613,60843.24,0.0046
+Retrospective Temporal Evaluation,RFM Baseline,10%,0.1,526,Value-aware,181.0,0.3441,0.0609,5944424.7,0.4483
+Retrospective Temporal Evaluation,RFM Baseline,10%,0.1,526,Hybrid,391.0,0.7433,0.1316,940834.32,0.071
+Retrospective Temporal Evaluation,RFM Baseline,10%,0.1,526,Random baseline (analytical),297.2,0.565,0.1001,1326755.01,0.1001
+Retrospective Temporal Evaluation,RFM Baseline,20%,0.2,1051,Risk-first,908.0,0.8639,0.3057,203445.62,0.0153
+Retrospective Temporal Evaluation,RFM Baseline,20%,0.2,1051,Value-aware,368.0,0.3501,0.1239,8053296.95,0.6073
+Retrospective Temporal Evaluation,RFM Baseline,20%,0.2,1051,Hybrid,746.0,0.7098,0.2512,1796263.37,0.1355
+Retrospective Temporal Evaluation,RFM Baseline,20%,0.2,1051,Random baseline (analytical),593.8,0.565,0.1999,2650987.66,0.1999
+Retrospective Temporal Evaluation,Expanded Model,1%,0.01,53,Risk-first,48.0,0.9057,0.0162,934.83,0.0001
+Retrospective Temporal Evaluation,Expanded Model,1%,0.01,53,Value-aware,21.0,0.3962,0.0071,1508385.6,0.1138
+Retrospective Temporal Evaluation,Expanded Model,1%,0.01,53,Hybrid,45.0,0.8491,0.0152,164966.98,0.0124
+Retrospective Temporal Evaluation,Expanded Model,1%,0.01,53,Random baseline (analytical),29.9,0.5642,0.0101,133684.44,0.0101
+Retrospective Temporal Evaluation,Expanded Model,5%,0.05,263,Risk-first,237.0,0.9011,0.0798,28592.26,0.0022
+Retrospective Temporal Evaluation,Expanded Model,5%,0.05,263,Value-aware,100.0,0.3802,0.0337,3450419.4,0.2602
+Retrospective Temporal Evaluation,Expanded Model,5%,0.05,263,Hybrid,195.0,0.7414,0.0657,531104.88,0.0401
+Retrospective Temporal Evaluation,Expanded Model,5%,0.05,263,Random baseline (analytical),148.6,0.565,0.05,663377.5,0.05
+Retrospective Temporal Evaluation,Expanded Model,10%,0.1,526,Risk-first,477.0,0.9068,0.1606,82584.55,0.0062
+Retrospective Temporal Evaluation,Expanded Model,10%,0.1,526,Value-aware,193.0,0.3669,0.065,4848157.89,0.3656
+Retrospective Temporal Evaluation,Expanded Model,10%,0.1,526,Hybrid,399.0,0.7586,0.1343,897205.33,0.0677
+Retrospective Temporal Evaluation,Expanded Model,10%,0.1,526,Random baseline (analytical),297.2,0.565,0.1001,1326755.01,0.1001
+Retrospective Temporal Evaluation,Expanded Model,20%,0.2,1051,Risk-first,907.0,0.863,0.3054,236568.69,0.0178
+Retrospective Temporal Evaluation,Expanded Model,20%,0.2,1051,Value-aware,403.0,0.3834,0.1357,7154456.78,0.5396
+Retrospective Temporal Evaluation,Expanded Model,20%,0.2,1051,Hybrid,751.0,0.7146,0.2529,1786090.05,0.1347
+Retrospective Temporal Evaluation,Expanded Model,20%,0.2,1051,Random baseline (analytical),593.8,0.565,0.1999,2650987.66,0.1999

@@ -107,49 +107,58 @@ def test_decile_metrics_and_calibration_output() -> None:
 
 
 def test_crm_queue_policies_and_tie_handling() -> None:
-    """Verifies CRM outreach queue policy simulation and deterministic tie breaking."""
+    """Verifies CRM outreach queue policy simulation, model/split identifiers,
+
+    deterministic tie breaking, and exact analytical random-baseline calculation using k / n.
+    """
     records = [
         {"customer_id": 1, "target_repeat_purchase_90d": 0, "net_commercial_spend": 1000.0},
         {"customer_id": 2, "target_repeat_purchase_90d": 0, "net_commercial_spend": 500.0},
         {"customer_id": 3, "target_repeat_purchase_90d": 1, "net_commercial_spend": 2000.0},
         {"customer_id": 4, "target_repeat_purchase_90d": 0, "net_commercial_spend": 50.0},
         {"customer_id": 5, "target_repeat_purchase_90d": 1, "net_commercial_spend": 100.0},
+        {"customer_id": 6, "target_repeat_purchase_90d": 0, "net_commercial_spend": 200.0},
+        {"customer_id": 7, "target_repeat_purchase_90d": 0, "net_commercial_spend": 300.0},
     ]
     df = pd.DataFrame(records)
-    # Predicted probabilities: Customer 1 & 4 high risk (low prob); Customer 3 & 5 low risk (high prob)
-    probs = np.array([0.1, 0.4, 0.8, 0.1, 0.9])
+    n = len(df)  # 7 customers
+    total_spend = df["net_commercial_spend"].sum()  # 4150.0
+    total_non_rep = (df["target_repeat_purchase_90d"] == 0).sum()  # 5 non-repeaters
 
-    # Evaluate at 40% capacity (k = 2 customers out of 5)
-    policies_df = evaluate_crm_queue_policies(df, probs, capacities=(0.40,))
-    assert len(policies_df) == 4  # 3 policies + random baseline
+    # Predicted probabilities
+    probs = np.array([0.1, 0.4, 0.8, 0.1, 0.9, 0.3, 0.2])
 
-    # Check Risk-first policy: customers 1 & 4 have prob 0.1 (risk 0.9). Ties broken by customer_id asc (1 then 4).
+    # Evaluate at 10% requested capacity -> k = max(1, round(0.10 * 7)) = 1
+    # Actual fraction = 1 / 7 = 0.142857 != 0.10
+    policies_df = evaluate_crm_queue_policies(
+        eval_df=df,
+        predicted_repeat_prob=probs,
+        model_name="Test Model",
+        evaluation_split="Test Split",
+        capacities=(0.10,),
+    )
+    assert len(policies_df) == 4
+    assert "model_name" in policies_df.columns
+    assert "evaluation_split" in policies_df.columns
+    assert (policies_df["model_name"] == "Test Model").all()
+    assert (policies_df["evaluation_split"] == "Test Split").all()
+
+    # Check Risk-first policy: customers 1 & 4 tie at risk 0.9. Deterministic tie-breaking selects customer 1 (asc ID).
     rf = policies_df[policies_df["policy"] == "Risk-first"].iloc[0]
-    assert rf["selected_count"] == 2
-    # Both customers 1 & 4 are non-repeaters (target == 0)
-    assert rf["selected_non_repeaters"] == 2
+    assert rf["selected_count"] == 1
+    assert rf["selected_non_repeaters"] == 1
     assert rf["selected_non_repeat_rate"] == 1.0
-    assert rf["historical_commercial_value_gbp"] == 1050.0  # 1000 + 50
+    assert rf["historical_commercial_value_gbp"] == 1000.0
 
-    # Check Value-aware policy: Expected Value at Risk = (1 - p) * spend
-    # Cust 1: 0.9 * 1000 = 900
-    # Cust 2: 0.6 * 500 = 300
-    # Cust 3: 0.2 * 2000 = 400
-    # Cust 4: 0.9 * 50 = 45
-    # Cust 5: 0.1 * 100 = 10
-    # Top 2 are Cust 1 (900) and Cust 3 (400)
-    va = policies_df[policies_df["policy"] == "Value-aware"].iloc[0]
-    assert va["selected_count"] == 2
-    # Cust 1 is non-repeater, Cust 3 is repeater -> 1 non-repeater
-    assert va["selected_non_repeaters"] == 1
-    assert va["selected_non_repeat_rate"] == 0.5
-    assert va["historical_commercial_value_gbp"] == 3000.0  # 1000 + 2000
-
-    # Check Random baseline analytical expectation
+    # Check Random baseline analytical expectation uses actual fraction k / n = 1 / 7, NOT 0.10!
     rnd = policies_df[policies_df["policy"] == "Random baseline (analytical)"].iloc[0]
-    # Total non-repeaters = 3 out of 5 (60%). At 40% capacity (k=2): 2 * 0.6 = 1.2
-    assert np.isclose(rnd["selected_non_repeaters"], 1.2)
-    assert np.isclose(rnd["historical_commercial_value_gbp"], 0.40 * 3650.0)
+    expected_non_rep = round((1 / 7) * total_non_rep, 1)  # 5 / 7 = 0.714 -> 0.7
+    expected_spend = round((1 / 7) * total_spend, 2)  # 4150 / 7 = 592.86
+    # If it had used cap (0.10), spend would be 415.0. It MUST be 592.86!
+    assert rnd["selected_count"] == 1
+    assert np.isclose(rnd["selected_non_repeaters"], expected_non_rep)
+    assert np.isclose(rnd["historical_commercial_value_gbp"], expected_spend)
+    assert not np.isclose(rnd["historical_commercial_value_gbp"], 0.10 * total_spend)
 
 
 def test_chronological_split_boundaries_and_benchmarks() -> None:
@@ -192,7 +201,10 @@ def test_chronological_split_boundaries_and_benchmarks() -> None:
 
 
 def test_full_modeling_pipeline_outputs_and_invariants() -> None:
-    """Verifies that run_repeat_purchase_modeling executes end-to-end and outputs valid artifacts."""
+    """Verifies that run_repeat_purchase_modeling executes end-to-end, covers both models
+
+    across both cohorts, and outputs valid artifacts.
+    """
     proc_dir = Path("data/processed")
     if not (proc_dir / "rfm_snapshot_20101209.parquet").exists():
         pytest.skip("Processed snapshot files not present on disk.")
@@ -218,24 +230,59 @@ def test_full_modeling_pipeline_outputs_and_invariants() -> None:
         # Assert metrics table contents
         metrics_df = pd.read_csv(metrics_csv)
         assert len(metrics_df) == 4
-        # Both models in validation achieve ROC-AUC >= 0.80
-        val_expanded = metrics_df[
-            (metrics_df["model_name"] == "Expanded Model")
-            & (metrics_df["split_name"] == "Validation")
-        ].iloc[0]
-        assert val_expanded["roc_auc"] >= 0.80
-        assert val_expanded["top_decile_precision"] >= 0.80
+        assert set(metrics_df["split_name"]) == {"Validation", "Retrospective Temporal Evaluation"}
+        assert set(metrics_df["model_name"]) == {"RFM Baseline", "Expanded Model"}
 
-        # Holdout top decile precision >= 0.85 (over double the 43.50% base rate)
-        ho_expanded = metrics_df[
-            (metrics_df["model_name"] == "Expanded Model")
-            & (metrics_df["split_name"] == "Temporal Holdout")
-        ].iloc[0]
-        assert ho_expanded["top_decile_precision"] >= 0.85
-        assert ho_expanded["bottom_decile_non_purchase_rate"] >= 0.85
+        # Assert policy comparison covers both models and both evaluation splits (64 rows total)
+        policy_df = pd.read_csv(policy_csv)
+        assert len(policy_df) == 64
+        assert "evaluation_split" in policy_df.columns
+        assert "model_name" in policy_df.columns
+        assert set(policy_df["evaluation_split"]) == {"Validation", "Retrospective Temporal Evaluation"}
+        assert set(policy_df["model_name"]) == {"RFM Baseline", "Expanded Model"}
+        assert set(policy_df["outreach_capacity"]) == {"1%", "5%", "10%", "20%"}
 
         # Check config json
         with open(config_json, encoding="utf-8") as fp:
             cfg = json.load(fp)
-            assert cfg["selected_model_by_validation"] == "Expanded Model"
+            assert cfg["recommended_default_model"] == "RFM Baseline"
+            assert cfg["challenger_model"] == "Expanded Model"
+            assert "selection_rationale" in cfg
             assert len(cfg["feature_sets"]["expanded_features"]) == 16
+
+
+def test_evaluation_report_content_integrity() -> None:
+    """Verifies that the generated report avoids unsupported causal claims, claims of an untouched holdout,
+
+    or false claims of good probability calibration where underprediction is present.
+    """
+    report_file = Path("reports/repeat_purchase_model_evaluation.md")
+    if not report_file.exists():
+        pytest.skip("reports/repeat_purchase_model_evaluation.md not generated yet.")
+
+    content = report_file.read_text(encoding="utf-8").lower()
+
+    # Must NOT claim untouched holdout or confirmatory test
+    assert "untouched" not in content
+    assert "confirmatory test" not in content
+    assert "evaluated strictly once" not in content
+    assert "frozen before any inspection" not in content
+
+    # Must NOT claim causal Q4/autumn/holiday demand causes
+    assert "due to q4" not in content
+    assert "holiday seasonal demand acceleration" not in content
+    assert "autumn/holiday seasonal" not in content
+
+    # Must NOT claim revenue saved or protected
+    assert "safeguards revenue" not in content
+    assert "revenue saved" not in content
+    assert "protects £" not in content
+
+    # Must NOT claim universally optimal policy
+    assert "universally optimal" not in content
+    assert "optimal balance" not in content
+
+    # MUST contain retrospective temporal evaluation and underprediction disclosure
+    assert "retrospective temporal" in content
+    assert "underprediction" in content
+    assert "historical commercial spend" in content
