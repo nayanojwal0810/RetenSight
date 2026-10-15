@@ -2,17 +2,17 @@
 
 ## Executive Summary
 
-This report documents the design, implementation, and empirical evaluation of two leakage-safe, explainable logistic regression models developed to estimate whether an active e-commerce customer will make at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.
+This report documents the design, implementation, and empirical evaluation of two point-in-time, explainable logistic regression models developed to estimate whether an active e-commerce customer will make at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.
 
 - **RFM Baseline Model:** Formulated strictly from Recency ($R$), Frequency ($F$), and net commercial spend ($M$).
 - **Expanded Model:** Extends the baseline with 13 additional point-in-time purchasing cadence, basket size, order value, cancellation behavior, and financial component features (16 total features).
-- **Validation-Governed Model Recommendation:** Model selection is governed exclusively by the `2011-06-10` validation cohort. While the Expanded model achieves slight statistical improvements in validation ROC-AUC (0.8079 vs 0.8026) and Brier calibration score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain (e.g., capturing only 3 additional non-repeaters under Risk-first at 10% capacity, and 7 under Hybrid, while capturing £768.8k less historical spend under Value-aware). In accordance with parsimony and decision utility principles, the **simpler 3-feature RFM Baseline is recommended as the operational default**, retaining the Expanded model as an analytical challenger.
+- **Validation-Governed Model Recommendation:** Model selection is governed exclusively by the `2011-06-10` validation cohort. While the Expanded model achieves slight statistical improvements in validation ROC-AUC (0.8079 vs 0.8026) and Brier score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain (e.g., capturing only 3 additional non-repeaters under Risk-first at 10% capacity, and 7 under Hybrid, while capturing £768.8k less historical spend under Value-aware). In accordance with parsimony and decision utility principles, the **simpler 3-feature RFM Baseline is recommended as the operational default**, retaining the Expanded model as an analytical challenger.
 - **Retrospective Temporal Evaluation (`2011-09-09`):** The later chronological evaluation cohort was inspected during exploratory development and is presented transparently as a retrospective temporal evaluation rather than a prospective holdout. Both models demonstrate robust ranking separation in this cohort, achieving an 89.73% repeat rate in the top decile (compared to a 43.50% cohort base rate) and a 90.68%–91.06% non-purchase rate in the bottom decile.
 - **CRM Outreach Prioritization Trade-offs:** Evaluated Risk-first, Value-aware, and Hybrid outreach policies across fixed capacity budgets (1%, 5%, 10%, 20%). Risk-first achieves the highest non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) but captures negligible historical commercial spend (<1%). Value-aware targets major historical commercial accounts (representing 35%–41% of cohort commercial spend at 10% capacity) with lower non-repeat precision. The Hybrid policy achieves an intermediate balance (81%–82% non-repeat precision in validation, representing ~7.4% of cohort historical spend). No single policy is universally superior across all business goals; the appropriate policy depends on commercial intervention costs and account value.
 
 ## 1. Strictly Chronological Walk-Forward Evaluation Design
 
-To guarantee zero look-ahead bias and eliminate all future information leakage, the evaluation strictly follows a chronological walk-forward architecture:
+To mitigate look-ahead bias and guard against future information leakage, the evaluation follows a strictly chronological walk-forward architecture. The methodology relies on defined chronological cutoffs, point-in-time feature construction, and explicit automated leakage guards, while acknowledging that no automated protocol can categorically prove the absence of every possible unobserved leakage source:
 
 | Phase | Training Period / Cutoff | Forward Target Window | Evaluation Snapshot Cutoff | Cohort Size ($N$) | Observed Repeaters ($y=1$) | Base Rate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -63,7 +63,9 @@ The following columns are strictly excluded from all training and feature matric
 
 ## 4. Calibration Evidence and Underprediction Analysis
 
-### Retrospective Temporal Cohort Decile Calibration (`2011-09-09`)
+### Expanded Model Decile Calibration on Retrospective Temporal Cohort (`2011-09-09`)
+
+*Calibration Scope:* Decile calibration was evaluated specifically for the **Expanded Model** on the retrospective temporal evaluation cohort (`2011-09-09`). Decile calibration has not been evaluated or reported for the RFM Baseline model.
 
 | decile                         | sample_count | mean_predicted_prob | observed_repeat_rate | abs_calibration_error |
 | ------------------------------ | ------------ | ------------------- | -------------------- | --------------------- |
@@ -79,7 +81,7 @@ The following columns are strictly excluded from all training and feature matric
 | (0.733, 0.999]                 | 526          | 0.8564              | 0.8973               | 0.0409                |
 
 > [!IMPORTANT]
-> **Calibration Finding:** Across all 10 reported deciles in the `2011-09-09` evaluation cohort, the observed repeat rate exceeds the mean predicted probability. This demonstrates **systematic probability underprediction**, driven by the shift in cohort repeat rate from ~31%–32% in training to 43.50% in this evaluation window. While predicted probabilities maintain strict monotonic ordering across deciles (from 4.40% in Decile 1 to 85.64% in Decile 10), they are not well-calibrated in an absolute sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted to this cohort, and raw probabilities must be interpreted with this underprediction in mind.
+> **Calibration Finding:** Across all 10 reported deciles for the Expanded Model in the `2011-09-09` retrospective temporal cohort, the observed repeat rate exceeds the mean predicted probability. This demonstrates **systematic probability underprediction** for this model. An observed upward shift in cohort repeat base rate (from 32.03% in validation to 43.50% in this evaluation window) coincides with that underprediction, while the underlying cause of this cohort base-rate shift remains unknown from observational transaction data. While predicted probabilities maintain strict monotonic ordering across deciles (from 4.40% in Decile 1 to 85.64% in Decile 10), they are not well-calibrated in an absolute frequency sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted to this cohort, and raw probability estimates from the Expanded Model must be interpreted with this underprediction in mind.
 
 ## 5. Model Explainability and Standardized Coefficients
 
@@ -149,7 +151,7 @@ To evaluate decision utility under capacity constraints, four targeting policies
   - Under **Hybrid**, the Expanded model captures 408 non-repeaters (82.42% non-repeat rate) versus 401 for the RFM Baseline (81.01%), a gain of only 7 accounts, with nearly identical historical spend represented (£844.9k vs £854.9k).
   - Under **Value-Aware**, the RFM Baseline captures substantially more historical commercial spend (£4.74M, 41.29% of cohort spend) than the Expanded model (£3.97M, 34.59% of cohort spend), while capturing 236 non-repeaters versus 253.
 - **Trade-Off Summary across Policies:**
-  - **Risk-First Policy:** Maximizes non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) by targeting customers with lowest predicted return likelihood. However, these customers are primarily low-value, one-time shoppers representing <1% of cohort historical commercial spend.
+  - **Risk-First Policy:** Maximizes non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) by targeting customers with lowest predicted return likelihood. However, these selected accounts account for a minimal share of historical commercial spend (<1% of cohort spend across both evaluation cohorts).
   - **Value-Aware Policy:** Prioritizes accounts with the highest historical commercial spend at risk, representing 35%–41% of cohort commercial spend at 10% capacity. Because high spenders repeat more often than average, non-repeat precision is lower (37%–51%).
   - **Hybrid Policy:** Combines normalized risk rank and spend rank ($0.5 \times \text{Risk} + 0.5 \times \text{Spend}$), achieving 74%–82% non-repeat precision while representing 6.8%–7.5% of cohort historical spend.
   - **Policy Selection Depends on Operating Context:** No single policy serves all objectives. The appropriate CRM policy depends on operational constraints, intervention costs, and account value. Low-cost automated re-engagement favors Risk-First; high-touch account management favors Value-Aware; budget-constrained marketing campaigns favor Hybrid.
@@ -158,5 +160,5 @@ To evaluate decision utility under capacity constraints, four targeting policies
 
 1. **No Causal Uplift or Preserved Revenue Claims:** Observed figures represent historical commercial spend associated with selected customers. They do not measure incremental retention, campaign uplift, causal impact, profit, or customer lifetime value. Observational data cannot establish how customers would respond to intervention.
 2. **Retrospective Status of Later Evaluation Cohort:** The `2011-09-09` cohort was inspected during development and serves as a retrospective temporal benchmark. It must not be treated as a prospective holdout benchmark.
-3. **Probability Underprediction:** Predicted probabilities exhibit systematic underprediction in cohorts with higher repeat base rates. While ranking discrimination remains effective for queue prioritization, raw probability values should not be interpreted as absolute calibrated propensities.
+3. **Probability Underprediction & Calibration Scope:** Decile calibration was evaluated exclusively for the Expanded Model on the retrospective temporal evaluation cohort (`2011-09-09`), where its reported deciles exhibit systematic probability underprediction. An observed upward shift in cohort repeat base rate coincides with that underprediction, while the underlying cause of this cohort base-rate shift is unknown from observational data. Calibration was not evaluated across deciles for the RFM Baseline. While ranking discrimination remains effective for customer prioritization queues, raw probability estimates from the Expanded Model should not be interpreted as absolute calibrated frequencies.
 4. **Unobserved Cutoff:** The `2011-12-09` snapshot represents production scoring as of dataset conclusion. Forward labels are strictly unobserved and were excluded from all training, validation, and evaluation.

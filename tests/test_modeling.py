@@ -14,6 +14,7 @@ from retensight.modeling import (
     PROHIBITED_FEATURE_COLUMNS,
     RFM_BASELINE_FEATURES,
     SignedLogTransformer,
+    _generate_markdown_report,
     build_modeling_pipeline,
     compute_calibration_table,
     compute_decile_metrics,
@@ -251,38 +252,114 @@ def test_full_modeling_pipeline_outputs_and_invariants() -> None:
             assert len(cfg["feature_sets"]["expanded_features"]) == 16
 
 
-def test_evaluation_report_content_integrity() -> None:
+def test_evaluation_report_content_integrity(tmp_path: Path) -> None:
     """Verifies that the generated report avoids unsupported causal claims, claims of an untouched holdout,
+    softens absolute lookahead/leakage claims, makes Expanded-Model calibration scope explicit,
+    and avoids unproven 'one-time shoppers' assertions.
 
-    or false claims of good probability calibration where underprediction is present.
+    Inspects the report generated during the test run in a temporary directory, as well as the
+    repository-level report if present.
     """
-    report_file = Path("reports/repeat_purchase_model_evaluation.md")
-    if not report_file.exists():
-        pytest.skip("reports/repeat_purchase_model_evaluation.md not generated yet.")
+    proc_dir = Path("data/processed")
+    if (proc_dir / "rfm_snapshot_20101209.parquet").exists():
+        # Generate fresh report via modeling pipeline in tmp_path
+        run_repeat_purchase_modeling(
+            processed_dir=proc_dir,
+            reports_dir=tmp_path,
+            random_state=42,
+        )
+        test_reports = [tmp_path / "repeat_purchase_model_evaluation.md"]
+    else:
+        # Fallback to direct report generator with mock dataframes
+        mock_metrics = pd.DataFrame({
+            "split_name": ["Validation", "Validation", "Retrospective Temporal Evaluation", "Retrospective Temporal Evaluation"],
+            "model_name": ["RFM Baseline", "Expanded Model", "RFM Baseline", "Expanded Model"],
+            "roc_auc": [0.8026, 0.8079, 0.7815, 0.7869],
+            "average_precision": [0.6928, 0.6993, 0.7478, 0.7545],
+            "brier_score": [0.1594, 0.1583, 0.2055, 0.2036],
+            "top_decile_purchase_precision": [0.7717, 0.7919, 0.8973, 0.8973],
+            "bottom_decile_non_purchase_rate": [0.9394, 0.9414, 0.9106, 0.9068],
+        })
+        mock_calib = pd.DataFrame({
+            "decile": ["(0.004, 0.08]"] * 10,
+            "count": [526] * 10,
+            "mean_predicted_prob": [0.044] * 10,
+            "observed_repeat_rate": [0.093] * 10,
+            "abs_calibration_error": [0.049] * 10,
+        })
+        mock_coef = pd.DataFrame({"feature": ["recency_days"], "standardized_beta": [-1.2], "odds_ratio": [0.3]})
+        mock_policy = pd.DataFrame({
+            "evaluation_split": ["Validation"] * 4,
+            "model_name": ["RFM Baseline"] * 4,
+            "outreach_capacity": ["10%"] * 4,
+            "target_customers": [495] * 4,
+            "non_repeaters_captured": [470] * 4,
+            "non_repeat_precision": [0.9495] * 4,
+            "capture_share": [0.1396] * 4,
+            "historical_commercial_spend": [18639.46] * 4,
+            "spend_share": [0.0016] * 4,
+            "expected_random_spend": [1146532.74] * 4,
+            "random_spend_lift": [0.02] * 4,
+            "policy": ["Risk-First", "Value-Aware", "Hybrid", "Random Baseline"],
+        })
+        tmp_report = tmp_path / "repeat_purchase_model_evaluation.md"
+        _generate_markdown_report(
+            report_path=tmp_report,
+            metrics_summary_df=mock_metrics,
+            calib_df=mock_calib,
+            coef_exp_df=mock_coef,
+            coef_rfm_df=mock_coef,
+            policy_comparison_df=mock_policy,
+            validation_cutoff="2011-06-10",
+            temporal_cutoff="2011-09-09",
+            config_data={"recommended_default_model": "RFM Baseline", "challenger_model": "Expanded Model"},
+        )
+        test_reports = [tmp_report]
 
-    content = report_file.read_text(encoding="utf-8").lower()
+    root_report = Path("reports/repeat_purchase_model_evaluation.md")
+    if root_report.exists():
+        test_reports.append(root_report)
 
-    # Must NOT claim untouched holdout or confirmatory test
-    assert "untouched" not in content
-    assert "confirmatory test" not in content
-    assert "evaluated strictly once" not in content
-    assert "frozen before any inspection" not in content
+    for report_file in test_reports:
+        content = report_file.read_text(encoding="utf-8").lower()
 
-    # Must NOT claim causal Q4/autumn/holiday demand causes
-    assert "due to q4" not in content
-    assert "holiday seasonal demand acceleration" not in content
-    assert "autumn/holiday seasonal" not in content
+        # 1. Softened lookahead and leakage wording assertions
+        assert "guarantees zero look-ahead bias" not in content
+        assert "guarantee zero look-ahead bias" not in content
+        assert "eliminates all future information leakage" not in content
+        assert "eliminate all future information leakage" not in content
+        assert "mitigate look-ahead bias" in content
+        assert "point-in-time" in content
+        assert "leakage guards" in content
 
-    # Must NOT claim revenue saved or protected
-    assert "safeguards revenue" not in content
-    assert "revenue saved" not in content
-    assert "protects £" not in content
+        # 2. Expanded Model calibration scope assertions
+        assert "expanded model decile calibration" in content
+        assert "decile calibration has not been evaluated or reported for the rfm baseline" in content
+        assert "systematic probability underprediction" in content
+        assert "coincides with that underprediction" in content
+        assert "cause of this cohort base-rate shift remains unknown" in content
+        assert "calibration was not evaluated across deciles for the rfm baseline" in content
 
-    # Must NOT claim universally optimal policy
-    assert "universally optimal" not in content
-    assert "optimal balance" not in content
+        # 3. Risk-first queue assertions (avoid unverified "one-time shoppers" claim)
+        assert "one-time shoppers" not in content
+        assert "one-time buyers" not in content
+        assert "<1% of cohort" in content
 
-    # MUST contain retrospective temporal evaluation and underprediction disclosure
-    assert "retrospective temporal" in content
-    assert "underprediction" in content
-    assert "historical commercial spend" in content
+        # 4. Standard evaluation integrity assertions
+        assert "untouched" not in content
+        assert "confirmatory test" not in content
+        assert "evaluated strictly once" not in content
+        assert "frozen before any inspection" not in content
+        assert "due to q4" not in content
+        assert "holiday seasonal demand acceleration" not in content
+        assert "autumn/holiday seasonal" not in content
+        assert "safeguards revenue" not in content
+        assert "revenue saved" not in content
+        assert "protects £" not in content
+        assert "universally optimal" not in content
+        assert "optimal balance" not in content
+
+        # 5. Required disclosures
+        assert "retrospective temporal" in content
+        assert "underprediction" in content
+        assert "historical commercial spend" in content

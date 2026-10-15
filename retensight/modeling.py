@@ -874,7 +874,7 @@ def _generate_markdown_report(
     md.append("# RetenSight — Repeat-Purchase Propensity Modeling and CRM Queue Evaluation Report\n\n")
     md.append("## Executive Summary\n\n")
     md.append(
-        "This report documents the design, implementation, and empirical evaluation of two leakage-safe, "
+        "This report documents the design, implementation, and empirical evaluation of two point-in-time, "
         "explainable logistic regression models developed to estimate whether an active e-commerce customer will make "
         "at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.\n\n"
     )
@@ -884,7 +884,7 @@ def _generate_markdown_report(
         "order value, cancellation behavior, and financial component features (16 total features).\n"
         "- **Validation-Governed Model Recommendation:** Model selection is governed exclusively by the `2011-06-10` validation cohort. "
         "While the Expanded model achieves slight statistical improvements in validation ROC-AUC (0.8079 vs 0.8026) and "
-        "Brier calibration score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain "
+        "Brier score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain "
         "(e.g., capturing only 3 additional non-repeaters under Risk-first at 10% capacity, and 7 under Hybrid, while capturing £768.8k "
         "less historical spend under Value-aware). In accordance with parsimony and decision utility principles, the **simpler 3-feature RFM Baseline "
         "is recommended as the operational default**, retaining the Expanded model as an analytical challenger.\n"
@@ -902,8 +902,10 @@ def _generate_markdown_report(
 
     md.append("## 1. Strictly Chronological Walk-Forward Evaluation Design\n\n")
     md.append(
-        "To guarantee zero look-ahead bias and eliminate all future information leakage, the evaluation strictly follows "
-        "a chronological walk-forward architecture:\n\n"
+        "To mitigate look-ahead bias and guard against future information leakage, the evaluation follows "
+        "a strictly chronological walk-forward architecture. The methodology relies on defined chronological cutoffs, "
+        "point-in-time feature construction, and explicit automated leakage guards, while acknowledging that no automated "
+        "protocol can categorically prove the absence of every possible unobserved leakage source:\n\n"
     )
     md.append("| Phase | Training Period / Cutoff | Forward Target Window | Evaluation Snapshot Cutoff | Cohort Size ($N$) | Observed Repeaters ($y=1$) | Base Rate |\n")
     md.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
@@ -968,17 +970,22 @@ def _generate_markdown_report(
     )
 
     md.append("## 4. Calibration Evidence and Underprediction Analysis\n\n")
-    md.append("### Retrospective Temporal Cohort Decile Calibration (`2011-09-09`)\n\n")
+    md.append("### Expanded Model Decile Calibration on Retrospective Temporal Cohort (`2011-09-09`)\n\n")
+    md.append(
+        "*Calibration Scope:* Decile calibration was evaluated specifically for the **Expanded Model** on the retrospective "
+        "temporal evaluation cohort (`2011-09-09`). Decile calibration has not been evaluated or reported for the RFM Baseline model.\n\n"
+    )
     md.append(_df_to_markdown(calib_df))
     md.append("\n\n")
     md.append(
         "> [!IMPORTANT]\n"
-        "> **Calibration Finding:** Across all 10 reported deciles in the `2011-09-09` evaluation cohort, the observed repeat rate "
-        "exceeds the mean predicted probability. This demonstrates **systematic probability underprediction**, driven by the shift "
-        "in cohort repeat rate from ~31%–32% in training to 43.50% in this evaluation window. "
+        "> **Calibration Finding:** Across all 10 reported deciles for the Expanded Model in the `2011-09-09` retrospective temporal cohort, "
+        "the observed repeat rate exceeds the mean predicted probability. This demonstrates **systematic probability underprediction** for this model. "
+        "An observed upward shift in cohort repeat base rate (from 32.03% in validation to 43.50% in this evaluation window) "
+        "coincides with that underprediction, while the underlying cause of this cohort base-rate shift remains unknown from observational transaction data. "
         "While predicted probabilities maintain strict monotonic ordering across deciles (from 4.40% in Decile 1 to 85.64% in Decile 10), "
-        "they are not well-calibrated in an absolute sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted "
-        "to this cohort, and raw probabilities must be interpreted with this underprediction in mind.\n\n"
+        "they are not well-calibrated in an absolute frequency sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted "
+        "to this cohort, and raw probability estimates from the Expanded Model must be interpreted with this underprediction in mind.\n\n"
     )
 
     md.append("## 5. Model Explainability and Standardized Coefficients\n\n")
@@ -1028,8 +1035,8 @@ def _generate_markdown_report(
         "than the Expanded model (£3.97M, 34.59% of cohort spend), while capturing 236 non-repeaters versus 253.\n"
         "- **Trade-Off Summary across Policies:**\n"
         "  - **Risk-First Policy:** Maximizes non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) "
-        "by targeting customers with lowest predicted return likelihood. However, these customers are primarily low-value, one-time shoppers "
-        "representing <1% of cohort historical commercial spend.\n"
+        "by targeting customers with lowest predicted return likelihood. However, these selected accounts account for a minimal share of historical "
+        "commercial spend (<1% of cohort spend across both evaluation cohorts).\n"
         "  - **Value-Aware Policy:** Prioritizes accounts with the highest historical commercial spend at risk, representing 35%–41% of cohort "
         "commercial spend at 10% capacity. Because high spenders repeat more often than average, non-repeat precision is lower (37%–51%).\n"
         "  - **Hybrid Policy:** Combines normalized risk rank and spend rank ($0.5 \\times \\text{Risk} + 0.5 \\times \\text{Spend}$), achieving "
@@ -1046,9 +1053,12 @@ def _generate_markdown_report(
         "Observational data cannot establish how customers would respond to intervention.\n"
         "2. **Retrospective Status of Later Evaluation Cohort:** The `2011-09-09` cohort was inspected during development and serves as "
         "a retrospective temporal benchmark. It must not be treated as a prospective holdout benchmark.\n"
-        "3. **Probability Underprediction:** Predicted probabilities exhibit systematic underprediction in cohorts with higher repeat base rates. "
-        "While ranking discrimination remains effective for queue prioritization, raw probability values should not be interpreted as absolute "
-        "calibrated propensities.\n"
+        "3. **Probability Underprediction & Calibration Scope:** Decile calibration was evaluated exclusively for the Expanded Model "
+        "on the retrospective temporal evaluation cohort (`2011-09-09`), where its reported deciles exhibit systematic probability underprediction. "
+        "An observed upward shift in cohort repeat base rate coincides with that underprediction, while the underlying cause of this cohort base-rate "
+        "shift is unknown from observational data. Calibration was not evaluated across deciles for the RFM Baseline. While ranking discrimination "
+        "remains effective for customer prioritization queues, raw probability estimates from the Expanded Model should not be interpreted as absolute "
+        "calibrated frequencies.\n"
         "4. **Unobserved Cutoff:** The `2011-12-09` snapshot represents production scoring as of dataset conclusion. Forward labels are strictly "
         "unobserved and were excluded from all training, validation, and evaluation.\n"
     )
