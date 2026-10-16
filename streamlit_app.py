@@ -569,11 +569,14 @@ with tabs[2]:
             spend_data[["Strategy", "SpendShare"]],
             x="Strategy",
             y="SpendShare",
+            x_label="",
+            y_label="Share of cohort spend (%)",
             horizontal=True,
             sort="-SpendShare",
             color=BLUE,
             height=270,
             use_container_width=True,
+            alt="Historical customer-attributed commercial spend represented by each contact strategy, as a percentage of total cohort spend.",
         )
 
     table = active.copy()
