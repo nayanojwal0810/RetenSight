@@ -386,7 +386,7 @@ with tabs[0]:
         ])
         comp_bars = alt.Chart(compare).mark_bar(cornerRadiusEnd=4, size=30).encode(
             y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(ticks=False)),
-            x=alt.X("Precision:Q", title="Non-repeat precision", scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format=".0f", grid=True)),
+            x=alt.X("Precision:Q", title="Non-repeat precision", scale=alt.Scale(domain=[0, 112]), axis=alt.Axis(format=".0f", tickCount=5, grid=True)),
             color=alt.Color(
                 "Strategy:N",
                 scale=alt.Scale(domain=["RFM Risk-first", "Random benchmark"], range=[NAVY, SLATE]),
@@ -396,7 +396,7 @@ with tabs[0]:
         )
         comp_labels = alt.Chart(compare).mark_text(align="left", baseline="middle", dx=5, color=INK, fontSize=11).encode(
             y=alt.Y("Strategy:N", sort="-x"),
-            x=alt.X("Precision:Q", scale=alt.Scale(domain=[0, 100])),
+            x=alt.X("Precision:Q", scale=alt.Scale(domain=[0, 112])),
             text=alt.Text("Label:N"),
         )
         st.altair_chart(base_chart(comp_bars + comp_labels, height=210), use_container_width=True)
@@ -475,7 +475,7 @@ with tabs[2]:
         unsafe_allow_html=True,
     )
 
-    ctrl, note = st.columns([1, 3], vertical_alignment="bottom")
+    ctrl, note = st.columns([1, 3])
     with ctrl:
         capacity = st.selectbox(
             "Contact capacity",
@@ -496,7 +496,7 @@ with tabs[2]:
         y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(labelLimit=180, ticks=False)),
         x=alt.X("Non-repeat precision (%):Q", title="Selected contacts who did not repeat (%)", scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format=".0f")),
         color=alt.condition(
-            alt.datum["Strategy"] == "Risk-first",
+            alt.datum.Strategy == "Risk-first",
             alt.value(NAVY),
             alt.value(SLATE),
         ),
@@ -519,7 +519,7 @@ with tabs[2]:
         y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(labelLimit=180, ticks=False)),
         x=alt.X("Spend represented (%):Q", title="Share of cohort historical spend (%)", scale=spend_scale, axis=alt.Axis(format=".0f")),
         color=alt.condition(
-            alt.datum["Strategy"] == "Value-aware",
+            alt.datum.Strategy == "Value-aware",
             alt.value(NAVY),
             alt.value(SLATE),
         ),
