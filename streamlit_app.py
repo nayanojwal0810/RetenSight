@@ -545,8 +545,8 @@ with tabs[2]:
         text=alt.Text("PrecisionLabel:N"),
     )
 
-    # Use one simple, standalone bar chart for spend share. Values are explicitly numeric;
-    # the comparison table below provides exact labels without relying on a chart text layer.
+    # Use Streamlit's native horizontal bar chart here: it renders directly from the
+    # numeric dataframe and avoids the missing-mark issue seen in the layered Altair chart.
     spend_data = active[["Strategy", "share_of_cohort_commercial_value", "historical_commercial_value_gbp"]].copy()
     spend_data["SpendShare"] = pd.to_numeric(
         spend_data.pop("share_of_cohort_commercial_value"), errors="coerce"
@@ -556,32 +556,6 @@ with tabs[2]:
     )
     spend_data["Strategy"] = spend_data["Strategy"].astype(str)
     spend_data = spend_data.dropna(subset=["SpendShare"]).reset_index(drop=True)
-    spend_max = max(15.0, float(spend_data["SpendShare"].max()) * 1.20)
-    spend_min = min(0.0, float(spend_data["SpendShare"].min()) * 1.20)
-    spend_bars = alt.Chart(spend_data).mark_bar(
-        color=BLUE,
-        cornerRadiusEnd=4,
-        size=26,
-        opacity=0.95,
-    ).encode(
-        y=alt.Y(
-            "Strategy:N",
-            sort=alt.SortField(field="SpendShare", order="descending"),
-            title=None,
-            axis=alt.Axis(labelLimit=180, ticks=False),
-        ),
-        x=alt.X(
-            "SpendShare:Q",
-            title="Share of cohort historical spend (%)",
-            scale=alt.Scale(domain=[spend_min, spend_max], zero=True),
-            axis=alt.Axis(format=".0f", grid=True),
-        ),
-        tooltip=[
-            alt.Tooltip("Strategy:N"),
-            alt.Tooltip("SpendShare:Q", title="Spend represented (%)", format=".2f"),
-            alt.Tooltip("HistoricalSpend:Q", title="Historical spend (£)", format="£,.0f"),
-        ],
-    ).properties(height=270)
 
     left, right = st.columns(2, gap="large")
     with left:
@@ -591,7 +565,16 @@ with tabs[2]:
     with right:
         st.markdown('<div class="chart-title">How much historical spend is represented?</div>', unsafe_allow_html=True)
         st.markdown('<div class="chart-caption">Past spend associated with selected customers; not campaign uplift or protected revenue.</div>', unsafe_allow_html=True)
-        st.altair_chart(base_chart(spend_bars, height=270), use_container_width=True)
+        st.bar_chart(
+            spend_data[["Strategy", "SpendShare"]],
+            x="Strategy",
+            y="SpendShare",
+            horizontal=True,
+            sort="-SpendShare",
+            color=BLUE,
+            height=270,
+            use_container_width=True,
+        )
 
     table = active.copy()
     table["Non-repeat precision"] = table["Non-repeat precision (%)"].map(lambda value: f"{value:.1f}%")
