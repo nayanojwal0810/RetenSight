@@ -117,20 +117,32 @@ st.markdown(
         line-height: 1.5;
         margin: 0.6rem 0 0.6rem 0;
     }
-    div[data-testid="stMetric"] {
-        padding: 0.85rem 0.95rem;
+    .kpi-card {
+        padding: 0.85rem 1rem 0.8rem 1rem;
         background: #F7F9FC;
         border: 1px solid #E7EBF0;
         border-radius: 8px;
+        min-height: 104px;
+        box-sizing: border-box;
     }
-    div[data-testid="stMetricLabel"] {
+    .kpi-label {
         color: #667085;
         font-size: 0.8rem;
+        line-height: 1.3;
+        margin-bottom: 0.38rem;
     }
-    div[data-testid="stMetricValue"] {
+    .kpi-value {
         color: #193A63;
         font-size: 1.75rem;
+        line-height: 1.2;
         font-weight: 650;
+        letter-spacing: -0.025em;
+    }
+    .kpi-note {
+        color: #667085;
+        font-size: 0.75rem;
+        line-height: 1.35;
+        margin-top: 0.25rem;
     }
     div[data-testid="stTabs"] button {
         font-weight: 550;
@@ -319,12 +331,28 @@ with tabs[0]:
         unsafe_allow_html=True,
     )
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Customers in observed cohort", f"{cohort_size:,}")
-    m2.metric("Repeat purchase rate", f"{repeat_rate:.2f}%")
-    m2.caption(f"{repeaters:,} customers repeated within 90 days")
-    m3.metric("Risk-first precision", f"{risk['Non-repeat precision (%)']:.2f}%")
-    m3.caption("At 10% contact capacity")
+    m1, m2, m3 = st.columns(3, gap="medium")
+    with m1:
+        st.markdown(
+            f'<div class="kpi-card"><div class="kpi-label">Customers in observed cohort</div>'
+            f'<div class="kpi-value">{cohort_size:,}</div>'
+            '<div class="kpi-note">Customers with an observed 90-day outcome</div></div>',
+            unsafe_allow_html=True,
+        )
+    with m2:
+        st.markdown(
+            f'<div class="kpi-card"><div class="kpi-label">Repeat purchase rate</div>'
+            f'<div class="kpi-value">{repeat_rate:.2f}%</div>'
+            f'<div class="kpi-note">{repeaters:,} customers repeated within 90 days</div></div>',
+            unsafe_allow_html=True,
+        )
+    with m3:
+        st.markdown(
+            f'<div class="kpi-card"><div class="kpi-label">Risk-first precision</div>'
+            f'<div class="kpi-value">{risk["Non-repeat precision (%)"]:.2f}%</div>'
+            '<div class="kpi-note">At 10% contact capacity</div></div>',
+            unsafe_allow_html=True,
+        )
 
     left, right = st.columns([1, 1], gap="large")
     with left:
@@ -431,7 +459,7 @@ with tabs[1]:
             "Segment": segment,
             "Customers": count,
             "Share (%)": count / eligible * 100,
-            "Label": f"{count:,}",
+            "Label": f"{count:,} · {count / eligible * 100:.1f}%",
             "CRM focus": concise_action,
         })
     segments = pd.DataFrame(records).sort_values("Customers", ascending=False).reset_index(drop=True)
