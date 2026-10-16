@@ -1,4 +1,4 @@
-# Cleaning and Reconciliation Results
+# RetenSight — Data Cleaning and Reconciliation Audit Report
 
 RetenSight checks row counts and financial totals as data moves from the workbook to invoice and customer tables.
 
@@ -18,8 +18,8 @@ RetenSight checks row counts and financial totals as data moves from the workboo
 
 | Measure | Company-wide value |
 |---|---:|
-| Gross product sales | £19,716,362.61 |
-| Special commercial charges | £806,317.23 |
+| Gross Product Sales | £19,716,362.61 |
+| Special Commercial Charges | £806,317.23 |
 | Gross commercial sales | £20,522,679.84 |
 | Cancellations and returns | -£1,465,303.66 |
 | Net commercial value before bad debt | £19,057,376.18 |
@@ -32,7 +32,7 @@ Company-wide totals include unattributed transactions. Customer commercial net s
 
 | Check | Result |
 |---|---|
-| Raw rows minus verified duplicates equals retained rows | Passed |
+| Raw rows minus verified duplicates equals retained rows | PASSED [✓] |
 | Transaction lines reconcile to invoice line counts | Passed |
 | Transaction quantities reconcile to invoice quantities | Passed |
 | Product sales reconcile | Passed |
