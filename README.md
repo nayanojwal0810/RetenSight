@@ -99,6 +99,23 @@ python -m pytest -v
 
 ---
 
+## Interactive Streamlit Dashboard
+
+To launch the executive decision-support dashboard locally:
+
+```bash
+streamlit run streamlit_app.py
+```
+
+### Cloud Deployment (Streamlit Community Cloud)
+
+The dashboard is configured for direct deployment on [Streamlit Community Cloud](https://share.streamlit.io):
+- **Repository**: `nayanojwal0810/RetenSight` (branch: `main`)
+- **Main file path**: `streamlit_app.py`
+- **Data dependency**: Powered entirely by committed aggregate audit and modeling reports in `reports/`, requiring no external database or bulky raw files in the cloud environment.
+
+---
+
 ## Design Principles
 
 - **Full Dataset Verification**: Real full-workbook execution without sampling or fabricated metrics.

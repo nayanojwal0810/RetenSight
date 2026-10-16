@@ -3,7 +3,7 @@
 You are the implementation worker. Follow this specification literally. The project owner decides analytical scope and accepts or rejects each completed increment.
 
 ## Objective
-Build a complete e-commerce CRM analytics and decision-support system from the locally supplied UCI Online Retail II workbook. The business goals are customer understanding, RFM segmentation, 90-day repeat-purchase propensity, and explainable customer-priority queues under limited outreach capacity. Deliver a verified, interactive Power BI report.
+Build a complete e-commerce CRM analytics and decision-support system from the locally supplied UCI Online Retail II workbook. The business goals are customer understanding, RFM segmentation, 90-day repeat-purchase propensity, and explainable customer-priority queues under limited outreach capacity. Deliver a verified, interactive hosted web dashboard (Streamlit).
 
 ## Non-negotiable constraints
 - Keep the supplied raw workbook unchanged and never commit it.
@@ -43,8 +43,8 @@ The workbook is expected at `data/raw/online_retail_II.xlsx` or project root if 
 - Run the full workbook, not just samples. Unit-test fixtures may be small. Clearly differentiate fixture tests from full-data results.
 - Use local output directories and ignore workbook, caches, virtual env, and machine-specific files in Git.
 - Provide machine-readable output validation that fails on discrepancies.
-- Power BI must use clean import tables, a star schema or explicitly justified relationships, measures, slicers, drill-through/customer details and clear labels. Dashboard KPIs must reconcile to Python outputs.
-- Create/validate a native PBIX in Power BI Desktop where possible. Never fake a PBIX by renaming another file. If this runtime cannot create PBIX, state the precise blocker and provide ready-to-import files, DAX, theme, model diagram, and detailed build instructions.
+- Web dashboard (Streamlit) must use clean data loading, validated schemas, clear KPI definitions, interactive filters, policy trade-off exploration, and clear labels. Dashboard KPIs must reconcile to Python outputs.
+- Deploy the interactive dashboard via Streamlit Community Cloud with a clean, responsive layout, restrained formal design system, and verified data artifacts.
 
 ## Git protocol
 Before editing, inspect repository state and avoid overwriting existing work. Commit each completed increment with a descriptive message and push to the connected remote. Keep dataset and derived files out of Git unless owner explicitly approves specific small, non-sensitive deliverables. After each increment hand off: commit hash, paths changed, exact commands, tests and results, known issues. Stop for owner review.
