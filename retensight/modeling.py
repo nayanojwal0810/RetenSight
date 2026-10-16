@@ -869,202 +869,120 @@ def _generate_markdown_report(
     coef_rfm_df: pd.DataFrame,
     config_data: Dict[str, Any],
 ) -> None:
-    """Generates the comprehensive, rigorous markdown report for repeat-purchase modeling."""
-    md = []
-    md.append("# RetenSight — Repeat-Purchase Propensity Modeling and CRM Queue Evaluation Report\n\n")
-    md.append("## Executive Summary\n\n")
-    md.append(
-        "This report documents the design, implementation, and empirical evaluation of two point-in-time, "
-        "explainable logistic regression models developed to estimate whether an active e-commerce customer will make "
-        "at least one qualifying merchandise purchase in the forward 90 days following a scoring cutoff date.\n\n"
-    )
-    md.append(
-        "- **RFM Baseline Model:** Formulated strictly from Recency ($R$), Frequency ($F$), and net commercial spend ($M$).\n"
-        "- **Expanded Model:** Extends the baseline with 13 additional point-in-time purchasing cadence, basket size, "
-        "order value, cancellation behavior, and financial component features (16 total features).\n"
-        "- **Validation-Governed Model Recommendation:** Model selection is governed exclusively by the `2011-06-10` validation cohort. "
-        "While the Expanded model achieves slight statistical improvements in validation ROC-AUC (0.8079 vs 0.8026) and "
-        "Brier score (0.1583 vs 0.1594), CRM queue simulations across capacities demonstrate negligible practical targeting gain "
-        "(e.g., capturing only 3 additional non-repeaters under Risk-first at 10% capacity, and 7 under Hybrid, while capturing £768.8k "
-        "less historical spend under Value-aware). In accordance with parsimony and decision utility principles, the **simpler 3-feature RFM Baseline "
-        "is recommended as the operational default**, retaining the Expanded model as an analytical challenger.\n"
-        "- **Retrospective Temporal Evaluation (`2011-09-09`):** The later chronological evaluation cohort was inspected during exploratory "
-        "development and is presented transparently as a retrospective temporal evaluation rather than a prospective holdout. "
-        "Both models demonstrate robust ranking separation in this cohort, achieving an 89.73% repeat rate in the top decile "
-        "(compared to a 43.50% cohort base rate) and a 90.68%–91.06% non-purchase rate in the bottom decile.\n"
-        "- **CRM Outreach Prioritization Trade-offs:** Evaluated Risk-first, Value-aware, and Hybrid outreach policies across fixed "
-        "capacity budgets (1%, 5%, 10%, 20%). Risk-first achieves the highest non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) "
-        "but captures negligible historical commercial spend (<1%). Value-aware targets major historical commercial accounts "
-        "(representing 35%–41% of cohort commercial spend at 10% capacity) with lower non-repeat precision. The Hybrid policy achieves "
-        "an intermediate balance (81%–82% non-repeat precision in validation, representing ~7.4% of cohort historical spend). "
-        "No single policy is universally superior across all business goals; the appropriate policy depends on commercial intervention costs and account value.\n\n"
-    )
+    """Write a concise report of repeat-purchase and CRM queue findings."""
+    lines = [
+        "# Repeat-Purchase Modelling Results",
+        "",
+        "RetenSight compares two logistic-regression models that estimate whether a customer will make at least one qualifying merchandise purchase in the next 90 days.",
+        "",
+        "## Main finding",
+        "",
+        f"The recommended default is the {config_data.get('recommended_default_model', 'RFM Baseline')}. It uses three RFM features. The Expanded Model uses 16 historical features and provides only small improvements in the observed validation metrics and practical queue results.",
+        "",
+        "## Model performance",
+        "",
+        "| Model | Cohort | Customers | Observed repeat rate | ROC-AUC | Average precision | Brier score | Log loss | Top-decile repeat rate | Bottom-decile non-repeat rate |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
 
-    md.append("## 1. Strictly Chronological Walk-Forward Evaluation Design\n\n")
-    md.append(
-        "To mitigate look-ahead bias and guard against future information leakage, the evaluation follows "
-        "a strictly chronological walk-forward architecture. The methodology relies on defined chronological cutoffs, "
-        "point-in-time feature construction, and explicit automated leakage guards, while acknowledging that no automated "
-        "protocol can categorically prove the absence of every possible unobserved leakage source:\n\n"
-    )
-    md.append("| Phase | Training Period / Cutoff | Forward Target Window | Evaluation Snapshot Cutoff | Cohort Size ($N$) | Observed Repeaters ($y=1$) | Base Rate |\n")
-    md.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
-    md.append("| **Validation Stage** | `2010-12-09 23:59:59` | `2010-12-10` to `2011-03-09` | `2011-06-10 23:59:59` | 4,952 | 1,586 | 32.03% |\n")
-    md.append("| **Retrospective Temporal Stage** | `2010-12-09` + `2011-06-10` (9,238 rows) | `2011-06-11` to `2011-09-08` | `2011-09-09 23:59:59` | 5,257 | 2,287 | 43.50% |\n")
-    md.append("| **Unobserved Production** | — | Unobserved (`2011-12-10` to `2012-03-08`) | `2011-12-09 12:50:00` | 5,853 | *None (<NA>)* | *Unobserved* |\n\n")
+    def metric_value(row: pd.Series, keys: list[str], percent: bool = False, digits: int = 3) -> str:
+        value = None
+        for key in keys:
+            if key in row.index and pd.notna(row[key]):
+                value = float(row[key])
+                break
+        if value is None:
+            return "—"
+        return f"{value * 100:.2f}%" if percent else f"{value:.{digits}f}"
 
-    md.append("### Chronological Separation and Methodological Integrity\n\n")
-    md.append(
-        "- **Validation Boundary:** Cutoff 1 target window closes on `2011-03-09 23:59:59`, exactly 93 days prior to the "
-        "Cutoff 2 evaluation scoring date (`2011-06-10 23:59:59`). No overlap exists.\n"
-        "- **Retrospective Evaluation Boundary:** Cutoff 2 target window closes on `2011-09-08 23:59:59`, exactly 1 day prior to the "
-        "Cutoff 3 scoring date (`2011-09-09 23:59:59`). No overlap exists.\n"
-        "- **Cohort Base-Rate Shift:** The observed 90-day repeat rate shifts from 32.03% in the `2011-06-10` cohort to 43.50% in the "
-        "`2011-09-09` cohort. The causal explanation for this shift is unknown from this observational analysis.\n"
-        "- **Repeated Observations:** Customers active across multiple cutoffs appear as distinct point-in-time scoring "
-        "observations. Customer ID is never used as a predictive feature.\n"
-        "- **Evaluation Freeze:** Model recommendations and policy choices were derived solely from the validation stage. "
-        "The retrospective temporal cohort was not used to select features, tune hyperparameters, or adjust decision thresholds.\n\n"
-    )
+    for _, row in metrics_df.iterrows():
+        top_keys = ["top_decile_precision", "top_decile_purchase_precision"]
+        lines.append(
+            "| {} | {} | {} | {} | {} | {} | {} | {} | {} | {} |".format(
+                row.get("model_name", "—"),
+                row.get("split_name", "—"),
+                f"{int(row['sample_count']):,}" if "sample_count" in row.index and pd.notna(row["sample_count"]) else "—",
+                metric_value(row, ["base_rate"], percent=True, digits=2),
+                metric_value(row, ["roc_auc"]),
+                metric_value(row, ["average_precision"]),
+                metric_value(row, ["brier_score"]),
+                metric_value(row, ["log_loss"]),
+                metric_value(row, top_keys, percent=True, digits=2),
+                metric_value(row, ["bottom_decile_non_purchase_rate"], percent=True, digits=2),
+            )
+        )
 
-    md.append("## 2. Feature Engineering and Leakage Exclusion\n\n")
-    md.append("### Feature Sets\n\n")
-    md.append("1. **RFM Baseline (3 features):** `recency_days`, `frequency`, `net_commercial_spend`.\n")
-    md.append(
-        "2. **Expanded Feature Set (16 features):** Baseline features plus `customer_tenure_days`, `distinct_purchase_days`, "
-        "`total_items_purchased`, `merchandise_aov`, `commercial_order_value`, `net_spend_per_order`, `total_invoices_all`, "
-        "`cancellation_invoice_count`, `monetary_merchandise_sales`, `monetary_merchandise_returns`, `monetary_shipping`, "
-        "`monetary_discounts`, `monetary_manual_charges`.\n\n"
-    )
-    md.append("### Preprocessing Pipeline\n\n")
-    md.append(
-        "- **Deterministic Signed-Log Transformation:** Applied to all monetary and count features: "
-        "$f(x) = \\operatorname{sign}(x) \\cdot \\ln(1 + |x|)$. Smoothly manages heavy right-skewed purchasing totals "
-        "as well as negative merchandise return amounts while mapping 0 identically to 0.\n"
-        "- **Median Imputation & Feature Standardization:** `SimpleImputer(strategy='median')` and `StandardScaler()` "
-        "are fitted strictly on training data and applied downstream to prevent distribution leakage.\n\n"
-    )
-    md.append("### Prohibited Columns (Enforced by Automated Leakage Guards)\n\n")
-    md.append(
-        "The following columns are strictly excluded from all training and feature matrices: "
-        "`customer_id`, `target_repeat_purchase_90d`, `target_spend_90d`, `target_ledger_balance_90d`, "
-        "`is_target_window_observed`, `segment`, `r_score`, `f_score`, `m_score`, `rfm_score`, `snapshot_date`, "
-        "`first_purchase_date`, `last_purchase_date`, `country`.\n\n"
-    )
+    lines.extend([
+        "",
+        "AUC and average precision measure ranking quality; Brier score and log loss measure probability error. The top and bottom deciles show how well the ranking separates customers by observed behaviour.",
+        "",
+        "## Contact strategies at 10% capacity",
+        "",
+        "The table below uses the RFM model on the June 2011 validation cohort. All strategies select the same share of customers.",
+        "",
+        "| Strategy | Contacts | Non-repeat precision | Share of non-repeaters captured | Historical spend | Share of cohort spend |",
+        "|---|---:|---:|---:|---:|---:|",
+    ])
 
-    md.append("## 3. Model Evaluation Results\n\n")
-    md.append("### Performance Metrics Comparison Table\n\n")
-    md.append(_df_to_markdown(metrics_df))
-    md.append("\n\n")
+    policies = policy_df.copy()
+    if "outreach_capacity" in policies.columns:
+        policies = policies[policies["outreach_capacity"].astype(str) == "10%"]
+    if "evaluation_split" in policies.columns:
+        policies = policies[policies["evaluation_split"].astype(str).str.lower() == "validation"]
+    if "model_name" in policies.columns:
+        policies = policies[policies["model_name"].astype(str).str.lower().isin(["rfm baseline", "rfm"])]
+    policy_key_map = {
+        "Risk-first": ["selected_non_repeat_rate", "non_repeat_precision"],
+        "Share of non-repeaters captured": ["share_of_all_non_repeaters_captured", "capture_share"],
+        "Historical spend (£)": ["historical_commercial_value_gbp", "historical_commercial_spend"],
+        "Share of cohort spend": ["share_of_cohort_commercial_value", "spend_share"],
+    }
 
-    md.append("### Key Analytical Insights\n\n")
-    md.append(
-        "1. **Validation Metrics Comparison:** On the `2011-06-10` validation set, the Expanded Model achieves slightly higher "
-        "ROC-AUC (0.8079 vs 0.8026) and average precision (0.6993 vs 0.6928), with a marginally lower Brier score (0.1583 vs 0.1594). "
-        "However, the top-decile repeat rate is virtually identical (85.45% Expanded vs 85.66% Baseline).\n"
-        "2. **Retrospective Temporal Performance:** On the `2011-09-09` cohort, both models achieve identical top-decile repeat precision (89.73%), "
-        "and the RFM Baseline exhibits a slightly higher bottom-decile non-purchase rate (91.06% vs 90.68%). ROC-AUC and average precision "
-        "remain modestly higher for the Expanded model (0.7869 vs 0.7815, and 0.7545 vs 0.7478).\n"
-        "3. **Practical Utility Conclusion:** Across both evaluation cohorts, the predictive differences between the two models are minor. "
-        "The additional complexity of maintaining 16 features does not produce a commensurate gain in practical customer ranking.\n\n"
-    )
+    def first_numeric(row: pd.Series, keys: list[str]) -> float | None:
+        for key in keys:
+            if key in row.index and pd.notna(row[key]):
+                return float(row[key])
+        return None
 
-    md.append("## 4. Calibration Evidence and Underprediction Analysis\n\n")
-    md.append("### Expanded Model Decile Calibration on Retrospective Temporal Cohort (`2011-09-09`)\n\n")
-    md.append(
-        "*Calibration Scope:* Decile calibration was evaluated specifically for the **Expanded Model** on the retrospective "
-        "temporal evaluation cohort (`2011-09-09`). Decile calibration has not been evaluated or reported for the RFM Baseline model.\n\n"
-    )
-    md.append(_df_to_markdown(calib_df))
-    md.append("\n\n")
-    md.append(
-        "> [!IMPORTANT]\n"
-        "> **Calibration Finding:** Across all 10 reported deciles for the Expanded Model in the `2011-09-09` retrospective temporal cohort, "
-        "the observed repeat rate exceeds the mean predicted probability. This demonstrates **systematic probability underprediction** for this model. "
-        "An observed upward shift in cohort repeat base rate (from 32.03% in validation to 43.50% in this evaluation window) "
-        "coincides with that underprediction, while the underlying cause of this cohort base-rate shift remains unknown from observational transaction data. "
-        "While predicted probabilities maintain strict monotonic ordering across deciles (from 4.40% in Decile 1 to 85.64% in Decile 10), "
-        "they are not well-calibrated in an absolute frequency sense. In accordance with evaluation integrity, no post-hoc calibrator was fitted "
-        "to this cohort, and raw probability estimates from the Expanded Model must be interpreted with this underprediction in mind.\n\n"
-    )
+    for _, row in policies.iterrows():
+        policy_name = str(row.get("policy", "—")).replace("Risk-First", "Risk-first").replace("Value-Aware", "Value-aware").replace("Random Baseline", "Random benchmark").replace("Random baseline (analytical)", "Random benchmark")
+        contacts = row.get("selected_count", row.get("target_customers", "—"))
+        if pd.notna(contacts) and contacts != "—":
+            contacts = f"{int(contacts):,}"
+        precision = first_numeric(row, policy_key_map["Risk-first"])
+        capture = first_numeric(row, policy_key_map["Share of non-repeaters captured"])
+        spend = first_numeric(row, policy_key_map["Historical spend (£)"])
+        spend_share = first_numeric(row, policy_key_map["Share of cohort spend"])
+        lines.append(
+            f"| {policy_name} | {contacts} | {precision * 100:.2f}% | {capture * 100:.2f}% | £{spend:,.0f} | {spend_share * 100:.2f}% |"
+            if None not in (precision, capture, spend, spend_share)
+            else f"| {policy_name} | {contacts} | — | — | — | — |"
+        )
 
-    md.append("## 5. Model Explainability and Standardized Coefficients\n\n")
-    md.append(
-        "The tables below report standardized logistic regression coefficients $\\beta_j$ and odds ratios $\\exp(\\beta_j)$ "
-        "per 1 standard deviation increase in the signed-log transformed feature.\n\n"
-    )
-    md.append("### Expanded Model Coefficients\n\n")
-    md.append(_df_to_markdown(coef_exp_df))
-    md.append("\n\n")
-
-    md.append("### RFM Baseline Coefficients\n\n")
-    md.append(_df_to_markdown(coef_rfm_df))
-    md.append("\n\n")
-
-    md.append(
-        "> [!IMPORTANT]\n"
-        "> **Observational Disclaimer:** These coefficients reflect conditional statistical associations in observational "
-        "transaction data, **not causal mechanisms**. A positive coefficient indicates that customers with higher historical "
-        "engagement were more likely to repeat under historical conditions. It does not imply that marketing actions designed "
-        "to increase frequency or spend will causally alter repeat purchase propensity by that odds ratio.\n\n"
-    )
-
-    md.append("## 6. CRM Outreach Queue Prioritization Policies\n\n")
-    md.append(
-        "To evaluate decision utility under capacity constraints, four targeting policies were simulated across both evaluation cohorts "
-        "at 1%, 5%, 10%, and 20% capacity budgets. Below is the primary comparison at **10% outreach capacity**:\n\n"
-    )
-
-    # Focus table on 10% capacity
-    policy_10pct = policy_df[policy_df["outreach_capacity"] == "10%"].copy()
-    md.append(_df_to_markdown(policy_10pct))
-    md.append("\n\n")
-    md.append(
-        "*Note: Full comparison tables across all capacities (1%, 5%, 10%, 20%) are available in "
-        "`reports/crm_queue_policy_comparison.csv`.*\n\n"
-    )
-
-    md.append("### CRM Policy Decision Outcomes and Trade-Offs\n\n")
-    md.append(
-        "- **RFM Baseline vs. Expanded Model in Validation (10% Capacity):**\n"
-        "  - Under **Risk-First**, the Expanded model captures 473 non-repeaters (95.56% non-repeat rate) versus 470 for the RFM Baseline (94.95%), "
-        "a gain of only 3 additional accounts out of 495 contacts.\n"
-        "  - Under **Hybrid**, the Expanded model captures 408 non-repeaters (82.42% non-repeat rate) versus 401 for the RFM Baseline (81.01%), "
-        "a gain of only 7 accounts, with nearly identical historical spend represented (£844.9k vs £854.9k).\n"
-        "  - Under **Value-Aware**, the RFM Baseline captures substantially more historical commercial spend (£4.74M, 41.29% of cohort spend) "
-        "than the Expanded model (£3.97M, 34.59% of cohort spend), while capturing 236 non-repeaters versus 253.\n"
-        "- **Trade-Off Summary across Policies:**\n"
-        "  - **Risk-First Policy:** Maximizes non-repeat capture precision (~95% in validation, ~91% in retrospective evaluation) "
-        "by targeting customers with lowest predicted return likelihood. However, these selected accounts account for a minimal share of historical "
-        "commercial spend (<1% of cohort spend across both evaluation cohorts).\n"
-        "  - **Value-Aware Policy:** Prioritizes accounts with the highest historical commercial spend at risk, representing 35%–41% of cohort "
-        "commercial spend at 10% capacity. Because high spenders repeat more often than average, non-repeat precision is lower (37%–51%).\n"
-        "  - **Hybrid Policy:** Combines normalized risk rank and spend rank ($0.5 \\times \\text{Risk} + 0.5 \\times \\text{Spend}$), achieving "
-        "74%–82% non-repeat precision while representing 6.8%–7.5% of cohort historical spend.\n"
-        "  - **Policy Selection Depends on Operating Context:** No single policy serves all objectives. The appropriate CRM policy depends on operational constraints, "
-        "intervention costs, and account value. Low-cost automated re-engagement favors Risk-First; high-touch account management favors Value-Aware; "
-        "budget-constrained marketing campaigns favor Hybrid.\n\n"
-    )
-
-    md.append("## 7. Operational Limitations and Deployment Safeguards\n\n")
-    md.append(
-        "1. **No Causal Uplift or Preserved Revenue Claims:** Observed figures represent historical commercial spend associated with "
-        "selected customers. They do not measure incremental retention, campaign uplift, causal impact, profit, or customer lifetime value. "
-        "Observational data cannot establish how customers would respond to intervention.\n"
-        "2. **Retrospective Status of Later Evaluation Cohort:** The `2011-09-09` cohort was inspected during development and serves as "
-        "a retrospective temporal benchmark. It must not be treated as a prospective holdout benchmark.\n"
-        "3. **Probability Underprediction & Calibration Scope:** Decile calibration was evaluated exclusively for the Expanded Model "
-        "on the retrospective temporal evaluation cohort (`2011-09-09`), where its reported deciles exhibit systematic probability underprediction. "
-        "An observed upward shift in cohort repeat base rate coincides with that underprediction, while the underlying cause of this cohort base-rate "
-        "shift is unknown from observational data. Calibration was not evaluated across deciles for the RFM Baseline. While ranking discrimination "
-        "remains effective for customer prioritization queues, raw probability estimates from the Expanded Model should not be interpreted as absolute "
-        "calibrated frequencies.\n"
-        "4. **Unobserved Cutoff:** The `2011-12-09` snapshot represents production scoring as of dataset conclusion. Forward labels are strictly "
-        "unobserved and were excluded from all training, validation, and evaluation.\n"
-    )
+    lines.extend([
+        "",
+        "- **Risk-first** prioritizes customers least likely to repeat. In validation at 10% capacity, it reaches about 95% non-repeat precision but represents <1% of cohort historical commercial spend.",
+        "- **Value-aware** selects customers with higher historical spend but has lower non-repeat precision.",
+        "- **Hybrid** balances risk and historical spend. Random selection provides a reference point.",
+        "",
+        "## Method and limitations",
+        "",
+        "Features are built point-in-time from data available by the scoring date. The pipeline uses leakage guards to mitigate look-ahead bias, although automated checks cannot prove the absence of every possible source of leakage.",
+        "",
+        "The June 2011 cohort governs model selection. The September 2011 cohort was inspected during development and is a retrospective temporal evaluation, not a prospective holdout.",
+        "",
+        "Expanded Model decile calibration was checked on the retrospective temporal cohort. Decile calibration has not been evaluated or reported for the RFM Baseline. The Expanded Model shows systematic probability underprediction; the higher observed repeat rate in the later cohort coincides with that underprediction, but the cause of this cohort base-rate shift remains unknown. Calibration was not evaluated across deciles for the RFM Baseline.",
+        "",
+        "Historical commercial spend describes past transactions. It is not revenue saved, profit, customer lifetime value, or evidence that a campaign changes purchasing behaviour. The data contains no campaign exposure or treatment information.",
+        "",
+        "The final December 2011 customer snapshot has no observed forward 90-day target. Those outcomes remain missing, not zero.",
+        "",
+        "For the complete model configuration and policy results, see repeat_purchase_model_config.json, repeat_purchase_model_metrics.csv and crm_queue_policy_comparison.csv.",
+        "",
+    ])
 
     with open(report_path, "w", encoding="utf-8") as fp:
-        fp.write("".join(md))
+        fp.write("\n".join(lines))
 
 
 def main() -> None:
