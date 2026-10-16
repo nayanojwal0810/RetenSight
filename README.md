@@ -101,4 +101,4 @@ The dashboard reads the committed aggregate reports in `reports/`; it does not n
 - [Model evaluation](reports/repeat_purchase_model_evaluation.md)
 - [Special stock-code results](reports/special_stock_codes_audit.md)
 
-The project uses the UCI Online Retail II dataset. The RFM approach and logistic regression are established methods; this project focuses on implementing them carefully and making the resulting CRM trade-offs clear.
+The project uses the [UCI Online Retail II dataset](https://archive.ics.uci.edu/dataset/502/online+retail+ii). RFM and logistic regression are established methods. For related prior work, see [ecommerce-churn-clv-prediction](https://github.com/ruturajdixit99/ecommerce-churn-clv-prediction). RetenSight focuses on its documented cleaning rules, temporal evaluation and CRM queue comparisons.
