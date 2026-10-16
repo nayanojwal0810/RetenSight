@@ -1,60 +1,42 @@
-# RetenSight — Worker Contract
+# RetenSight — Project Working Rules
 
-You are the implementation worker. Follow this specification literally. The project owner decides analytical scope and accepts or rejects each completed increment.
+## Purpose
 
-## Objective
-Build a complete e-commerce CRM analytics and decision-support system from the locally supplied UCI Online Retail II workbook. The business goals are customer understanding, RFM segmentation, 90-day repeat-purchase propensity, and explainable customer-priority queues under limited outreach capacity. Deliver a verified, interactive hosted web dashboard (Streamlit).
+RetenSight is an e-commerce CRM decision-support project. It cleans transaction data, builds customer RFM profiles and segments, estimates 90-day repeat-purchase likelihood, and compares contact-prioritization strategies. The deliverable is a tested Streamlit dashboard and clear supporting documentation.
 
-## Non-negotiable constraints
-- Keep the supplied raw workbook unchanged and never commit it.
-- Normal CPU only. No GPU, paid APIs, or paid software requirements.
-- Do not invent metrics, test results, model performance, UI states, or completed work.
-- Do not claim causal campaign uplift from observational transaction data.
-- Do not use future information in features. All scoring features must be available as of the scoring cutoff; labels must use a complete future 90-day period.
-- The owner reviews pushed commits. Work in small, complete increments and stop for review after each requested increment.
-- Cite and acknowledge existing code/method references in project documentation. Reproducing methods is fine; never claim that established algorithms or copied code were invented here.
-- Write technical docs needed to run the project. Defer the polished academic report and presentation until the owner confirms that implementation and dashboard outputs are frozen.
-- Do not populate user-facing documents with repetitive phase/step labels.
+## Work carefully
+
+- Inspect the current code and artifacts before editing.
+- Make focused changes and commit them to the intended branch.
+- Never commit the raw workbook, credentials, personal exports, caches, or large intermediate files.
+- Do not invent data, results, tests, screenshots, or deployment status.
+- Do not change model logic just to improve the presentation.
+- Keep the code readable and the user interface concise.
+- Use plain, formal English in user-facing documentation.
+- Keep internal development stages out of the dashboard navigation.
+- Use the correct cohort and fully observed target window for every model comparison.
+- Represent unobserved outcomes as missing, never as zero.
+- Separate company-wide accounting totals from customer-attributed commercial spend.
+- Do not claim campaign uplift, saved revenue, profit, churn prevention, or causal impact from observational transactions.
 
 ## Data rules
-The workbook is expected at `data/raw/online_retail_II.xlsx` or project root if initially supplied there. Detect both sheets and validate their names/schema. The two sheets overlap in date coverage: correct only verified cross-sheet full-row duplicate copies. Do not drop all rows in the overlapping date range, and do not indiscriminately deduplicate within a sheet. Keep a data lineage/cleaning audit.
-- Normalize column names and dtypes.
-- Customer-level modeling excludes rows without customer IDs but preserve a separate reconciliation for unattributed business sales.
-- Handle cancellation invoices, nonpositive quantities/prices, and non-product codes through documented, configurable rules.
-- Calculate line value as quantity × price; clearly distinguish gross positive sales, cancellations/returns, and net revenue.
-- Aggregate line items to invoice and customer grain before joining summaries; add uniqueness and reconciliation checks to prevent fanout.
-- Output counts and value totals at each cleaning stage.
+
+- Source workbook: `data/raw/online_retail_II.xlsx`.
+- The two source sheets overlap. Remove only verified cross-sheet duplicate copies; preserve legitimate repeated lines within each sheet.
+- Keep unattributed transactions in company-level reconciliation, but exclude them from customer-level modelling.
+- Define qualifying purchase events at invoice level, not line-item level.
+- Keep sales, returns, fees, administrative adjustments and bad debt distinguishable.
+- Preserve audit outputs and reconcile invoice/customer totals.
 
 ## Models and evaluation
-- RFM baseline plus expanded logistic-regression model, with deterministic preprocessing and seeds.
-- Establish target: at least one purchase in the 90 days following a cutoff.
-- Keep all features as-of cutoff. Exclude a customer if the full target window is unavailable. Define how same-day invoices are aggregated.
-- Maintain the three chronological evaluation cutoffs currently specified in the project planning material, if the target windows are fully observed. Document the exact cutoffs and windows.
-- Report ROC-AUC, average precision, Brier score/calibration, top-decile purchase precision and bottom-decile non-purchase rate. Compare model metrics and business utility; no model must be declared a winner for every decision.
-- Tune on training/validation data only. Holdout windows are not used for hyperparameter selection.
-- Compare risk-first, value-aware, and hybrid CRM queue policies at fixed capacities (e.g. 1%, 5%, 10%, 20%) against a random/first-come baseline. Historical value is not CLV or profit.
-- Explain features/scores in customer-facing business terms. Check stability across windows and run sensitivity tests.
-- CLV is optional and outside the core unless it independently beats simple baselines on temporal holdout evaluation and implementation discrepancy checks are resolved.
 
-## Engineering requirements
-- Modular Python package, pinned/bounded dependencies, configuration, type hints where useful, logging, error handling, deterministic runs and relative paths.
-- Provide one documented command for ingestion through validation and output generation.
-- Automated tests: workbook/schema; cross-sheet duplicate correction; cleaning rules; row/invoice/customer grain; revenue reconciliation; date cutoffs/90-day boundaries; feature leakage; output metrics; queue capacity.
-- Run the full workbook, not just samples. Unit-test fixtures may be small. Clearly differentiate fixture tests from full-data results.
-- Use local output directories and ignore workbook, caches, virtual env, and machine-specific files in Git.
-- Provide machine-readable output validation that fails on discrepancies.
-- Web dashboard (Streamlit) must use clean data loading, validated schemas, clear KPI definitions, interactive filters, policy trade-off exploration, and clear labels. Dashboard KPIs must reconcile to Python outputs.
-- Deploy the interactive dashboard via Streamlit Community Cloud with a clean, responsive layout, restrained formal design system, and verified data artifacts.
+- Keep the RFM logistic-regression baseline and expanded logistic-regression challenger.
+- Use only features available at the scoring date.
+- The target is at least one qualifying purchase in the following 90 days.
+- The June 2011 cohort governs the main model recommendation. The September 2011 cohort is retrospective because it was inspected during development.
+- Compare Risk-first, Value-aware and Hybrid queues at equal capacity and include the random benchmark.
+- Historical queue spend is not proof of campaign impact.
 
-## Git protocol
-Before editing, inspect repository state and avoid overwriting existing work. Commit each completed increment with a descriptive message and push to the connected remote. Keep dataset and derived files out of Git unless owner explicitly approves specific small, non-sensitive deliverables. After each increment hand off: commit hash, paths changed, exact commands, tests and results, known issues. Stop for owner review.
+## Checks and handoff
 
-## First assignment
-Implement only the data ingestion/cleaning foundation:
-1. Inspect workspace and locate workbook; do not download another dataset.
-2. Scaffold package, dependency file, config, .gitignore, data dictionary skeleton.
-3. Implement full-workbook ingestion and safe cross-sheet duplicate handling.
-4. Produce a cleaning audit and invoice-level cleaned table locally.
-5. Add unit tests for duplicate handling, cleaning rules, schema, and revenue/count invariants.
-6. Run unit tests and full data processing on the actual workbook.
-7. Commit and push. Stop; do not start modeling until owner review.
+After changes, run the relevant tests and report the exact outcome. For dashboard changes, run the dashboard tests, fast suite and Streamlit execution check. Inspect rendered screenshots when available; never say visual review is complete unless it happened. Keep README commands and generated report descriptions aligned with the actual code.
