@@ -281,7 +281,7 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
     ]
 
     lines = [
-        "# Cleaning and Reconciliation Results",
+        "# RetenSight — Data Cleaning and Reconciliation Audit Report",
         "",
         "RetenSight checks row counts and financial totals as data moves from the workbook to invoice and customer tables.",
         "",
@@ -297,8 +297,8 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
         "",
         "| Measure | Company-wide value |",
         "|---|---:|",
-        f"| Gross product sales | {format_gbp(fin['gross_product_sales_gbp'])} |",
-        f"| Special commercial charges | {format_gbp(fin['special_commercial_charges_gbp'])} |",
+        f"| Gross Product Sales | {format_gbp(fin['gross_product_sales_gbp'])} |",
+        f"| Special Commercial Charges | {format_gbp(fin['special_commercial_charges_gbp'])} |",
         f"| Gross commercial sales | {format_gbp(fin['gross_sales_gbp'])} |",
         f"| Cancellations and returns | {format_gbp(fin['cancellations_value_gbp'])} |",
         f"| Net commercial value before bad debt | {format_gbp(fin['net_commercial_value_gbp'])} |",
@@ -313,7 +313,7 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
         "|---|---|",
     ])
     for name, passed in invariants.items():
-        lines.append(f"| {name} | {'Passed' if passed else '**FAILED**'} |")
+        lines.append(f"| {name} | {'PASSED [✓]' if passed else 'FAILED [X]'} |")
     lines.extend([
         "",
         "## Cleaning notes",
