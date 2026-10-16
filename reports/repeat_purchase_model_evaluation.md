@@ -28,7 +28,7 @@ The table below uses the RFM model on the June 2011 validation cohort. Each stra
 | Value-aware | 495 | 47.68% | 7.01% | £4,736,270 | 41.29% |
 | Random benchmark | 495 | 67.98% | 10.00% | £1,146,539 | 10.00% |
 
-- **Risk-first** prioritizes customers least likely to repeat. At 10% capacity it reaches about 95% non-repeat precision but represents less than 1% of cohort historical commercial spend.
+- **Risk-first** prioritizes customers least likely to repeat. At 10% capacity it reaches about 95% non-repeat precision but represents <1% of cohort historical commercial spend.
 - **Value-aware** selects customers with higher historical spend but has lower non-repeat precision.
 - **Hybrid** balances risk and historical spend. Random selection provides a reference point.
 
