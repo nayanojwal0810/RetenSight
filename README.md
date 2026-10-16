@@ -95,7 +95,6 @@ The dashboard reads the committed aggregate reports in `reports/`; it does not n
 - [Cleaning rules](docs/cleaning_rules.md)
 - [Data dictionary](docs/data_dictionary.md)
 - [RFM features and segmentation](docs/rfm_feature_definitions.md)
-- [Special stock-code audit](docs/special_stock_code_audit.md)
 - [Cleaning and reconciliation results](reports/cleaning_and_reconciliation_summary.md)
 - [RFM summary](reports/rfm_segmentation_summary.md)
 - [Model evaluation](reports/repeat_purchase_model_evaluation.md)
