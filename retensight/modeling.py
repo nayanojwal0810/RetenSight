@@ -973,7 +973,7 @@ def _generate_markdown_report(
         "",
         "Expanded Model decile calibration was checked on the retrospective temporal cohort. Decile calibration has not been evaluated or reported for the RFM Baseline. The Expanded Model shows systematic probability underprediction; the higher observed repeat rate in the later cohort coincides with that underprediction, but the cause of this cohort base-rate shift remains unknown. Calibration was not evaluated across deciles for the RFM Baseline.",
         "",
-        "Historical commercial spend describes past transactions. It is not revenue saved, profit, customer lifetime value, or evidence that a campaign changes purchasing behaviour. The data contains no campaign exposure or treatment information.",
+        "Historical commercial spend describes past transactions. It does not measure incremental campaign value, profit, customer lifetime value, or whether a campaign changes purchasing behaviour. The data contains no campaign exposure or treatment information.",
         "",
         "The final December 2011 customer snapshot has no observed forward 90-day target. Those outcomes remain missing, not zero.",
         "",
