@@ -1,0 +1,49 @@
+name: RetenSight dashboard checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile application and package
+        run: python -m compileall -q streamlit_app.py retensight
+
+      - name: Run dashboard data and integrity tests
+        run: python -m pytest tests/test_dashboard.py -q
+
+      - name: Run fast test suite
+        run: python -m pytest -q -m "not full_data"
+
+      - name: Execute Streamlit app script
+        run: |
+          python - <<'PY'
+          from streamlit.testing.v1 import AppTest
+
+          app = AppTest.from_file("streamlit_app.py", default_timeout=45).run()
+          assert not app.exception, "\n".join(str(item) for item in app.exception)
+          print("Streamlit script executed without reported app exceptions.")
+          PY
