@@ -548,14 +548,18 @@ with tabs[2]:
     # Use Streamlit's native horizontal bar chart here: it renders directly from the
     # numeric dataframe and avoids the missing-mark issue seen in the layered Altair chart.
     spend_data = active[["Strategy", "share_of_cohort_commercial_value", "historical_commercial_value_gbp"]].copy()
-    spend_data["SpendShare"] = pd.to_numeric(
+    spend_data["Share of cohort spend (%)"] = pd.to_numeric(
         spend_data.pop("share_of_cohort_commercial_value"), errors="coerce"
     ) * 100.0
-    spend_data["HistoricalSpend"] = pd.to_numeric(
+    spend_data["Historical spend (£)"] = pd.to_numeric(
         spend_data.pop("historical_commercial_value_gbp"), errors="coerce"
     )
     spend_data["Strategy"] = spend_data["Strategy"].astype(str)
-    spend_data = spend_data.dropna(subset=["SpendShare"]).reset_index(drop=True)
+    # Keep the visible chart labels short enough for the two-column layout.
+    spend_data["Chart strategy"] = spend_data["Strategy"].replace(
+        {"Random benchmark (analytical)": "Random", "Random benchmark": "Random"}
+    )
+    spend_data = spend_data.dropna(subset=["Share of cohort spend (%)"]).reset_index(drop=True)
 
     left, right = st.columns(2, gap="large")
     with left:
@@ -565,18 +569,18 @@ with tabs[2]:
     with right:
         st.markdown('<div class="chart-title">How much historical spend is represented?</div>', unsafe_allow_html=True)
         st.markdown('<div class="chart-caption">Past spend associated with selected customers; not campaign uplift or protected revenue.</div>', unsafe_allow_html=True)
+        spend_chart_data = spend_data[["Chart strategy", "Share of cohort spend (%)"]].rename(
+            columns={"Chart strategy": "Strategy"}
+        ).sort_values("Share of cohort spend (%)", ascending=False).set_index("Strategy")
         st.bar_chart(
-            spend_data[["Strategy", "SpendShare"]],
-            x="Strategy",
-            y="SpendShare",
-            x_label="",
-            y_label="Share of cohort spend (%)",
+            spend_chart_data,
             horizontal=True,
-            sort="-SpendShare",
             color=BLUE,
             height=270,
             use_container_width=True,
-            alt="Historical customer-attributed commercial spend represented by each contact strategy, as a percentage of total cohort spend.",
+            x_label="",
+            y_label="",
+            stack=False,
         )
 
     table = active.copy()
