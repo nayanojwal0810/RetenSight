@@ -409,70 +409,42 @@ def save_stock_code_audit_reports(
         json.dump(audit_dict, f, indent=2)
     logger.info("Saved special stock code audit JSON to '%s'.", json_path)
 
-    # 2. Save Markdown
+    # 2. Save a concise Markdown summary. The JSON file retains the complete audit details.
     entries = audit_dict["stock_code_entries"]
     meta = audit_dict["audit_metadata"]
 
     md_lines = [
-        "# RetenSight — Special Stock Code & Service Fee Audit Report",
+        "# Special Stock-Code Audit",
         "",
-        "## Executive Summary",
+        f"RetenSight reviewed **{meta['audited_codes_count']} stock codes** across **{meta['total_lines_analyzed']:,} lines**. The audit separates physical products, commercial fees and administrative entries so they do not distort purchase frequency or customer spend.",
         "",
-        f"- **Audited Stock Codes:** {meta['audited_codes_count']}",
-        f"- **Total Transaction Lines Analyzed:** {meta['total_lines_analyzed']:,}",
-        f"- **Total Net Value Analyzed:** £{meta['total_value_gbp']:,.2f}",
+        "## Audited codes",
         "",
-        "This audit examines non-standard, service, and administrative stock codes to prevent non-product fees ",
-        "or staff adjustments from artificially inflating customer purchase frequency or distorting customer commercial spend.",
-        "",
-        "## Summary Audit Table",
-        "",
-        "| Stock Code | Lines | Total Value (£) | Attributed Value (£) | Unattributed Value (£) | Inferred Nature | Physical Merchandise? | Increments Frequency? | Affects Customer Commercial Spend? |",
-        "| :--- | ---: | ---: | ---: | ---: | :--- | :---: | :---: | :---: |",
+        "| Code | Lines | Total value (£) | Category | Merchandise? | Counts as purchase? | Included in customer commercial spend? |",
+        "|---|---:|---:|---|:---:|:---:|:---:|",
     ]
 
     for e in entries:
-        merch_str = "Yes" if e["is_physical_merchandise"] else "No"
-        freq_str = "Yes" if e["increments_purchase_frequency"] else "No"
-        spend_str = "Yes" if e["affects_customer_commercial_spend"] else "No (Admin / Accounting only)"
+        merchandise = "Yes" if e["is_physical_merchandise"] else "No"
+        frequency = "Yes" if e["increments_purchase_frequency"] else "No"
+        spend = "Yes" if e["affects_customer_commercial_spend"] else "No"
         md_lines.append(
-            f"| `{e['stock_code']}` | {e['line_count']:,} | £{e['total_value_gbp']:,.2f} | "
-            f"£{e['customer_attributed_value_gbp']:,.2f} | £{e['unattributed_value_gbp']:,.2f} | "
-            f"`{e['inferred_category']}` | {merch_str} | {freq_str} | {spend_str} |"
+            f"| {e['stock_code']} | {e['line_count']:,} | £{e['total_value_gbp']:,.2f} | "
+            f"{e['inferred_category']} | {merchandise} | {frequency} | {spend} |"
         )
 
     md_lines.extend([
         "",
-        "## Detailed Stock Code Breakdown & Classification Rules",
+        "## Rules that matter for CRM",
         "",
-    ])
-
-    for e in entries:
-        desc_list = ", ".join([f"'{d}' ({cnt})" for d, cnt in e["top_descriptions"].items()])
-        sample_invs = ", ".join(e["sample_invoices"])
-        md_lines.extend([
-            f"### Stock Code: `{e['stock_code']}`",
-            f"- **Inferred Category:** `{e['inferred_category']}`",
-            f"- **Physical Merchandise:** {'Yes' if e['is_physical_merchandise'] else 'No'}",
-            f"- **Increments Frequency:** {'Yes (on qualifying invoice)' if e['increments_purchase_frequency'] else 'No (Excluded from repeat purchase events)'}",
-            f"- **Affects Customer Commercial Spend:** {'Yes (Included in net commercial spend)' if e['affects_customer_commercial_spend'] else 'No (Isolated under administrative settlements)'}",
-            f"- **Transaction Volume:** {e['line_count']:,} lines (Customer Attributed: {e['customer_attributed_lines']:,}, Unattributed: {e['unattributed_lines']:,})",
-            f"- **Net Financial Value:** £{e['total_value_gbp']:,.2f} (Customer Attributed: £{e['customer_attributed_value_gbp']:,.2f}, Unattributed: £{e['unattributed_value_gbp']:,.2f})",
-            f"- **Representative Invoices:** {sample_invs}",
-            f"- **Frequent Descriptions:** {desc_list}",
-            f"- **Observed Evidence:** {e['evidence']}",
-            f"- **Applied Treatment Rule:** {e['treatment_rule']}",
-            "",
-        ])
-
-    md_lines.extend([
-        "## Methodological Conclusions for Customer RFM Pipeline",
+        "- POST and DOT are commercial shipping fees. They affect spend but do not count as merchandise purchases on their own.",
+        "- M and D adjust commercial spend but do not increase purchase frequency.",
+        "- CRUK, BANK CHARGES, ADJUST and ADJUST2 are administrative settlements. They are reported separately from customer commercial spend.",
+        "- B records bad debt and stays in company-level accounting.",
+        "- PADS, DCGSSBOY and DCGSSGIRL are treated as physical merchandise.",
+        "- Unattributed fees such as AMAZONFEE and sample write-offs remain in the company audit but are not assigned to customer RFM profiles.",
         "",
-        "1. **Postage and Freight (`POST`, `DOT`):** Shipping fees constitute commercial revenue and contribute to customer commercial spend, but invoices containing purely postage fees without physical items do not represent product repeat purchases.",
-        "2. **Manual Adjustments & Discounts (`M`, `D`):** Commercial entries adjust customer net commercial spend (credits/debits), but lack catalog SKU merchandise definitions and do not increment purchase frequency.",
-        "3. **Administrative Settlements (`CRUK`, `ADJUST`, `ADJUST2`, `BANK CHARGES`):** Clerical balance adjustments, bank processing fees, and charity commission payouts are isolated from customer commercial spend. They are preserved in whole-company financial reconciliation and tracked separately under `monetary_admin_settlements`.",
-        "4. **Cushion Pads (`PADS`):** Confirmed as physical catalog merchandise ('PADS TO MATCH ALL CUSHIONS'). Reclassified as `standard_product_sale` (or merchandise return if cancelled).",
-        "5. **Overhead / Unattributed Items (`B`, `AMAZONFEE`, `S`):** Bad debt adjustments, platform seller fees, and non-commercial sample distributions have 0 customer attribution and remain strictly in business accounting auditing.",
+        "This Markdown file is the short report. The companion JSON audit retains detailed evidence, descriptions and sample invoices for each code.",
         "",
     ])
 
