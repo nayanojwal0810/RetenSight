@@ -876,104 +876,58 @@ def save_rfm_summary_reports(
         dec_df.to_csv(audit_dir / "crm_segment_decision_table.csv", index=False)
 
     cutoffs = summary_dict["cutoffs"]
-    seg_cross = summary_dict["segment_distribution_cross_cutoff"]
-    cutoff_dates = list(cutoffs.keys())
-
+    latest_date = list(cutoffs.keys())[-1]
+    latest = cutoffs[latest_date]
     md_lines = [
-        "# RetenSight — Customer RFM Analytics & Segmentation Summary",
+        "# Customer RFM Summary",
         "",
-        "## Executive Summary",
+        "RFM uses Recency, Frequency and Monetary value to describe customer purchase history. RetenSight assigns each eligible customer to one of 11 segments using a deterministic decision table.",
         "",
-        "This report details customer-level RFM features, monetary component reconciliation, ",
-        "deterministic single-source-of-truth 125-cell CRM segmentation, merchandise and commercial AOV, ",
-        "and observed 90-day repeat-purchase rates across chronological evaluation cutoffs for the UCI Online Retail II dataset.",
+        "## Repeat-purchase outcomes",
         "",
-        "## Cutoff Overview & Observed 90-Day Repeat-Purchase Rates",
+        "A repeat purchase means at least one qualifying merchandise purchase in the following 90 days. Outcomes are shown only where the full window is observed.",
         "",
-        "| Evaluation Cutoff | Target Observation Window | Eligible Customers | Mean Recency (Days) | Mean Frequency | Mean Merchandise AOV (£) | Mean Commercial AOV (£) | Total Net Commercial Spend (£) | 90-Day Repeat Buyers | Observed Repeat Rate (%) |",
-        "| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |",
+        "| Snapshot date | Customers | Repeaters in next 90 days | Repeat rate | Target observed? |",
+        "|---|---:|---:|---:|---|",
     ]
 
-    target_windows_desc = {
-        "2010-12-09": "2010-12-10 to 2011-03-09 23:59:59 (90 days)",
-        "2011-06-10": "2011-06-11 to 2011-09-08 23:59:59 (90 days)",
-        "2011-09-09": "2011-09-10 to 2011-12-08 23:59:59 (90 days)",
-        "2011-12-09": "Unobserved (Dataset ends at 2011-12-09 12:50:00)",
-    }
-
-    for d, info in cutoffs.items():
-        w_desc = target_windows_desc.get(d, "Observed 90-day window")
-        rep_cnt = f"{info['repeat_purchasers_90d']:,}" if info["repeat_purchasers_90d"] is not None else "N/A"
-        rep_rate = f"{info['repeat_purchase_rate_pct']:.2f}%" if info["repeat_purchase_rate_pct"] is not None else "Unobserved (Marked <NA>)"
-        merch_aov = info.get("mean_merchandise_aov_gbp", info["mean_avg_order_value_gbp"])
-        comm_aov = info.get("mean_commercial_order_value_gbp", merch_aov)
+    for date, info in cutoffs.items():
+        count = info.get("repeat_purchasers_90d")
+        rate = info.get("repeat_purchase_rate_pct")
+        count_text = f"{count:,}" if count is not None else "—"
+        rate_text = f"{rate:.2f}%" if rate is not None else "Not observed"
+        observed_text = "Yes" if info.get("is_target_window_observed") else "No"
         md_lines.append(
-            f"| `{d}` | {w_desc} | {info['eligible_customers']:,} | {info['mean_recency_days']:.1f} | "
-            f"{info['mean_frequency']:.2f} | £{merch_aov:,.2f} | £{comm_aov:,.2f} | £{info['total_net_commercial_spend_gbp']:,.2f} | "
-            f"{rep_cnt} | {rep_rate} |"
+            f"| {date} | {info['eligible_customers']:,} | {count_text} | {rate_text} | {observed_text} |"
         )
 
     md_lines.extend([
         "",
-        "## Cross-Cutoff CRM Segment Distribution (125-Cell Single Source of Truth)",
+        f"## Segment distribution at {latest_date}",
         "",
-        f"| CRM Segment | {' | '.join([f'`{d}` Count (%)' for d in cutoff_dates])} |",
-        f"| :--- | {' | '.join(['---:'] * len(cutoff_dates))} |",
+        f"The latest snapshot contains {latest['eligible_customers']:,} customers. Its future 90-day outcome is not observed, so this section describes segments only.",
+        "",
+        "| Segment | Customers | Share |",
+        "|---|---:|---:|",
     ])
-
-    for seg, d_dict in seg_cross.items():
-        vals = [f"{d_dict[d]['count']:,} ({d_dict[d]['pct']:.1f}%)" for d in cutoff_dates]
-        md_lines.append(f"| **{seg}** | {' | '.join(vals)} |")
+    for segment, count in sorted(latest["segment_counts"].items(), key=lambda item: item[1], reverse=True):
+        share = count / latest["eligible_customers"] * 100
+        md_lines.append(f"| {segment} | {count:,} | {share:.1f}% |")
 
     md_lines.extend([
         "",
-        "## Explicit Monetary-Aware Decision Table (125 Cells + Negative Spend)",
+        "## RFM definitions",
         "",
-        "The RFM segmentation scheme deterministically maps every possible combination of `(r_score, f_score, m_score)` ",
-        "plus negative net spend to 11 mutually exclusive, exhaustive business categories. The complete 126-row decision table ",
-        "is published in machine-readable form at `reports/crm_segment_decision_table.csv` and `reports/crm_segment_decision_table.json`.",
+        "- **Recency:** days since the latest qualifying purchase; lower is more recent.",
+        "- **Frequency:** number of distinct qualifying purchase invoices.",
+        "- **Monetary value:** customer commercial net spend, including commercial returns and adjustments but excluding administrative settlements and bad debt.",
+        "- Positive spend is ranked into five monetary groups. Zero or negative spend receives a separate score and segment.",
         "",
-        "| CRM Segment | Cell Count | Criteria Summary | Business Rationale & Core Action |",
-        "| :--- | ---: | :--- | :--- |",
-        "| **Champions** | 8 | `R in [4, 5]`, `F in [4, 5]`, `M in [4, 5]` | Top-tier VIP concierge outreach, early product access, executive appreciation. |",
-        "| **Loyal Customers** | 21 | (`R in [4, 5]`, `F in [4, 5]`, `M in [2, 3]`) or (`R == 3`, `F in [4, 5]`, `M in [3, 4, 5]`) or (`R in [3, 4, 5]`, `F == 3`, `M in [4, 5]`) or (`R == 3`, `F == 3`, `M == 3`) | Membership loyalty rewards, category cross-sell, automated reorder reminders. |",
-        "| **Potential Loyalists** | 12 | `R in [4, 5]`, `F in [2, 3]`, `M in [2, 3, 4, 5]` | Category cross-sell, second-tier order bundles, loyalty point incentives. |",
-        "| **New Customers** | 4 | `R in [4, 5]`, `F == 1`, `M in [1, 2]` | Dedicated onboarding sequence, welcome-back second order discount. |",
-        "| **Promising** | 20 | (`R in [4, 5]`, `F == 1`, `M in [3, 4, 5]`) or (`R in [4, 5]`, `F in [2, 3, 4, 5]`, `M == 1`) or (`R == 3`, `F in [1, 2]`, `M in [3, 4, 5]`) | Incentives to increase basket size and establish regular purchasing cadence. |",
-        "| **Can't Lose Them** | 10 | (`R in [1, 2]`, `F in [4, 5]`, `M in [4, 5]`) or (`R in [1, 2]`, `F == 3`, `M == 5`) | Highest priority win-back campaigns, bespoke commercial terms, direct executive outreach. |",
-        "| **At Risk** | 26 | (`R in [1, 2]`, `F in [4, 5]`, `M in [2, 3]`) or (`R == 2`, `F in [4, 5]`, `M == 1`) or (`R in [1, 2]`, `F == 3`, `M in [3, 4]`) or (`R in [1, 2]`, `F == 2`, `M in [4, 5]`) or (`R in [1, 2]`, `F == 1`, `M in [4, 5]`) or (`R == 3`, `F in [4, 5]`, `M in [1, 2]`) | Targeted re-engagement campaigns, personalized catalog offers, renewal discounts. |",
-        "| **About To Sleep** | 14 | (`R == 2`, `F in [1, 2]`, `M in [1, 2, 3]`) or (`R == 2`, `F == 3`, `M in [1, 2]`) or (`R == 3`, `F in [1, 2]`, `M in [1, 2]`) or (`R == 3`, `F == 3`, `M in [1, 2]`) | Gentle re-activation reminders before dormancy; low-friction seasonal promotions. |",
-        "| **Hibernating** | 7 | (`R == 1`, `F in [2, 3]`, `M in [1, 2, 3]`) or (`R == 1`, `F in [4, 5]`, `M == 1`) | Automated low-cost email drip campaigns; seasonal clearance announcements. |",
-        "| **Lost** | 3 | `R == 1`, `F == 1`, `M in [1, 2, 3]` | Deprioritized from high-touch CRM; archive or broad brand awareness only. |",
-        "| **Negative or Zero Spend** | 1 | `net_commercial_spend <= 0.0` or `M == 0` | Audit return reasons, inspect product defect reports, review trade concessions. |",
+        "The 126-row segmentation decision table is the source of truth for all score combinations: [CSV](crm_segment_decision_table.csv) and [JSON](crm_segment_decision_table.json).",
         "",
-        "## Customer Monetary Value Reconciliation & Sensitivity Analysis",
+        "## Interpretation",
         "",
-        "### 1. Independently Aggregated Commercial Components",
-        "- **Merchandise Sales (`product_sales`):** £17,137,712.98 across 788,464 non-cancellation product lines.",
-        "- **Merchandise Returns (`merchandise_returns_value`):** -£713,343.75 across 17,652 product return lines.",
-        "- **Shipping Charges (`shipping_value`):** +£122,244.87 across customer shipping entries (`POST`, `DOT`).",
-        "- **Commercial Discounts (`discount_value`):** -£12,785.34 across trade discount entries (`D`).",
-        "- **Manual Commercial Adjustments (`manual_value`):** -£185,325.48 across manual entries (`M`).",
-        "- **Reconciliation Residual:** Exactly **£0.00** across all customer accounts.",
-        "- **Primary Customer Commercial Net Spend:** **£16,348,503.28** (sum of above 5 components).",
-        "",
-        "### 2. Company Accounting Ledger & Administrative Settlements",
-        "- **Customer Administrative Settlements:** -£4,834.26 (`CRUK`, `BANK CHARGES`, `ADJUST`, `ADJUST2`).",
-        "- **Customer Account Balance:** **£16,343,669.02** (£16,348,503.28 + (-£4,834.26)).",
-        "- **Whole-Company Accounting Net Value:** **£18,909,762.10** (including £2,566,093.08 unattributed revenue).",
-        "",
-        "### 3. Administrative Settlements Sensitivity Analysis",
-        "- **Whole Dataset Population (5,942 customer accounts):**",
-        "  - Accounts with any administrative transaction: **74**",
-        "  - Accounts with non-zero net administrative settlement: **69** (total net value: -£4,834.26)",
-        "  - Accounts with net zero administrative settlement: **5** (transactions cancel out exactly to £0.00)",
-        "- **Final RFM Snapshot (2011-12-09, 5,853 qualifying customers):**",
-        "  - Qualifying accounts with any administrative transaction: **53**",
-        "  - Qualifying accounts with non-zero net administrative settlement: **48**",
-        "  - Qualifying accounts with net zero administrative settlement: **5**",
-        "- **Excluded Accounts (21 accounts):**",
-        "  - 21 accounts with administrative transactions had 0 qualifying merchandise purchases (e.g. only cancellations or administrative adjustments) and are correctly excluded from repeat-purchase modeling.",
+        "Segments summarize past behaviour and help organize CRM planning; they do not predict campaign impact. The final December 2011 snapshot has no observed future target and must not be treated as a zero repeat rate.",
         "",
     ])
 
