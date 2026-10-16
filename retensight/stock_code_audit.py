@@ -416,7 +416,7 @@ def save_stock_code_audit_reports(
     md_lines = [
         "# RetenSight — Special Stock Code & Service Fee Audit Report",
         "",
-        f"RetenSight reviewed **{meta['audited_codes_count']} stock codes** across **{meta['total_lines_analyzed']:,} lines**. The audit separates physical products, commercial fees and administrative entries so they do not distort purchase frequency or customer spend.",
+        f"RetenSight reviewed **{meta['audited_codes_count']} stock codes** across **{meta['total_lines_analyzed']:,} lines**, with a combined audited value of **£{meta['total_value_gbp']:,.2f}**. The audit separates physical products, commercial fees and administrative entries so they do not distort purchase frequency or customer spend.",
         "",
         "## Audited codes",
         "",
