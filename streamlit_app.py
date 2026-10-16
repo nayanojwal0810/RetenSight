@@ -486,7 +486,7 @@ with tabs[2]:
     with note:
         row_count = int(policy_rows(capacity)["selected_count"].iloc[0])
         st.caption(
-            f"Same validation cohort · {row_count:,} contacts at {capacity} capacity · Recommended default: RFM"
+            f"Same customer population across strategies · {row_count:,} contacts at {capacity} capacity · Recommended default: RFM"
         )
 
     active = policy_rows(capacity)
