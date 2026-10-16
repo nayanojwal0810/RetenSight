@@ -52,7 +52,7 @@ st.markdown(
     .stApp { background: #FFFFFF; }
     .block-container {
         max-width: 1320px;
-        padding-top: 1.45rem;
+        padding-top: 2.65rem;
         padding-bottom: 2.25rem;
     }
     .brand-row {
@@ -321,8 +321,10 @@ with tabs[0]:
 
     m1, m2, m3 = st.columns(3)
     m1.metric("Customers in observed cohort", f"{cohort_size:,}")
-    m2.metric("Repeat purchase rate", f"{repeat_rate:.2f}%", f"{repeaters:,} customers")
-    m3.metric("Risk-first precision", f"{risk['Non-repeat precision (%)']:.2f}%", "At 10% contact capacity")
+    m2.metric("Repeat purchase rate", f"{repeat_rate:.2f}%")
+    m2.caption(f"{repeaters:,} customers repeated within 90 days")
+    m3.metric("Risk-first precision", f"{risk['Non-repeat precision (%)']:.2f}%")
+    m3.caption("At 10% contact capacity")
 
     left, right = st.columns([1, 1], gap="large")
     with left:
@@ -490,49 +492,59 @@ with tabs[2]:
         )
 
     active = policy_rows(capacity)
-    precision_data = active[["Strategy", "Non-repeat precision (%)"]].copy()
-    precision_data["Precision label"] = precision_data["Non-repeat precision (%)"].map(lambda value: f"{value:.1f}%")
-    precision_chart_bars = alt.Chart(precision_data).mark_bar(cornerRadiusEnd=4, size=26).encode(
+    # Use simple, explicit field names for robust Altair/Vega-Lite encoding.
+    precision_data = active[["Strategy", "Non-repeat precision (%)"]].rename(
+        columns={"Non-repeat precision (%)": "Precision"}
+    )
+    precision_data["PrecisionLabel"] = precision_data["Precision"].map(lambda value: f"{value:.1f}%")
+    precision_data["Strategy"] = precision_data["Strategy"].astype(str)
+    precision_scale = alt.Scale(domain=[0, 112])
+    precision_chart_bars = alt.Chart(precision_data).mark_bar(
+        color=NAVY, cornerRadiusEnd=4, size=26
+    ).encode(
         y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(labelLimit=180, ticks=False)),
-        x=alt.X("Non-repeat precision (%):Q", title="Selected contacts who did not repeat (%)", scale=alt.Scale(domain=[0, 100]), axis=alt.Axis(format=".0f")),
-        color=alt.condition(
-            alt.datum.Strategy == "Risk-first",
-            alt.value(NAVY),
-            alt.value(SLATE),
-        ),
+        x=alt.X("Precision:Q", title="Selected contacts who did not repeat (%)", scale=precision_scale, axis=alt.Axis(format=".0f", tickCount=5, grid=True)),
         tooltip=[
             alt.Tooltip("Strategy:N"),
-            alt.Tooltip("Non-repeat precision (%):Q", format=".2f"),
+            alt.Tooltip("Precision:Q", title="Precision (%)", format=".2f"),
         ],
     )
-    precision_chart_labels = alt.Chart(precision_data).mark_text(align="left", baseline="middle", dx=5, fontSize=11, color=INK).encode(
+    precision_chart_labels = alt.Chart(precision_data).mark_text(
+        align="left", baseline="middle", dx=5, fontSize=11, color=INK
+    ).encode(
         y=alt.Y("Strategy:N", sort="-x"),
-        x=alt.X("Non-repeat precision (%):Q", scale=alt.Scale(domain=[0, 100])),
-        text=alt.Text("Precision label:N"),
+        x=alt.X("Precision:Q", scale=precision_scale),
+        text=alt.Text("PrecisionLabel:N"),
     )
 
-    spend_data = active[["Strategy", "Spend represented (%)"]].copy()
-    spend_data["Spend label"] = spend_data["Spend represented (%)"].map(lambda value: f"{value:.1f}%")
-    spend_max = max(15.0, float(spend_data["Spend represented (%)"].max()) * 1.18)
+    # Fixed bar colour and normalized names ensure that all spend bars remain visible.
+    spend_data = active[["Strategy", "Spend represented (%)", "historical_commercial_value_gbp"]].rename(
+        columns={
+            "Spend represented (%)": "SpendShare",
+            "historical_commercial_value_gbp": "HistoricalSpend",
+        }
+    )
+    spend_data["SpendLabel"] = spend_data["SpendShare"].map(lambda value: f"{value:.1f}%")
+    spend_data["Strategy"] = spend_data["Strategy"].astype(str)
+    spend_max = max(15.0, float(spend_data["SpendShare"].max()) * 1.25)
     spend_scale = alt.Scale(domain=[0, spend_max])
-    spend_bars = alt.Chart(spend_data).mark_bar(cornerRadiusEnd=4, size=26).encode(
+    spend_bars = alt.Chart(spend_data).mark_bar(
+        color=BLUE, cornerRadiusEnd=4, size=26
+    ).encode(
         y=alt.Y("Strategy:N", sort="-x", title=None, axis=alt.Axis(labelLimit=180, ticks=False)),
-        x=alt.X("Spend represented (%):Q", title="Share of cohort historical spend (%)", scale=spend_scale, axis=alt.Axis(format=".0f")),
-        color=alt.condition(
-            alt.datum.Strategy == "Value-aware",
-            alt.value(NAVY),
-            alt.value(SLATE),
-        ),
+        x=alt.X("SpendShare:Q", title="Share of cohort historical spend (%)", scale=spend_scale, axis=alt.Axis(format=".0f", grid=True)),
         tooltip=[
             alt.Tooltip("Strategy:N"),
-            alt.Tooltip("Spend represented (%):Q", format=".2f"),
-            alt.Tooltip("historical_commercial_value_gbp:Q", title="Historical spend (£)", format="£,.0f"),
+            alt.Tooltip("SpendShare:Q", title="Spend represented (%)", format=".2f"),
+            alt.Tooltip("HistoricalSpend:Q", title="Historical spend (£)", format="£,.0f"),
         ],
     )
-    spend_labels = alt.Chart(spend_data).mark_text(align="left", baseline="middle", dx=5, fontSize=11, color=INK).encode(
+    spend_labels = alt.Chart(spend_data).mark_text(
+        align="left", baseline="middle", dx=5, fontSize=11, color=INK
+    ).encode(
         y=alt.Y("Strategy:N", sort="-x"),
-        x=alt.X("Spend represented (%):Q", scale=spend_scale),
-        text=alt.Text("Spend label:N"),
+        x=alt.X("SpendShare:Q", scale=spend_scale),
+        text=alt.Text("SpendLabel:N"),
     )
 
     left, right = st.columns(2, gap="large")
