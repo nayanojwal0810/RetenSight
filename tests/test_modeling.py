@@ -305,13 +305,11 @@ def test_evaluation_report_content_integrity(tmp_path: Path) -> None:
         tmp_report = tmp_path / "repeat_purchase_model_evaluation.md"
         _generate_markdown_report(
             report_path=tmp_report,
-            metrics_summary_df=mock_metrics,
+            metrics_df=mock_metrics,
+            policy_df=mock_policy,
             calib_df=mock_calib,
             coef_exp_df=mock_coef,
             coef_rfm_df=mock_coef,
-            policy_comparison_df=mock_policy,
-            validation_cutoff="2011-06-10",
-            temporal_cutoff="2011-09-09",
             config_data={"recommended_default_model": "RFM Baseline", "challenger_model": "Expanded Model"},
         )
         test_reports = [tmp_report]
