@@ -262,7 +262,7 @@ def format_gbp(val: float) -> str:
 
 
 def generate_markdown_report(audit: Dict[str, Any]) -> str:
-    """Renders human-readable markdown summary report from audit data."""
+    """Render a concise cleaning and reconciliation summary from the audit data."""
     ing = audit["ingestion"]
     dedup = audit["deduplication"]
     tx = audit["transactions_breakdown"]
@@ -270,184 +270,58 @@ def generate_markdown_report(audit: Dict[str, Any]) -> str:
     fin = audit["financial_reconciliation"]
     invariants = audit["reconciliation_invariants"]
 
-    lines = [
-        "# RetenSight — Data Cleaning and Reconciliation Audit Report",
-        "",
-        "## 1. Executive Summary",
-        "",
-        "- **Raw Rows Ingested**: {:,} across 2 workbook sheets (`{}`: {:,}, `{}`: {:,})".format(
-            ing["total_raw_rows_ingested"],
-            ing["sheet1_name"],
-            ing["sheet1_raw_rows"],
-            ing["sheet2_name"],
-            ing["sheet2_raw_rows"],
-        ),
-        "- **Exact Cross-Sheet Duplicates Removed**: {:,} (from `{}` overlap)".format(
-            dedup["cross_sheet_duplicates_removed"], ing["sheet2_name"]
-        ),
-        "- **Retained Transactions**: {:,}".format(dedup["retained_rows_post_deduplication"]),
-        "- **Customer Commercial-Ready Transactions**: {:,} (excludes {:,} zero-revenue freebies)".format(
-            tx["customer_commercial_ready_transactions"], tx["promotional_freebies_count"]
-        ),
-        "- **Distinct Valid Customers**: {:,}".format(inv["distinct_valid_customers"]),
-        "- **Total Unique Invoices**: {:,}".format(inv["total_unique_invoices"]),
-        "- **Gross Product Sales**: {}".format(format_gbp(fin["gross_product_sales_gbp"])),
-        "- **Special Commercial Charges**: {}".format(format_gbp(fin["special_commercial_charges_gbp"])),
-        "- **Total Gross Commercial Sales**: {}".format(format_gbp(fin["gross_sales_gbp"])),
-        "- **Cancellations / Refunds**: {}".format(format_gbp(fin["cancellations_value_gbp"])),
-        "- **Net Commercial Value (before bad debt)**: {}".format(format_gbp(fin["net_commercial_value_gbp"])),
-        "- **Bad Debt Adjustments**: {}".format(format_gbp(fin["bad_debt_adjustments_gbp"])),
-        "- **All Transactions Net Value (after bad debt)**: {}".format(format_gbp(fin["all_transactions_net_value_gbp"])),
-        "",
-        "---",
-        "",
-        "## 2. Ingestion & Duplicate Resolution",
-        "",
-        "| Metric | Value | Notes |",
-        "| :--- | :--- | :--- |",
-        "| Sheet 1 Raw Rows (`{}`) | {:,} | Dates: 2009-12-01 to 2010-12-09 |".format(
-            ing["sheet1_name"], ing["sheet1_raw_rows"]
-        ),
-        "| Sheet 2 Raw Rows (`{}`) | {:,} | Dates: 2010-12-01 to 2011-12-09 |".format(
-            ing["sheet2_name"], ing["sheet2_raw_rows"]
-        ),
-        "| Date Overlap Window | {} to {} | Overlap period |".format(
-            dedup["overlap_window_start"], dedup["overlap_window_end"]
-        ),
-        "| Cross-Sheet 1-to-1 Duplicates Removed | {:,} | Removed strictly from `{}` |".format(
-            dedup["cross_sheet_duplicates_removed"], ing["sheet2_name"]
-        ),
-        "| Sheet 1 Same-Sheet Duplicates Preserved | {:,} | Legitimate repeat rows kept |".format(
-            dedup["sheet1_rows_in_same_sheet_duplicates"]
-        ),
-        "| Retained Rows Post-Deduplication | {:,} | Exactly Sheet 1 + Retained Sheet 2 |".format(
-            dedup["retained_rows_post_deduplication"]
-        ),
-        "",
-        "---",
-        "",
-        "## 3. Transaction Breakdown by Classification",
-        "",
-        "| Category | Rows | % of Total | Description |",
-        "| :--- | :--- | :--- | :--- |",
-        "| `standard_product_sale` | {:,} | {:.2f}% | Ordinary merchandise sales (qty > 0, price > 0, standard code) |".format(
-            tx["standard_product_sales_count"],
-            (tx["standard_product_sales_count"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "| `special_commercial_charge` | {:,} | {:.2f}% | Commercial fees (POST, DOT, M, BANK CHARGES, etc.) |".format(
-            tx["special_commercial_charges_count"],
-            (tx["special_commercial_charges_count"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "| `cancellation` | {:,} | {:.2f}% | Invoices starting with 'C' (returns/cancellations) |".format(
-            tx["cancellations_count"],
-            (tx["cancellations_count"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "| `inventory_adjustment` | {:,} | {:.2f}% | Administrative loss/found write-offs (price=0, no customer ID) |".format(
-            tx["inventory_adjustments_count"],
-            (tx["inventory_adjustments_count"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "| `promotional_freebie` | {:,} | {:.2f}% | Free gifts with customer orders (price=0, customer ID present) |".format(
-            tx["promotional_freebies_count"],
-            (tx["promotional_freebies_count"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "| `bad_debt_adjustment` | {:,} | {:.4f}% | Invoices starting with 'A' (accounting debt write-offs) |".format(
-            tx["bad_debt_adjustments_count"],
-            (tx["bad_debt_adjustments_count"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "| **Total Retained Rows** | **{:,}** | **100.00%** | |".format(tx["total_retained_transactions"]),
-        "",
-        "### Customer Attribution & Modeling Readiness",
-        "- **Total Customer-Attributed Transactions**: {:,} ({:.2f}%)".format(
-            tx["customer_attributed_transactions"],
-            (tx["customer_attributed_transactions"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "- **Customer Commercial-Ready Transactions**: {:,} (excludes zero-revenue promotional freebies)".format(
-            tx["customer_commercial_ready_transactions"]
-        ),
-        "- **Unattributed Transactions**: {:,} ({:.2f}%)".format(
-            tx["unattributed_transactions"],
-            (tx["unattributed_transactions"] / tx["total_retained_transactions"]) * 100,
-        ),
-        "",
-        "---",
-        "",
-        "## 4. Invoice Aggregation",
-        "",
-        "| Invoice Type | Invoices | Line Count | Distinct Customers |",
-        "| :--- | :--- | :--- | :--- |",
-        "| Customer Sales (`customer_sale`) | {:,} | Attributed | {:,} |".format(
-            inv["customer_sales_invoices"], inv["distinct_valid_customers"]
-        ),
-        "| Customer Cancellations (`customer_cancellation`) | {:,} | Attributed | - |".format(
-            inv["customer_cancellation_invoices"]
-        ),
-        "| Unattributed Sales (`unattributed_sale`) | {:,} | Guest checkout | N/A |".format(
-            inv["unattributed_sales_invoices"]
-        ),
-        "| Unattributed Cancellations | {:,} | Guest returns | N/A |".format(
-            inv["unattributed_cancellation_invoices"]
-        ),
-        "| Inventory Adjustments | {:,} | Internal warehouse | N/A |".format(
-            inv["inventory_adjustment_invoices"]
-        ),
-        "| Bad Debt Adjustments | {:,} | Accounting adjustments | N/A |".format(
-            inv["bad_debt_adjustment_invoices"]
-        ),
-        "| **Total Unique Invoices** | **{:,}** | **100% Accounted** | |".format(
-            inv["total_unique_invoices"]
-        ),
-        "",
-        "---",
-        "",
-        "## 5. Financial Reconciliation",
-        "",
-        "| Revenue Stream | Attributed | Unattributed | Total |",
-        "| :--- | :--- | :--- | :--- |",
-        "| **Standard Product Sales** | {} | {} | {} |".format(
-            format_gbp(fin["attributed_product_sales_gbp"]),
-            format_gbp(fin["unattributed_product_sales_gbp"]),
-            format_gbp(fin["gross_product_sales_gbp"]),
-        ),
-        "| **Special Commercial Charges** | {} | {} | {} |".format(
-            format_gbp(fin["attributed_special_charges_gbp"]),
-            format_gbp(fin["unattributed_special_charges_gbp"]),
-            format_gbp(fin["special_commercial_charges_gbp"]),
-        ),
-        "| **Total Gross Commercial Sales** | {} | {} | {} |".format(
-            format_gbp(fin["attributed_product_sales_gbp"] + fin["attributed_special_charges_gbp"]),
-            format_gbp(fin["unattributed_product_sales_gbp"] + fin["unattributed_special_charges_gbp"]),
-            format_gbp(fin["gross_sales_gbp"]),
-        ),
-        "| **Cancellations / Refunds** | {} | {} | {} |".format(
-            format_gbp(fin["attributed_cancellations_gbp"]),
-            format_gbp(fin["unattributed_cancellations_gbp"]),
-            format_gbp(fin["cancellations_value_gbp"]),
-        ),
-        "| **Net Commercial Value (before bad debt)** | **{}** | **{}** | **{}** |".format(
-            format_gbp(fin["attributed_product_sales_gbp"] + fin["attributed_special_charges_gbp"] + fin["attributed_cancellations_gbp"]),
-            format_gbp(fin["unattributed_product_sales_gbp"] + fin["unattributed_special_charges_gbp"] + fin["unattributed_cancellations_gbp"]),
-            format_gbp(fin["net_commercial_value_gbp"]),
-        ),
-        "| **Bad Debt Adjustments** | {} | {} | {} |".format(
-            format_gbp(0.0),
-            format_gbp(fin["bad_debt_adjustments_gbp"]),
-            format_gbp(fin["bad_debt_adjustments_gbp"]),
-        ),
-        "| **All Transactions Net Value (after bad debt)** | **{}** | **{}** | **{}** |".format(
-            format_gbp(fin["attributed_product_sales_gbp"] + fin["attributed_special_charges_gbp"] + fin["attributed_cancellations_gbp"]),
-            format_gbp(fin["unattributed_product_sales_gbp"] + fin["unattributed_special_charges_gbp"] + fin["unattributed_cancellations_gbp"] + fin["bad_debt_adjustments_gbp"]),
-            format_gbp(fin["all_transactions_net_value_gbp"]),
-        ),
-        "",
-        "---",
-        "",
-        "## 6. Mathematical Invariants Verification",
-        "",
+    rows = [
+        ("Rows ingested", f"{ing['total_raw_rows_ingested']:,}"),
+        ("Verified cross-sheet copies removed", f"{dedup['cross_sheet_duplicates_removed']:,}"),
+        ("Rows retained", f"{dedup['retained_rows_post_deduplication']:,}"),
+        ("Customer-attributed rows", f"{tx['customer_attributed_transactions']:,}"),
+        ("Customer commercial-ready rows", f"{tx['customer_commercial_ready_transactions']:,}"),
+        ("Unique invoices", f"{inv['total_unique_invoices']:,}"),
+        ("Customers with qualifying purchase history", f"{inv['distinct_valid_customers']:,}"),
     ]
 
-    for inv_name, status in invariants.items():
-        status_icon = "PASSED [✓]" if status else "FAILED [X]"
-        lines.append(f"- **{inv_name}**: {status_icon}")
-
-    lines.append("")
+    lines = [
+        "# Cleaning and Reconciliation Results",
+        "",
+        "RetenSight checks row counts and financial totals as data moves from the workbook to invoice and customer tables.",
+        "",
+        "## Data volume",
+        "",
+        "| Measure | Result |",
+        "|---|---:|",
+    ]
+    lines.extend(f"| {label} | {value} |" for label, value in rows)
+    lines.extend([
+        "",
+        "## Financial reconciliation",
+        "",
+        "| Measure | Company-wide value |",
+        "|---|---:|",
+        f"| Gross product sales | {format_gbp(fin['gross_product_sales_gbp'])} |",
+        f"| Special commercial charges | {format_gbp(fin['special_commercial_charges_gbp'])} |",
+        f"| Gross commercial sales | {format_gbp(fin['gross_sales_gbp'])} |",
+        f"| Cancellations and returns | {format_gbp(fin['cancellations_value_gbp'])} |",
+        f"| Net commercial value before bad debt | {format_gbp(fin['net_commercial_value_gbp'])} |",
+        f"| Bad-debt adjustments | {format_gbp(fin['bad_debt_adjustments_gbp'])} |",
+        f"| Net invoice value after bad debt | {format_gbp(fin['all_transactions_net_value_gbp'])} |",
+        "",
+        "Company-wide totals include unattributed transactions. Customer commercial spend is a separate measure and excludes administrative settlements and bad debt.",
+        "",
+        "## Integrity checks",
+        "",
+        "| Check | Result |",
+        "|---|---|",
+    ])
+    for name, passed in invariants.items():
+        lines.append(f"| {name} | {'Passed' if passed else '**FAILED**'} |")
+    lines.extend([
+        "",
+        "## Cleaning notes",
+        "",
+        "- Only confirmed copies duplicated between the two sheets are removed. Repeated rows within a sheet are preserved.",
+        "- Transaction lines retain their category and sign so sales, returns and adjustments can be reconciled.",
+        "- Free promotional items are kept in the cleaned data but excluded from the customer commercial-ready extract.",
+        "- Administrative settlements and bad debt remain in the company accounting audit but are not treated as customer purchases.",
+        "",
+    ])
     return "\n".join(lines)
