@@ -1,4 +1,4 @@
-# Special Stock-Code Audit
+# RetenSight — Special Stock Code & Service Fee Audit Report
 
 RetenSight reviewed **17 stock codes** across **5,487 transaction lines**. The audit separates physical products, commercial fees and administrative entries so they do not distort purchase frequency or customer spend. The combined audited value is **-£86,015.13**.
 
